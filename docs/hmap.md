@@ -1,42 +1,49 @@
 
 <img src="https://github.com/greg7mdp/gtl/blob/main/html/img/phash.png?raw=true" width="120" align="middle"> 
 
-# Greg's Template Library of useful classes.
+# Hash containers provided by [gtl](https://github.com/greg7mdp/gtl)
 
-  [![License: Apache-2.0](https://img.shields.io/badge/License-Apache-yellow.svg)](https://opensource.org/licenses/Apache-2.0) [![Linux](https://github.com/greg7mdp/gtl/actions/workflows/linux.yml/badge.svg)](https://github.com/greg7mdp/gtl/actions/workflows/linux.yml)  [![MacOS](https://github.com/greg7mdp/gtl/actions/workflows/macos.yml/badge.svg)](https://github.com/greg7mdp/gtl/actions/workflows/macos.yml) [![Windows](https://github.com/greg7mdp/gtl/actions/workflows/windows.yml/badge.svg)](https://github.com/greg7mdp/gtl/actions/workflows/windows.yml) 
+[Gtl](https://github.com/greg7mdp/gtl) provides a set of hash containers (maps and sets) implemented using open addressing (single array of values, very cache friendly), as well as advanced SSE lookup optimizations allowing for excellent performance even when the table is up to 95% full. These containers have the same API as the `unordered` versions from the STL, and are significantly outperforming the unordered version both in terms of speed and space.
 
-## Overview
+Here are some of the benefits they offer:
 
-This repository aims to provide many classes that are commonly needed in substantial C++ projects, but that are either not available, or not fast enough in the C++ standard library. In some cases, the C++ standard requirements prevents from providing faster alternatives (for example the  pointer stability requirement for unordered maps or sets prevents providing implementations using open addressing).
 
-Among the many classes offered by [gtl](https://github.com/greg7mdp/gtl), we find a set of excellent **hash map** implementations, as well as a **btree** alternative to `std::map` and `std::set`. These are *drop-in replacements* for the standard C++ classes and provide the same API.
+- **drop-in replacement** for `std::unordered_map`, `std::unordered_set`, `std::map` and `std::set`
 
-We are happy to integrate new classes into [gtl](https://github.com/greg7mdp/gtl), provided the license is compatible with ours, and we feel it will be useful to most users. Often, when integrating classes from other sources, we are able to improve their performance both in time and space by using other classes already available in [gtl](https://github.com/greg7mdp/gtl) (hash maps, btree, bit_vector, etc...)  instead of the spandard ones.
+- **Very efficient**, significantly faster than your compiler's unordered map/set or Boost's
 
-[gtl](https://github.com/greg7mdp/gtl) requires a C++20 compiler. We currently support:  `Visual Studio 2019 +`, `gcc 11.1 +`, and `clang from Xcode 13.2+`.
+- **Memory friendly**: low memory usage, although a little higher than [sparsepp](https://github.com/greg7mdp/sparsepp)
 
-Because [gtl](https://github.com/greg7mdp/gtl) is a header only library, installation is trivial, just copy the `gtl` directory to your project and you are good to go. We also support common package managers such as [Conan](https://conan.io/) and [vcpkg](https://vcpkg.io/en/index.html).
+- Supports **heterogeneous lookup**
 
-Following is a short look at the various classes available in [gtl](https://github.com/greg7mdp/gtl). In many cases, a more complete description is linked.
+- Easy to **forward declare**: just include `phmap_fwd_decl.hpp` in your header files to forward declare Parallel Hashmap containers [note: this does not work currently for hash maps with pointer keys]
 
+- **Dump/load** feature: when a `flat` hash map stores data that is `std::trivially_copyable`, the table can be dumped to disk and restored as a single array, very efficiently, and without requiring any hash computation. This is typically about 10 times faster than doing element-wise serialization to disk, but it will use 10% to 60% extra disk space. See `examples/serialize.cpp`. _(flat hash map/set only)_. When using [Cereal](https://uscilab.github.io/cereal/) and a `BinaryArchive`, flat hash containers automatically use the direct table dump functionality.
+
+- Automatic support for **boost's hash_value()** method for providing the hash function (see `examples/hash_value.hpp`). Also default hash support for `std::pair` and `std::tuple`.
+
+- **natvis** visualization support in Visual Studio
+
+@byronhe kindly provided this [Chinese translation](https://byronhe.com/post/2020/11/10/parallel-hashmap-btree-fast-multi-thread-intro/) of the README.md.
+
+
+## Fast *and*  memory friendly
+
+Click here [For a full writeup explaining the design and benefits of the Parallel Hashmap](https://greg7mdp.github.io/gtl/).
+
+The hashmaps and btree provided here are built upon those open sourced by Google in the Abseil library. The hashmaps use closed hashing, where values are stored directly into a memory array, avoiding memory indirections. By using parallel SSE2 instructions, these hashmaps are able to look up items by checking 16 slots in parallel,  allowing the implementation to remain fast even when the table is filled up to 87.5% capacity.
+
+> **IMPORTANT:** This repository borrows code from the [abseil-cpp](https://github.com/abseil/abseil-cpp) repository, with modifications, and may behave differently from the original. This repository is an independent work, with no guarantees implied or provided by the authors. Please visit [abseil-cpp](https://github.com/abseil/abseil-cpp) for the official Abseil libraries.
 
 ## Installation
 
 Copy the gtl directory to your project. Update your include path. That's all.
 
-If you are using Visual Studio, you probably want to add `gtl/debug_vis/gtl.natvis` to your projects. This will allow for a clear display of the hash table contents in the debugger.
+If you are using Visual Studio, you probably want to add `gtl.natvis` to your projects. This will allow for a clear display of the hash table contents in the debugger.
 
-> A cmake configuration files (CMakeLists.txt) is provided for building the tests and examples. Command for building and running the tests is: 
-> `mkdir build && cd build && cmake -DGTL_BUILD_TESTS=ON -DGTL_BUILD_EXAMPLES=ON .. && cmake --build . && make test`
+> A cmake configuration files (CMakeLists.txt) is provided for building the tests and examples. Command for building and running the tests is: `mkdir build && cd build && cmake -DGTL_BUILD_TESTS=ON -DGTL_BUILD_EXAMPLES=ON .. && cmake --build . && make test`
 
-
-## Hash containers (`flat_hash_map`, `flat_hash_set`, `node_hash_map`, `node_hash_set`)
-
-[Gtl](https://github.com/greg7mdp/gtl) provides a set of hash containers (maps and sets) implemented using open addressing (single array of values, very cache friendly), as well as advanced SSE lookup optimizations allowing for excellent performance even when the table is up to 87% full. These containers have the same API as the `unordered` versions from the STL, and are significantly outperforming the unordered version both in terms of speed and space.
-
-For more information on the hash containers, please see [gth hash containers](https://github.com/greg7mdp/gtl/docs/hmap.md)
-
-Here is a very basic example of using the gtl::flat_hash_map:
+## Example
 
 ```c++
 #include <iostream>
@@ -68,58 +75,6 @@ int main()
     return 0;
 }
 ```
-
-
-## Parallel hash containers (`parallel_flat_hash_map`, `parallel_flat_hash_set`, `parallel_node_hash_map`, `parallel_node_hash_set`)
-
-
-
-## Btree containers (`btree_map`, `btree_set`, `btree_multimap`, `btree_multiset`)
-
-
-
-
-
-All [gtl](https://github.com/greg7mdp/gtl) classes have the following characteristics: 
-
-- **Header only**: nothing to build, just copy the `gtl` directory to your project and you are good to go.
-
-- Containers are **drop-in replacement** for `std::unordered_map`, `std::unordered_set`, `std::map` and `std::set`
-
-- **Very efficient**, significantly faster than your compiler's unordered map/set or Boost's, or than [sparsepp](https://github.com/greg7mdp/sparsepp)
-
-- **Memory friendly**: low memory usage, although a little higher than [sparsepp](https://github.com/greg7mdp/sparsepp)
-
-- Supports **heterogeneous lookup**
-
-- Easy to **forward declare**: just include `phmap_fwd_decl.hpp` in your header files to forward declare Parallel Hashmap containers [note: this does not work currently for hash maps with pointer keys]
-
-- **Dump/load** feature: when a `flat` hash map stores data that is `std::trivially_copyable`, the table can be dumped to disk and restored as a single array, very efficiently, and without requiring any hash computation. This is typically about 10 times faster than doing element-wise serialization to disk, but it will use 10% to 60% extra disk space. See `examples/serialize.cpp`. _(flat hash map/set only)_
-
-- **Tested** on Windows (vs2015 & vs2017, vs2019, Intel compiler 18 and 19), linux (g++ 4.8.4, 5, 6, 7, 8, clang++ 3.9, 4.0, 5.0) and MacOS (g++ and clang++) - click on travis and appveyor icons above for detailed test status.
-
-- Automatic support for **boost's hash_value()** method for providing the hash function (see `examples/hash_value.hpp`). Also default hash support for `std::pair` and `std::tuple`.
-
-- **natvis** visualization support in Visual Studio _(hash map/set only)_
-
-@byronhe kindly provided this [Chinese translation](https://byronhe.com/post/2020/11/10/parallel-hashmap-btree-fast-multi-thread-intro/) of the README.md.
-
-
-## Fast *and*  memory friendly
-
-Click here [For a full writeup explaining the design and benefits of the Parallel Hashmap](https://greg7mdp.github.io/gtl/).
-
-The hashmaps and btree provided here are built upon those open sourced by Google in the Abseil library. The hashmaps use closed hashing, where values are stored directly into a memory array, avoiding memory indirections. By using parallel SSE2 instructions, these hashmaps are able to look up items by checking 16 slots in parallel,  allowing the implementation to remain fast even when the table is filled up to 87.5% capacity.
-
-> **IMPORTANT:** This repository borrows code from the [abseil-cpp](https://github.com/abseil/abseil-cpp) repository, with modifications, and may behave differently from the original. This repository is an independent work, with no guarantees implied or provided by the authors. Please visit [abseil-cpp](https://github.com/abseil/abseil-cpp) for the official Abseil libraries.
-
-## Installation
-
-Copy the gtl directory to your project. Update your include path. That's all.
-
-If you are using Visual Studio, you probably want to add `gtl.natvis` to your projects. This will allow for a clear display of the hash table contents in the debugger.
-
-> A cmake configuration files (CMakeLists.txt) is provided for building the tests and examples. Command for building and running the tests is: `mkdir build && cd build && cmake -DGTL_BUILD_TESTS=ON -DGTL_BUILD_EXAMPLES=ON .. && cmake --build . && make test`
 
 ## Various hash maps and their pros and cons
 
