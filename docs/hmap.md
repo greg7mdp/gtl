@@ -27,100 +27,11 @@ Here are some of the benefits they offer:
 @byronhe kindly provided this [Chinese translation](https://byronhe.com/post/2020/11/10/parallel-hashmap-btree-fast-multi-thread-intro/) of the README.md.
 
 
-## Fast *and*  memory friendly
-
-Click here [For a full writeup explaining the design and benefits of the Parallel Hashmap](https://greg7mdp.github.io/gtl/).
-
-The hashmaps and btree provided here are built upon those open sourced by Google in the Abseil library. The hashmaps use closed hashing, where values are stored directly into a memory array, avoiding memory indirections. By using parallel SSE2 instructions, these hashmaps are able to look up items by checking 16 slots in parallel,  allowing the implementation to remain fast even when the table is filled up to 87.5% capacity.
+The hashmaps provided here are built upon those open sourced by Google in the Abseil library. The hashmaps use closed hashing, where values are stored directly into a memory array, avoiding memory indirections. By using parallel SSE2 instructions, these hashmaps are able to look up items by checking 16 slots in parallel,  allowing the implementation to remain fast even when the table is filled up to 87.5% capacity.
 
 > **IMPORTANT:** This repository borrows code from the [abseil-cpp](https://github.com/abseil/abseil-cpp) repository, with modifications, and may behave differently from the original. This repository is an independent work, with no guarantees implied or provided by the authors. Please visit [abseil-cpp](https://github.com/abseil/abseil-cpp) for the official Abseil libraries.
 
-## Installation
-
-Copy the gtl directory to your project. Update your include path. That's all.
-
-If you are using Visual Studio, you probably want to add `gtl.natvis` to your projects. This will allow for a clear display of the hash table contents in the debugger.
-
-> A cmake configuration files (CMakeLists.txt) is provided for building the tests and examples. Command for building and running the tests is: `mkdir build && cd build && cmake -DGTL_BUILD_TESTS=ON -DGTL_BUILD_EXAMPLES=ON .. && cmake --build . && make test`
-
-## Example
-
-```c++
-#include <iostream>
-#include <string>
-#include <gtl/phmap.hpp>
-
-using gtl::flat_hash_map;
- 
-int main()
-{
-    // Create an unordered_map of three strings (that map to strings)
-    flat_hash_map<std::string, std::string> email = 
-    {
-        { "tom",  "tom@gmail.com"},
-        { "jeff", "jk@gmail.com"},
-        { "jim",  "jimg@microsoft.com"}
-    };
- 
-    // Iterate and print keys and values 
-    for (const auto& n : email) 
-        std::cout << n.first << "'s email is: " << n.second << "\n";
- 
-    // Add a new entry
-    email["bill"] = "bg@whatever.com";
- 
-    // and print it
-    std::cout << "bill's email is: " << email["bill"] << "\n";
- 
-    return 0;
-}
-```
-
-## Various hash maps and their pros and cons
-
-The header `gtl/phmap.hpp` provides the implementation for the following eight hash tables:
-- gtl::flat_hash_set
-- gtl::flat_hash_map
-- gtl::node_hash_set
-- gtl::node_hash_map
-- gtl::parallel_flat_hash_set
-- gtl::parallel_flat_hash_map
-- gtl::parallel_node_hash_set
-- gtl::parallel_node_hash_map
-
-The header `gtl/btree.hpp` provides the implementation for the following btree-based ordered containers:
-- gtl::btree_set
-- gtl::btree_map
-- gtl::btree_multiset
-- gtl::btree_multimap
-
-The btree containers are direct ports from Abseil, and should behave exactly the same as the Abseil ones, modulo small differences (such as supporting std::string_view instead of absl::string_view, and being forward declarable).
-
-When btrees are mutated, values stored within can be moved in memory. This means that pointers or iterators to values stored in btree containers can be invalidated when that btree is modified. This is a significant difference with `std::map` and `std::set`, as the std containers do offer a guarantee of pointer stability. The same is true for the 'flat' hash maps and sets.
-
 The full types with template parameters can be found in the [gtl/phmap_fwd_decl.hpp](https://raw.githubusercontent.com/greg7mdp/gtl/main/gtl/phmap_fwd_decl.hpp) header, which is useful for forward declaring the Parallel Hashmaps when necessary.
-
-**Key decision points for hash containers:**
-
-- The `flat` hash maps will move the keys and values in memory. So if you keep a pointer to something inside a `flat` hash map, this pointer may become invalid when the map is mutated. The `node` hash maps don't, and should be used instead if this is a problem.
-
-- The `flat` hash maps will use less memory, and usually be faster than the `node` hash maps, so use them if you can. the exception is when the values inserted in the hash map are large (say more than 100 bytes [*needs testing*]) and costly to move.
-
-- The `parallel` hash maps are preferred when you have a few hash maps that will store a very large number of values. The `non-parallel` hash maps are preferred if you have a large number of hash maps, each storing a relatively small number of values.
-
-- The benefits of the `parallel` hash maps are:  
-   a. reduced peak memory usage (when resizing), and  
-   b. multithreading support (and inherent internal parallelism)
-
-**Key decision points for btree containers:**
-
-Btree containers are ordered containers, which can be used as alternatives to `std::map` and `std::set`. They store multiple values in each tree node, and are therefore more cache friendly and use significantly less memory.
-
-Btree containers will usually be preferable to the default red-black trees of the STL, except when:
-- pointer stability or iterator stability is required
-- the value_type is large and expensive to move
-
-When an ordering is not needed, a hash container is typically a better choice than a btree one.
 
 ## Changes to Abseil's hashmaps
 
@@ -141,8 +52,6 @@ When an ordering is not needed, a hash container is typically a better choice th
 |-----------------------|-------------------|-----------------------------------------------|
 | flat tables           | ![flat_mem_usage](https://github.com/greg7mdp/gtl/blob/master/html/img/flat_mem_usage.png?raw=true) | ![flat_peak_usage](https://github.com/greg7mdp/gtl/blob/master/html/img/flat_peak.png?raw=true) |
 | node tables           | ![node_mem_usage](https://github.com/greg7mdp/gtl/blob/master/html/img/node_mem_usage.png?raw=true) | ![node_peak_usage](https://github.com/greg7mdp/gtl/blob/master/html/img/node_peak.png?raw=true) |
-| parallel flat tables  | ![flat_mem_usage](https://github.com/greg7mdp/gtl/blob/master/html/img/flat_mem_usage.png?raw=true) | ![parallel_flat_peak](https://github.com/greg7mdp/gtl/blob/master/html/img/parallel_flat_peak.png?raw=true) |
-| parallel node tables  | ![node_mem_usage](https://github.com/greg7mdp/gtl/blob/master/html/img/node_mem_usage.png?raw=true) | ![parallel_node_peak](https://github.com/greg7mdp/gtl/blob/master/html/img/parallel_node_peak.png?raw=true) |
 
 
 - *size()* is the number of values in the container, as returned by the size() method
@@ -150,11 +59,10 @@ When an ordering is not needed, a hash container is typically a better choice th
 - the value 9 comes from `sizeof(void *) + 1`, as the *node* hash maps store one pointer plus one byte of metadata for each entry in the bucket array.
 - flat tables store the values, plus one byte of metadata per value), directly into the bucket array, hence the `sizeof(C::value_type) + 1`.
 - the additional peak memory usage (when resizing) corresponds the the old bucket array (half the size of the new one, hence the 0.5), which contains the values to be copied to the new bucket array, and which is freed when the values have been copied.
-- the *parallel* hashmaps, when created with a template parameter N=4, create 16 submaps. When the hash values are well distributed, and in single threaded mode, only one of these 16 submaps resizes at any given time, hence the factor `0.03` roughly equal to `0.5 / 16`
 
 ## Iterator invalidation for hash containers
 
-The rules are the same as for `std::unordered_map`, and are valid for all the phmap hash containers:
+The rules are the same as for `std::unordered_map`, and are valid for all the gtl hash containers:
 
 
 |    Operations	                            | Invalidated                |
@@ -164,19 +72,8 @@ The rules are the same as for `std::unordered_map`, and are valid for all the ph
 | insert, emplace, emplace_hint, operator[] | Only if rehash triggered   |
 | erase                                     | Only to the element erased |
 
-## Iterator invalidation for btree containers
 
-Unlike for `std::map` and `std::set`, any mutating operation may invalidate existing iterators to btree containers.
-
-
-|    Operations	                            | Invalidated                |
-|-------------------------------------------|----------------------------|
-| All read only operations, swap, std::swap | Never                      |
-| clear, operator=                          | Always                     |
-| insert, emplace, emplace_hint, operator[] | Yes                        |
-| erase                                     | Yes                        |
-
-## Example 2 - providing a hash function for a user-defined class
+## Example - providing a hash function for a user-defined class
 
 In order to use a flat_hash_set or flat_hash_map, a hash function should be provided. This can be done with one of the following methods:
 
@@ -276,19 +173,15 @@ int main()
 
 ## Thread safety
 
-Parallel Hashmap containers follow the thread safety rules of the Standard C++ library. In Particular:
+[Gtl](https://github.com/greg7mdp/gtl) containers follow the thread safety rules of the Standard C++ library. In Particular:
 
-- A single phmap hash table is thread safe for reading from multiple threads. For example, given a hash table A, it is safe to read A from thread 1 and from thread 2 simultaneously.
+- A single hash container is thread safe for reading from multiple threads. For example, given a hash container A, it is safe to read A from thread 1 and from thread 2 simultaneously.
 
-- If a single hash table is being written to by one thread, then all reads and writes to that hash table on the same or other threads must be protected. For example, given a hash table A, if thread 1 is writing to A, then thread 2 must be prevented from reading from or writing to A. 
+- If a single hash container is being written to by one thread, then all reads and writes to that hash container on the same or other threads must be protected. For example, given a hash container A, if thread 1 is writing to A, then thread 2 must be prevented from reading from or writing to A. 
 
-- It is safe to read and write to one instance of a type even if another thread is reading or writing to a different instance of the same type. For example, given hash tables A and B of the same type, it is safe if A is being written in thread 1 and B is being read in thread 2.
-
-- The *parallel* tables can be made internally thread-safe for concurrent read and write access, by providing a synchronization type (for example [std::mutex](https://en.cppreference.com/w/cpp/thread/mutex)) as the last template argument. Because locking is performed at the *submap* level, a high level of concurrency can still be achieved. Read access can be done safely using `if_contains()`, which passes a reference value to the callback while holding the *submap* lock. Similarly, write access can be done safely using `modify_if`, `try_emplace_l` or `lazy_emplace_l`. However, please be aware that iterators or references returned by standard APIs are not protected by the mutex, so they cannot be used reliably on a hash map which can be changed by another thread.
-
-- Examples on how to use various mutex types, including boost::mutex, boost::shared_mutex and absl::Mutex can be found in `examples/bench.cpp`
+- It is safe to read and write to one instance of a type even if another thread is reading or writing to a different instance of the same type. For example, given hash containers A and B of the same type, it is safe if A is being written in thread 1 and B is being read in thread 2.
 
 
 ## Acknowledgements
 
-Many thanks to the Abseil developers for implementing the swiss table and btree data structures (see [abseil-cpp](https://github.com/abseil/abseil-cpp)) upon which this work is based, and to Google for releasing it as open-source. 
+Many thanks to the Abseil developers for implementing the swiss table (see [abseil-cpp](https://github.com/abseil/abseil-cpp)) upon which this work is based, and to Google for releasing it as open-source. 

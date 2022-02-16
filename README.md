@@ -24,17 +24,23 @@ Following is a short look at the various classes available in [gtl](https://gith
 
 Copy the gtl directory to your project. Update your include path. That's all.
 
-If you are using Visual Studio, you probably want to add `gtl/debug_vis/gtl.natvis` to your projects. This will allow for a clear display of the hash table contents in the debugger.
+If you are using Visual Studio, you probably want to add `gtl/debug_vis/gtl.natvis` to your projects. This will allow for a clear display of the hash table contents in the debugger. Similar debug visualizers are also provided for gdb and lldb in the \gtl/debug_vis` directory.
 
-> A cmake configuration files (CMakeLists.txt) is provided for building the tests and examples. Command for building and running the tests is: 
+> A cmake configuration files (CMakeLists.txt) is provided for building the tests and examples. Command for building and running the tests is: <br>
 > `mkdir build && cd build && cmake -DGTL_BUILD_TESTS=ON -DGTL_BUILD_EXAMPLES=ON .. && cmake --build . && make test`
 
 
-## Hash containers (`flat_hash_map`, `flat_hash_set`, `node_hash_map`, `node_hash_set`)
+## Hash containers
 
 [Gtl](https://github.com/greg7mdp/gtl) provides a set of hash containers (maps and sets) implemented using open addressing (single array of values, very cache friendly), as well as advanced SSE lookup optimizations allowing for excellent performance even when the table is up to 87% full. These containers have the same API as the `unordered` versions from the STL, and are significantly outperforming the unordered version both in terms of speed and space.
 
-For more information on the hash containers, please see [gth hash containers](https://github.com/greg7mdp/gtl/docs/hmap.md)
+The four provided hash containers are:
+    - `gtl::flat_hash_map`
+    - `gtl::flat_hash_set`
+    - `gtl::node_hash_map`
+    - `gtl::node_hash_set`
+
+For more information on the hash containers, please see [gtl hash containers](https://github.com/greg7mdp/gtl/tree/main/docs/hmap.md)
 
 Here is a very basic example of using the gtl::flat_hash_map:
 
@@ -69,12 +75,65 @@ int main()
 }
 ```
 
+**Key decision points for hash containers:**
 
-## Parallel hash containers (`parallel_flat_hash_map`, `parallel_flat_hash_set`, `parallel_node_hash_map`, `parallel_node_hash_set`)
+- The `flat` hash containers do not provide pointer stability. This means that when the table resizes, it will move the keys and values in memory. So if you keep a pointer to something inside a `flat` hash container, this pointer may become invalid when the container is resized. The `node` hash containers don't, and should be used instead if this is a problem.
+
+- The `flat` hash containers will use less memory, and usually are faster than the `node` hash containers, so use them if you can. the exception is when the values inserted in the hash container are large (say more than 100 bytes [*needs testing*]) and expensive to move.
+
+- The `parallel` hash containers are preferred when you have a few hash containers that will store a very large number of values. The `non-parallel` hash containers are preferred if you have a large number of hash containers, each storing a relatively small number of values.
+
+- The benefits of the `parallel` hash containers are:  
+   a. reduced peak memory usage (when resizing), and  
+   b. multithreading support (and inherent internal parallelism)
 
 
 
-## Btree containers (`btree_map`, `btree_set`, `btree_multimap`, `btree_multiset`)
+## Parallel hash containers
+
+
+The four provided parallel hash containers are:
+    - `gtl::parallel_flat_hash_map`
+    - `gtl::parallel_flat_hash_set`
+    - `gtl::parallel_node_hash_map`
+    - `gtl::parallel_node_hash_set`
+
+
+For a full writeup explaining the design and benefits of the parallel hash containers, [click here](https://greg7mdp.github.io/gtl/).
+
+For more information on the implementation, usage and characteristics of the parallel hash containers, please see [gtl hash containers](https://github.com/greg7mdp/gtl/tree/main/docs/phmap.md)
+
+Here is a very basic example of using the gtl::flat_hash_map:
+
+
+## Btree containers
+
+
+The four provided btree containers are:
+    - `gtl::btree_map`
+    - `gtl::btree_set`
+    - `gtl::btree_multimap`
+    - `gtl::btree_multiset`
+
+For more information on the hash containers, please see [gtl hash containers](https://github.com/greg7mdp/gtl/tree/main/docs/btree.md)
+
+**Key decision points for btree containers:**
+
+Btree containers are ordered containers, which can be used as alternatives to `std::map` and `std::set`. They store multiple values in each tree node, and are therefore more cache friendly and use significantly less memory.
+
+Btree containers will usually be preferable to the default red-black trees of the STL, except when:
+- pointer stability or iterator stability is required
+- the value_type is large and expensive to move
+
+When an ordering is not needed, a hash container is typically a better choice than a btree one.
+
+
+
+
+
+
+
+
 
 
 
