@@ -173,7 +173,7 @@ int main()
 
 ## Thread safety
 
-[Gtl](https://github.com/greg7mdp/gtl) containers follow the thread safety rules of the Standard C++ library. In Particular:
+[Gtl](https://github.com/greg7mdp/gtl) hash containers follow the thread safety rules of the Standard C++ library. In Particular:
 
 - A single hash container is thread safe for reading from multiple threads. For example, given a hash container A, it is safe to read A from thread 1 and from thread 2 simultaneously.
 

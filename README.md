@@ -7,32 +7,32 @@
 
 ## Overview
 
-This repository aims to provide many classes that are commonly needed in substantial C++ projects, but that are either not available, or not fast enough in the C++ standard library. In some cases, the C++ standard requirements prevents from providing faster alternatives (for example the  pointer stability requirement for unordered maps or sets prevents providing implementations using open addressing).
+This repository aims to provide many classes that are commonly needed in substantial C++ projects, but that are either not available in the C++ standard library, or have a specification which makes them slower than they could beslow implementation. In some cases, the C++ standard requirements prevents from providing faster alternatives (for example the  pointer stability requirement for unordered maps or sets prevents providing implementations using open addressing).
 
-Among the many classes offered by [gtl](https://github.com/greg7mdp/gtl), we find a set of excellent **hash map** implementations, as well as a **btree** alternative to `std::map` and `std::set`. These are *drop-in replacements* for the standard C++ classes and provide the same API.
+Among the many classes offered by [gtl](https://github.com/greg7mdp/gtl), we have a set of excellent **hash map** implementations, as well as a **btree** alternative to `std::map` and `std::set`. These are *drop-in replacements* for the standard C++ classes and provide the same API, but are significantly faster and use less memory.
 
-We are happy to integrate new classes into [gtl](https://github.com/greg7mdp/gtl), provided the license is compatible with ours, and we feel it will be useful to most users. Often, when integrating classes from other sources, we are able to improve their performance both in time and space by using other classes already available in [gtl](https://github.com/greg7mdp/gtl) (hash maps, btree, bit_vector, etc...)  instead of the spandard ones.
+We are happy to integrate new classes into [gtl](https://github.com/greg7mdp/gtl), provided the license is compatible with ours, and we feel they will be useful to most users. Often, when integrating classes from other sources, we are able to improve their performance both in time and space by using other classes already available in [gtl](https://github.com/greg7mdp/gtl) (such as hash maps, btree, bit_vector, etc...)  instead of the spandard ones.
 
 [gtl](https://github.com/greg7mdp/gtl) requires a C++20 compiler. We currently support:  `Visual Studio 2019 +`, `gcc 11.1 +`, and `clang from Xcode 13.2+`.
 
 Because [gtl](https://github.com/greg7mdp/gtl) is a header only library, installation is trivial, just copy the `gtl` directory to your project and you are good to go. We also support common package managers such as [Conan](https://conan.io/) and [vcpkg](https://vcpkg.io/en/index.html).
 
-Following is a short look at the various classes available in [gtl](https://github.com/greg7mdp/gtl). In many cases, a more complete description is linked.
-
-
 ## Installation
 
 Copy the gtl directory to your project. Update your include path. That's all.
 
-If you are using Visual Studio, you probably want to add `gtl/debug_vis/gtl.natvis` to your projects. This will allow for a clear display of the hash table contents in the debugger. Similar debug visualizers are also provided for gdb and lldb in the \gtl/debug_vis` directory.
+If you are using Visual Studio, you probably want to add `gtl/debug_vis/gtl.natvis` to your projects. This will allow for a user friendly display of gtl containers in the debugger. Similar debug visualizers are also provided for gdb and lldb in the \gtl/debug_vis` directory.
 
 > A cmake configuration files (CMakeLists.txt) is provided for building the tests and examples. Command for building and running the tests is: <br>
 > `mkdir build && cd build && cmake -DGTL_BUILD_TESTS=ON -DGTL_BUILD_EXAMPLES=ON .. && cmake --build . && make test`
 
 
+Following is a short look at the various classes available in [gtl](https://github.com/greg7mdp/gtl). In many cases, a more complete description is linked.
+
+
 ## Hash containers
 
-[Gtl](https://github.com/greg7mdp/gtl) provides a set of hash containers (maps and sets) implemented using open addressing (single array of values, very cache friendly), as well as advanced SSE lookup optimizations allowing for excellent performance even when the table is up to 87% full. These containers have the same API as the `unordered` versions from the STL, and are significantly outperforming the unordered version both in terms of speed and space.
+[Gtl](https://github.com/greg7mdp/gtl) provides a set of hash containers (maps and sets) implemented using open addressing (single array of values, very cache friendly), as well as advanced SSE lookup optimizations allowing for excellent performance even when the container is up to 87% full. These containers have the same API as the `unordered` versions from the STL, and are significantly outperforming the unordered version both in terms of speed and space.
 
 The four provided hash containers are:
     - `gtl::flat_hash_map`
@@ -77,7 +77,7 @@ int main()
 
 **Key decision points for hash containers:**
 
-- The `flat` hash containers do not provide pointer stability. This means that when the table resizes, it will move the keys and values in memory. So if you keep a pointer to something inside a `flat` hash container, this pointer may become invalid when the container is resized. The `node` hash containers don't, and should be used instead if this is a problem.
+- The `flat` hash containers do not provide pointer stability. This means that when the container resizes, it will move the keys and values in memory. So pointers to something inside a `flat` hash containerc will become invalid when the container is resized. The `node` hash containers do provide pointer stability, and should be used instead if this is an issue.
 
 - The `flat` hash containers will use less memory, and usually are faster than the `node` hash containers, so use them if you can. the exception is when the values inserted in the hash container are large (say more than 100 bytes [*needs testing*]) and expensive to move.
 
@@ -101,7 +101,7 @@ The four provided parallel hash containers are:
 
 For a full writeup explaining the design and benefits of the parallel hash containers, [click here](https://greg7mdp.github.io/gtl/).
 
-For more information on the implementation, usage and characteristics of the parallel hash containers, please see [gtl hash containers](https://github.com/greg7mdp/gtl/tree/main/docs/phmap.md)
+For more information on the implementation, usage and characteristics of the parallel hash containers, please see [gtl parallel hash containers](https://github.com/greg7mdp/gtl/tree/main/docs/phmap.md)
 
 Here is a very basic example of using the gtl::flat_hash_map:
 
@@ -115,7 +115,7 @@ The four provided btree containers are:
     - `gtl::btree_multimap`
     - `gtl::btree_multiset`
 
-For more information on the hash containers, please see [gtl hash containers](https://github.com/greg7mdp/gtl/tree/main/docs/btree.md)
+For more information on the hash containers, please see [gtl btree containers](https://github.com/greg7mdp/gtl/tree/main/docs/btree.md)
 
 **Key decision points for btree containers:**
 
@@ -153,7 +153,7 @@ All [gtl](https://github.com/greg7mdp/gtl) classes have the following characteri
 
 - Easy to **forward declare**: just include `phmap_fwd_decl.hpp` in your header files to forward declare Parallel Hashmap containers [note: this does not work currently for hash maps with pointer keys]
 
-- **Dump/load** feature: when a `flat` hash map stores data that is `std::trivially_copyable`, the table can be dumped to disk and restored as a single array, very efficiently, and without requiring any hash computation. This is typically about 10 times faster than doing element-wise serialization to disk, but it will use 10% to 60% extra disk space. See `examples/serialize.cpp`. _(flat hash map/set only)_
+- **Dump/load** feature: when a `flat` hash map stores data that is `std::trivially_copyable`, the container can be dumped to disk and restored as a single array, very efficiently, and without requiring any hash computation. This is typically about 10 times faster than doing element-wise serialization to disk, but it will use 10% to 60% extra disk space. See `examples/serialize.cpp`. _(flat hash map/set only)_
 
 - **Tested** on Windows (vs2015 & vs2017, vs2019, Intel compiler 18 and 19), linux (g++ 4.8.4, 5, 6, 7, 8, clang++ 3.9, 4.0, 5.0) and MacOS (g++ and clang++) - click on travis and appveyor icons above for detailed test status.
 
@@ -168,7 +168,7 @@ All [gtl](https://github.com/greg7mdp/gtl) classes have the following characteri
 
 Click here [For a full writeup explaining the design and benefits of the Parallel Hashmap](https://greg7mdp.github.io/gtl/).
 
-The hashmaps and btree provided here are built upon those open sourced by Google in the Abseil library. The hashmaps use closed hashing, where values are stored directly into a memory array, avoiding memory indirections. By using parallel SSE2 instructions, these hashmaps are able to look up items by checking 16 slots in parallel,  allowing the implementation to remain fast even when the table is filled up to 87.5% capacity.
+The hashmaps and btree provided here are built upon those open sourced by Google in the Abseil library. The hashmaps use closed hashing, where values are stored directly into a memory array, avoiding memory indirections. By using parallel SSE2 instructions, these hashmaps are able to look up items by checking 16 slots in parallel,  allowing the implementation to remain fast even when the container is filled up to 87.5% capacity.
 
 > **IMPORTANT:** This repository borrows code from the [abseil-cpp](https://github.com/abseil/abseil-cpp) repository, with modifications, and may behave differently from the original. This repository is an independent work, with no guarantees implied or provided by the authors. Please visit [abseil-cpp](https://github.com/abseil/abseil-cpp) for the official Abseil libraries.
 
@@ -176,13 +176,13 @@ The hashmaps and btree provided here are built upon those open sourced by Google
 
 Copy the gtl directory to your project. Update your include path. That's all.
 
-If you are using Visual Studio, you probably want to add `gtl.natvis` to your projects. This will allow for a clear display of the hash table contents in the debugger.
+If you are using Visual Studio, you probably want to add `gtl.natvis` to your projects. This will allow for a clear display of the hash container contents in the debugger.
 
 > A cmake configuration files (CMakeLists.txt) is provided for building the tests and examples. Command for building and running the tests is: `mkdir build && cd build && cmake -DGTL_BUILD_TESTS=ON -DGTL_BUILD_EXAMPLES=ON .. && cmake --build . && make test`
 
 ## Various hash maps and their pros and cons
 
-The header `gtl/phmap.hpp` provides the implementation for the following eight hash tables:
+The header `gtl/phmap.hpp` provides the implementation for the following eight hash containers:
 - gtl::flat_hash_set
 - gtl::flat_hash_map
 - gtl::node_hash_set
@@ -232,11 +232,11 @@ When an ordering is not needed, a hash container is typically a better choice th
 
 - The `erase(iterator)` and `erase(const_iterator)` both return an iterator to the element following the removed element, as does the std::unordered_map. A non-standard `void _erase(iterator)` is provided in case the return value is not needed.
 
-- No new types, such as `absl::string_view`, are provided. All types with a `std::hash<>` implementation are supported by phmap tables (including `std::string_view` of course if your compiler provides it).
+- No new types, such as `absl::string_view`, are provided. All types with a `std::hash<>` implementation are supported by phmap containers (including `std::string_view` of course if your compiler provides it).
 
-- The Abseil hash tables internally randomize a hash seed, so that the table iteration order is non-deterministic. This can be useful to prevent *Denial Of Service*  attacks when a hash table is used for a customer facing web service, but it can make debugging more difficult. The *phmap* hashmaps by default do **not** implement this randomization, but it can be enabled by adding `#define GTL_NON_DETERMINISTIC 1` before including the header `phmap.hpp` (as is done in raw_hash_set_test.cpp).
+- The Abseil hash containers internally randomize a hash seed, so that the container iteration order is non-deterministic. This can be useful to prevent *Denial Of Service*  attacks when a hash container is used for a customer facing web service, but it can make debugging more difficult. The *phmap* hashmaps by default do **not** implement this randomization, but it can be enabled by adding `#define GTL_NON_DETERMINISTIC 1` before including the header `phmap.hpp` (as is done in raw_hash_set_test.cpp).
 
-- Unlike the Abseil hash maps, we do an internal mixing of the hash value provided. This prevents serious degradation of the hash table performance when the hash function provided by the user has poor entropy distribution. The cost in performance is very minimal, and this helps provide reliable performance even with *imperfect* hash functions. 
+- Unlike the Abseil hash maps, we do an internal mixing of the hash value provided. This prevents serious degradation of the hash container performance when the hash function provided by the user has poor entropy distribution. The cost in performance is very minimal, and this helps provide reliable performance even with *imperfect* hash functions. 
 
 
 ## Memory usage

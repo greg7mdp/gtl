@@ -28,7 +28,7 @@ Unlike for `std::map` and `std::set`, any mutating operation may invalidate exis
 
 ## Thread safety
 
-[Gtl](https://github.com/greg7mdp/gtl) containers follow the thread safety rules of the Standard C++ library. In Particular:
+[Gtl](https://github.com/greg7mdp/gtl) btree containers follow the thread safety rules of the Standard C++ library. In Particular:
 
 - A single btree container is thread safe for reading from multiple threads. For example, given a btree container A, it is safe to read A from thread 1 and from thread 2 simultaneously.
 
@@ -39,4 +39,4 @@ Unlike for `std::map` and `std::set`, any mutating operation may invalidate exis
 
 ## Acknowledgements
 
-Many thanks to the Abseil developers for implementing the btree data structures (see [abseil-cpp](https://github.com/abseil/abseil-cpp)) upon which this work is based, and to Google for releasing it as open-source. 
+Many thanks to the Abseil developers for implementing the btree containers (see [abseil-cpp](https://github.com/abseil/abseil-cpp)) upon which this work is based, and to Google for releasing it as open-source. 
