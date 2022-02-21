@@ -127,6 +127,8 @@ endif()
     add_executable(ex_matt examples/hmap/matt.cpp gtl/debug_vis/gtl.natvis)
 
     add_executable(ex_soa examples/misc/soa.cpp gtl/debug_vis/gtl.natvis)
+    add_executable(ex_vec_utils examples/misc/vec_utils.cpp gtl/debug_vis/gtl.natvis)
+    add_executable(ex_bit_vector examples/misc/bit_vector.cpp gtl/debug_vis/gtl.natvis)
 
     target_link_libraries(ex_knucleotide Threads::Threads)
     target_link_libraries(ex_bench Threads::Threads)
