@@ -89,6 +89,7 @@ if (GTL_BUILD_TESTS)
 
     ## --------------- misc -----------------------------------------------
     gtl_cc_test(NAME lru_cache SRCS "tests/misc/lru_cache.cpp" CLOPTS "-w" DEPS gmock_main)
+    gtl_cc_test(NAME bit_vector SRCS "tests/misc/bitvector_test.cpp" CLOPTS "-w" DEPS gmock_main)
 
 
 endif()
