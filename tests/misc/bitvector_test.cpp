@@ -168,10 +168,12 @@ TEST(BitVectorTest, bitwise_op_on_bv) {
         EXPECT_TRUE((v2 ^ v1).none());
         EXPECT_TRUE((v2 - v1).none());
         EXPECT_TRUE((v2 & v1) == v1);
+        EXPECT_TRUE(~(~v1) == v1);
         for (auto v3 : testv) {
             if (v3.size() != v1.size())
                 continue;
             EXPECT_TRUE(~(v3 | v1) == (~v3 & ~v1));
+            EXPECT_TRUE(~(v3 & v1) == (~v3 | ~v1));
         }
     }
 }
@@ -248,6 +250,12 @@ TEST(BitVectorTest, popcount_on_full_bit_vector) {
     const std::vector<gtl::bit_vector>& testv = get_test_vector();
     for (auto v : testv) {
         EXPECT_TRUE(v.popcount() == popcount_naive(v));
+        for (size_t i=0; i<v.size(); ++i) {
+            v.set(i);
+            EXPECT_TRUE(v.popcount() == popcount_naive(v));
+            if (i % 2)
+                v.clear(i);
+        }
     }
 }
 

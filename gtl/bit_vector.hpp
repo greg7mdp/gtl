@@ -83,9 +83,9 @@ public:
         if (first_slot == last_slot) {
             uint64_t& s  = _s[first_slot]; 
             uint64_t  fs = f(s, (int)mod(first)); 
-            uint64_t  m  = lowmask(first) ^ lowmask(last); // m has ones on the bits we want to change
-            s &= ~m;
-            s |= fs & m;
+            uint64_t  m  = ~(lowmask(first) ^ lowmask(last)); // m has ones on the bits we don't want to change
+            s &= m;
+            s |= fs & ~m;
         } else {
             // first slot
             // ----------
@@ -117,6 +117,55 @@ public:
         }
         _check_extra_bits();
     }
+
+    // functional inspection by bit range, last is 1 + last index to change
+    // if function f returns true, we exit immediately 
+    // if oor_bits = true, out-of-range bits are set to 1, 0 otherwise
+    // -----------------------------------------------------------------------
+    template<class F>
+    void inspect(size_t first, size_t last, bool oor_bits, F f) { 
+        if (last <= first)
+            return;
+        size_t first_slot = slot(first);
+        size_t last_slot  = slot(last);
+        if (first_slot == last_slot) {
+            uint64_t m  = ~(lowmask(first) ^ lowmask(last)); // m has ones on the bits we don't want to change
+            uint64_t s  = _s[first_slot]; 
+            if (oor_bits) s |= m; else s &= ~m;
+            if (f(s))
+                return;
+        } else {
+            // first slot
+            // ----------
+            if (mod(first)) {
+                uint64_t m  = lowmask(first);  // m has ones on the bits we don't want to change
+                uint64_t s  = _s[first_slot]; 
+                if (oor_bits) s |= m; else s &= ~m;
+                if (f(s))
+                    return;
+                ++first_slot;
+            }
+            
+            // full slots
+            // ----------
+            for (size_t slot=first_slot; slot<last_slot; ++slot) {
+                uint64_t s  = _s[slot]; 
+                if (f(s))
+                    return;
+            }
+
+            // last slot
+            // ---------
+            if (mod(last)) {
+                uint64_t m  = himask(last);   // m has ones on the bits we  don't want to change
+                uint64_t s  = _s[last_slot];
+                if (oor_bits) s |= m; else s &= ~m;
+                (void)f(s);
+            }
+        }
+        _check_extra_bits();
+    }
+    
 
     // -----------------------------------------------------------------------
     template<class F>
@@ -165,8 +214,8 @@ public:
         assert(_last >= _first);
     }
 
-    size_t size()  const { return _last - _first; }
-    bool empty() const { return _last == _first; }
+    size_t size() const { return _last - _first; }
+    bool empty()  const { return _last == _first; }
 
     // single bit access
     // -----------------
@@ -189,7 +238,7 @@ public:
 
     // bitwise assignment operators
     // ----------------------------
-    view& operator|=(const view &o);
+    view& operator|=(const view &o) { assert(size() == o.size()); }
     view& operator&=(const view &o);
     view& operator^=(const view &o);
     view& operator<<=(size_t cnt);
@@ -197,8 +246,18 @@ public:
 
     // unary predicates: any, every, etc...
     // ------------------------------------
-    bool any()   const;
-    bool every() const;
+    bool any() const { 
+        bool res = false;
+        _bv.storage().inspect(_first, _last, false, [&](uint64_t v) { if (v) res = true; return res; }); 
+        return res; 
+    }
+
+    bool every() const { 
+        bool res = true;
+        _bv.storage().inspect(_first, _last, true, [&](uint64_t v) { if (v != (uint64_t)-1) res = false; return !res; }); 
+        return res; 
+    }
+
     bool none()  const { return !any(); }
 
     // binary predicates operator==(), contains, disjoint, ...
@@ -292,27 +351,8 @@ public:
 
     // unary predicates any, every, etc...
     // -----------------------------------
-    bool any() const { 
-        size_t num_slots = _s.size(); 
-        for (size_t i=0; i<num_slots; ++i) 
-            if (_s[i]) 
-                return true; // we rely of the fact that the extra bits on the last slot are zeroes
-        return false; 
-    }
-
-    bool every() const { 
-        size_t num_slots = _s.size(); 
-        if (!num_slots) 
-            return true;
-        size_t slot;
-        for (slot=0; slot<num_slots-1; ++slot)
-            if (_s[slot] != all_ones)
-                return false;
-        if ((_s[slot] | himask(_sz)) != all_ones) // check only add missing ones on last slot
-            return false;
-        return true;
-    }
-
+    bool any()   const { return view().any(); }
+    bool every() const { return view().every(); }
     bool none()  const { return !any(); }
 
     // binary predicates operator==(), contains, disjoint, ...
@@ -396,6 +436,7 @@ public:
     // access via gtl::bit_view
     // ------------------------
     bv_type view(size_t first = 0, size_t last = end) { return bv_type(*this, first, last); }
+    const bv_type view(size_t first = 0, size_t last = end) const { return bv_type(const_cast<vec&>(*this), first, last); }
 
 private:
     static inline size_t _popcount64(uint64_t y) { // https://gist.github.com/enjoylife/4091854
