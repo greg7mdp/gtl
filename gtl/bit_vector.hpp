@@ -296,7 +296,7 @@ public:
         size_t num_slots = _s.size(); 
         for (size_t i=0; i<num_slots; ++i) 
             if (_s[i]) 
-                return true; 
+                return true; // we rely of the fact that the extra bits on the last slot are zeroes
         return false; 
     }
 
@@ -320,6 +320,8 @@ public:
     // -------------------------------------------------------
     template <class S2>
     bool operator==(const vec<S2> &o) const {
+        if (this == &o)
+            return true;
         if (_sz != o._sz)
             return false;
         size_t num_slots = _s.size();
@@ -334,11 +336,11 @@ public:
 
     template <class S2>
     bool contains(const vec<S2> &o) const {
-        if (_sz <= o._sz)
+        if (_sz < o._sz)
             return false;
         size_t num_slots = o._s.size();
         for (size_t i=0; i<num_slots; ++i) 
-            if (_s[i] | o._s[i] != _s[i])  
+            if ((_s[i] | o._s[i]) != _s[i])  
                 return false;              // o._s[i] has some bits set that are not in _s[i]
         return true;
     }
@@ -355,7 +357,14 @@ public:
 
     // miscellaneous
     // -------------
-    size_t   popcnt() const   { return view().popcnt(); }
+    size_t popcount() const {                // should we use std::popcount?
+        size_t num_slots = slot_cnt(_sz), n = 0; 
+        for (size_t i=0; i<num_slots; ++i) 
+            n += _popcount64(_s[i]);       // we rely of the fact that the extra bits on the last slot are zeroes
+        return n;
+    }
+
+    size_t   popcnt_naive() const { size_t n = 0; for (size_t i=0; i<size(); ++i) if ((*this)[i]) ++n; return n; }
 
     size_t   size() const     { return _sz; }
     S&       storage()        { return _s; }
@@ -389,6 +398,12 @@ public:
     bv_type view(size_t first = 0, size_t last = end) { return bv_type(*this, first, last); }
 
 private:
+    static inline size_t _popcount64(uint64_t y) { // https://gist.github.com/enjoylife/4091854
+        y -= ((y >> 1) & 0x5555555555555555ull);
+        y = (y & 0x3333333333333333ull) + (y >> 2 & 0x3333333333333333ull);
+        return ((y + (y >> 4)) & 0xf0f0f0f0f0f0f0full) * 0x101010101010101ull >> 56;
+    }
+
     size_t _sz; // actual number of bits
     S      _s;
 };

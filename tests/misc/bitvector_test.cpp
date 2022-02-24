@@ -29,34 +29,7 @@ void clear_bits_naive(gtl::bit_vector &v, size_t first, size_t last) {
     }
 }    
 
-void bv_change_test(gtl::bit_vector &v1, gtl::bit_vector &v2, size_t lg) {
-    gtl::bit_vector  v3(v1.size());
-
-    for (size_t i=0; i<130; ++i) {
-        v1.view(i, i + lg).set();
-        set_bits_naive(v2, i, i + lg);
-        EXPECT_TRUE(v1 == v2);
-        
-        v1.view(i, i + lg).flip();
-        flip_bits_naive(v2, i, i + lg);
-        EXPECT_TRUE(v1 == v2);
-        EXPECT_TRUE(v1 == v3);
-
-        v1.view(i, i + lg).set();
-        set_bits_naive(v2, i, i + lg);
-        EXPECT_TRUE(v1 == v2);
-        
-        v1.view(i, i + lg).clear();
-        clear_bits_naive(v2, i, i + lg);
-        EXPECT_TRUE(v1 == v2);
-        EXPECT_TRUE(v1 == v3);
-
-        v1.view(i, i + lg).set().flip();
-        EXPECT_TRUE(v1 == v3);
-    }    
-}
-
-std::vector<gtl::bit_vector>& get_test_vector() {
+const std::vector<gtl::bit_vector>& get_test_vector() {
     static std::vector<gtl::bit_vector> res;
     if (res.empty()) {
         res.push_back(gtl::bit_vector(0));
@@ -99,12 +72,15 @@ std::vector<gtl::bit_vector>& get_test_vector() {
         {
             // generate some vectors of size 256
             // ---------------------------------
-            gtl::bit_vector v(256, false);
-            v.view(177,227).set();
-            res.push_back(v);
+            for (uint64_t i=27; i<36; ++i) {
+                gtl::bit_vector v(256, false);
+                v.view(117+i, 237-i).set();
+                v.view(i, i+2).set();
+                res.push_back(v);
 
-            v.flip();
-            res.push_back(v);
+                v.flip();
+                res.push_back(v);
+            }
         }
     }
     return res;
@@ -134,7 +110,34 @@ TEST(BitVectorTest, resize) {
 TEST(BitVectorTest, bit_view_change) {
     static constexpr size_t sz = 500;
     gtl::bit_vector v1(sz), v2(sz);
-    
+
+    auto bv_change_test = [](gtl::bit_vector &v1, gtl::bit_vector &v2, size_t lg) {
+        gtl::bit_vector  v3(v1.size());
+
+        for (size_t i=0; i<130; ++i) {
+            v1.view(i, i + lg).set();
+            set_bits_naive(v2, i, i + lg);
+            EXPECT_TRUE(v1 == v2);
+        
+            v1.view(i, i + lg).flip();
+            flip_bits_naive(v2, i, i + lg);
+            EXPECT_TRUE(v1 == v2);
+            EXPECT_TRUE(v1 == v3);
+
+            v1.view(i, i + lg).set();
+            set_bits_naive(v2, i, i + lg);
+            EXPECT_TRUE(v1 == v2);
+        
+            v1.view(i, i + lg).clear();
+            clear_bits_naive(v2, i, i + lg);
+            EXPECT_TRUE(v1 == v2);
+            EXPECT_TRUE(v1 == v3);
+
+            v1.view(i, i + lg).set().flip();
+            EXPECT_TRUE(v1 == v3);
+        }    
+    };
+
     bv_change_test(v1, v2, 11);
     bv_change_test(v1, v2, 69);
     bv_change_test(v1, v2, 155);
@@ -158,30 +161,94 @@ TEST(BitVectorTest, bitwise_op_on_bv) {
         EXPECT_TRUE(~v1 == v2);
     }
 
-    std::vector<gtl::bit_vector>& testv = get_test_vector();
+    const std::vector<gtl::bit_vector>& testv = get_test_vector();
     for (auto v1 : testv) {
         auto v2 = v1;
         EXPECT_TRUE((~v2 ^ v1).every());
         EXPECT_TRUE((v2 ^ v1).none());
         EXPECT_TRUE((v2 - v1).none());
-        auto v3 = v2 & v1;
         EXPECT_TRUE((v2 & v1) == v1);
+        for (auto v3 : testv) {
+            if (v3.size() != v1.size())
+                continue;
+            EXPECT_TRUE(~(v3 | v1) == (~v3 & ~v1));
+        }
     }
 }
 
-TEST(BitVectorTest, bitwise_assign_op_on_bv) {
+TEST(BitVectorTest, bitwise_assign_op_on_full_bit_vector) {
+    const std::vector<gtl::bit_vector>& testv = get_test_vector();
+    for (auto v1 : testv) {
+        auto v2 = v1;
+        EXPECT_TRUE((~(v2^= v1)).every());
+
+        v2 = v1;
+        EXPECT_TRUE((v2 ^= v1).none());
+
+        v2 = v1;
+        EXPECT_TRUE((v2 -= v1).none());
+
+        v2 = v1;
+        EXPECT_TRUE((v2 &= v1) == v1);
+    }
+        
 } 
 
-TEST(BitVectorTest, shift_operators_on_bv) {
+TEST(BitVectorTest, shift_operators_on_full_bit_vector) {
 }
 
-TEST(BitVectorTest, unary_predicates_on_bv) {
+TEST(BitVectorTest, unary_predicates_on_full_bit_vector) {
+    static constexpr size_t sz1 = 199;
+    auto check_sz = [](size_t sz) {
+        gtl::bit_vector v(sz);
+
+        for (size_t i=0; i<sz; ++i) {
+            EXPECT_TRUE(v.none());
+            v.set(i);
+            EXPECT_FALSE(v.none());
+            v.view().set();
+            EXPECT_TRUE(v.every());
+            v.clear(i);
+            EXPECT_FALSE(v.every());
+            v.view().clear();
+        }
+    };
+
+    check_sz(199);
 }
 
-TEST(BitVectorTest, binary_predicates_on_bv) {
+TEST(BitVectorTest, binary_predicates_on_full_bit_vector) {
+    const std::vector<gtl::bit_vector>& testv = get_test_vector();
+    for (auto v1 : testv) {
+        auto v1_copy = v1;
+        EXPECT_TRUE(v1 == v1_copy);
+        for (auto v2 : testv) {
+            if (v2.size() != v1.size())
+                continue;
+            EXPECT_TRUE(v1.contains(v2) || ((v1 | v2) != v1));
+
+            if (v1.contains(v2) && v2.contains(v1))
+                EXPECT_TRUE(v1 == v2);
+            
+            if (v1.disjoint(v2))
+                EXPECT_TRUE((v1 & v2).none());
+        }
+    }
 }
 
-TEST(BitVectorTest, popcount_on_bv) {
+TEST(BitVectorTest, popcount_on_full_bit_vector) {
+    auto popcount_naive = [](const gtl::bit_vector &v) {
+        size_t n = 0; 
+        for (size_t i=0; i<v.size(); ++i) 
+            if (v[i]) 
+                ++n; 
+        return n; 
+    };
+
+    const std::vector<gtl::bit_vector>& testv = get_test_vector();
+    for (auto v : testv) {
+        EXPECT_TRUE(v.popcount() == popcount_naive(v));
+    }
 }
 
 TEST(BitVectorTest, print) {
