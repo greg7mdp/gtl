@@ -225,9 +225,9 @@ public:
 
     // single bit access
     // -----------------
-    bool set(size_t idx)   { _bv.set(idx + _first); }
-    bool clear(size_t idx) { _bv.clear(idx + _first); }
-    bool flip(size_t idx)  { _bv.flip(idx + _first); }
+    void set(size_t idx)   { _bv.set(idx + _first); }
+    void clear(size_t idx) { _bv.clear(idx + _first); }
+    void flip(size_t idx)  { _bv.flip(idx + _first); }
     bool operator[](size_t idx) const { return _bv[idx + _first]; }
 
     // change whole view
@@ -236,8 +236,9 @@ public:
     view& clear() { _bv.storage().update(_first, _last, false, [](uint64_t  , int) { return (uint64_t)0; });  return *this; }
     view& flip()  { _bv.storage().update(_first, _last, false, [](uint64_t v, int) { return ~v; });           return *this; }
 
+    // only works when view is within one slot
     view& set_uint64(uint64_t val) { 
-        assert(size() <= 64);
+        assert(size() <= 64 && slot(_first) ==  slot(_last - 1));
         _bv.storage().update(_first, _last, false, [val](uint64_t, int shl) { return shl >= 0 ? val << shl : val >> shl; });
         return *this; 
     }
@@ -250,7 +251,22 @@ public:
 
     // shift operators. Zeroes are shifted in.
     // ---------------------------------------
-    view& operator<<=(size_t ) { assert(0); return *this; } // todo
+    view& operator<<=(size_t cnt) { 
+        if (cnt >= size())
+            clear();
+        else if (!cnt)
+            return *this; 
+        else {
+            // -------- slow version for now [greg todo]
+            size_t sz = size();
+            for (size_t i=0; i<(sz - cnt); ++i)
+                if ((*this)[i + cnt])
+                    set(i);
+                else
+                    clear(i);
+        }
+        return *this;
+    }
 
     view& operator>>=(size_t cnt) { 
         if (cnt >= size())
@@ -283,8 +299,40 @@ public:
         return *this; 
     }
 
-    view& operator=(const view &o); // todo
+    view& operator=(const view &o) {
+        assert(size() == o.size());
+        
+        // ------ slow version for now [greg todo]
+        if (&_bv != &o._bv) {
+            clear();
+            for (size_t i=0; i<size(); ++i)
+                if (o[i])
+                    set(i);
+        } else {
+            // same bv, be careful which way we iterate in case the views overlap
+            if (_first < o._first)
+                for (size_t i=0; i<size(); ++i)
+                    if (o[i]) set(i); else clear(i);
+            else if (_first > o._first)
+                for (size_t i=size(); i-- > 0; )
+                    if (o[i]) set(i); else clear(i);
+        }
+        return *this; 
+    }
 
+    bool operator==(const view &o) const {
+        if (this == &o) 
+            return true;
+        if (size() != o.size())
+            return false;
+
+        // -------- slow version for now [greg todo]
+        for (size_t i=0; i<size(); ++i)
+            if ((*this)[i] != o[i])
+                return false;
+        return true;
+    }
+        
     // unary predicates: any, every, etc...
     // ------------------------------------
     bool any() const { 
@@ -301,10 +349,8 @@ public:
 
     bool none()  const { return !any(); }
 
-    // binary predicates operator==(), contains, disjoint, ...
-    // -------------------------------------------------------
-    bool operator==(const view &o) const; // todo
-
+    // binary predicatescontains, disjoint, ...
+    // ----------------------------------------
     // miscellaneous
     // -------------
     size_t popcount() const {

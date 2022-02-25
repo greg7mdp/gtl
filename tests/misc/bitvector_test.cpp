@@ -197,15 +197,19 @@ TEST(BitVectorTest, bitwise_assign_op_on_full_bit_vector) {
 } 
 
 TEST(BitVectorTest, bit_shift) {
-    auto check = [](const gtl::bit_vector &v1, const gtl::bit_vector &v2, int i_shift, size_t first, size_t last) {
-        if (i_shift >= 0) {
-            size_t shift = (size_t)i_shift;
-            EXPECT_TRUE(v2.view(first, std::min(first + shift, last)).none());
-
-            // EXPECT_TRUE(v2.view(shift) == v1.view(0));
-            for (size_t i=first+shift; i<std::min(last, v2.size()); ++i)
-                EXPECT_TRUE(v2[i] == v1[i - shift]);
+    auto check = [](const gtl::bit_vector &v_orig, const gtl::bit_vector &v2, int i_shift, size_t first, size_t last) {
+        size_t shift = (i_shift >= 0) ? (size_t)i_shift : (size_t)-i_shift;
+        last = std::min(last, v2.size());
+        if (shift <= last - first) {
+            if (i_shift >= 0) {
+                EXPECT_TRUE(v2.view(first, first + shift).none());
+                EXPECT_TRUE(v2.view(first+shift, last) == v_orig.view(first, last - shift));
+            } else {
+                EXPECT_TRUE(v2.view(last - shift, last).none());
+                EXPECT_TRUE(v2.view(first, last - shift) == v_orig.view(first+shift, last));
+            }
         }
+
     };
 
     auto bitshift_check = [&](const gtl::bit_vector &v_orig, int shift, size_t first=0, size_t last = gtl::bit_vector::end) {
@@ -249,6 +253,25 @@ TEST(BitVectorTest, bit_shift) {
         check_range(v, 127, 31);
     }
         
+}
+
+TEST(BitVectorTest, view_assignment) {
+    auto check_va = [](const gtl::bit_vector &v2, size_t div) {
+        size_t sz = v2.size();
+        if (sz) {
+            gtl::bit_vector v(sz, false);
+            for (size_t i=0; i<div; ++i)
+                v.view((i*sz)/div, ((i+1)*sz)/div) = v2.view((i*sz)/div, ((i+1)*sz)/div);
+            EXPECT_TRUE(v == v2);
+        }
+    };
+
+    const std::vector<gtl::bit_vector>& testv = get_test_vector();
+    for (auto v : testv) {
+        check_va(v, 3);
+        check_va(v, 7);
+        check_va(v, 17);
+    }
 }
 
 TEST(BitVectorTest, unary_predicates_on_full_bit_vector) {
