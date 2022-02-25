@@ -81,7 +81,7 @@ public:
     // (>= 0 means left shift)
     // -----------------------------------------------------------------------
     template<class F>
-    void update(size_t first, size_t last, bool oor_bits, F f) { 
+    void update(size_t first, size_t last, bool oor_bits, F f, bool forward = true) { 
         if (last <= first)
             return;
         size_t first_slot = slot(first);
@@ -92,7 +92,7 @@ public:
             uint64_t  fs = f(oor_bits ? (s | m) : (s & ~m), (int)mod(first)); 
             s &= m;
             s |= fs & ~m;
-        } else {
+        } else if (forward) {
             // first slot
             // ----------
             if (mod(first)) {
@@ -120,6 +120,33 @@ public:
                 s &= m;                        // zero bits to be changed
                 s |= fs & ~m;                  // copy masked new value
             }
+        } else {
+            // last slot
+            // ---------
+            if (mod(last)) {
+                uint64_t& s  = _s[last_slot]; 
+                uint64_t  m  = himask(last);   // m has ones on the bits we don't want to change
+                uint64_t  fs = f(oor_bits ? (s | m) : (s & ~m), -(int)(mod(first))); 
+                s &= m;                        // zero bits to be changed
+                s |= fs & ~m;                  // copy masked new value
+            }
+            --last_slot;
+
+            // full slots
+            // ----------
+            for (size_t slot=last_slot; slot > first_slot; --slot) {
+                uint64_t& s  = _s[slot]; 
+                s = f(s, 0); 
+            }
+
+            // first slot
+            // ----------
+            uint64_t& s  = _s[first_slot]; 
+            uint64_t  m  = lowmask(first);  // m has ones on the bits we don't want to change
+            uint64_t  fs = f(oor_bits ? (s | m) : (s & ~m), (int)mod(first)); 
+            s &= m;                         // zero bits to be changed
+            s |= fs & ~m;                   // copy masked new value
+            ++first_slot;
         }
         _check_extra_bits();
     }
@@ -255,15 +282,27 @@ public:
         if (cnt >= size())
             clear();
         else if (cnt) {
-            // -------- slow version for now [greg todo]
-            size_t sz = size();
-            for (size_t i=0; i<(sz - cnt); ++i)
-                if ((*this)[i + cnt])
-                    set(i);
-                else
-                    clear(i);
-            for (size_t i=(sz - cnt); i < sz; ++i)
-                clear(i);
+            if (cnt == stride) {
+                size_t carry = 0;
+                _bv.storage().update(_first, _last, false, [&](uint64_t v, int ) { 
+                        size_t res = carry; 
+                        carry = v;
+                        return res;
+                    }, false);
+            } else if (cnt <= stride) {
+                size_t carry = 0;
+                _bv.storage().update(_first, _last, false, [&](uint64_t v, int ) { 
+                        size_t res = (v >> cnt) | carry; // yes we have to shift the opposite way!
+                        carry = (v << (stride - cnt));
+                        return res;
+                    }, false);
+            } else {
+                while(cnt) {
+                    size_t shift = std::min(cnt, stride);
+                    *this <<= shift;
+                    cnt -= shift;
+                }
+            }
         }
         return *this;
     }
@@ -347,8 +386,10 @@ public:
 
     bool none()  const { return !any(); }
 
-    // binary predicatescontains, disjoint, ...
-    // ----------------------------------------
+    // binary predicates: contains, disjoint, ...
+    // ------------------------------------------
+    // todo
+
     // miscellaneous
     // -------------
     size_t popcount() const {

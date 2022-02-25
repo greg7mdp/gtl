@@ -249,6 +249,8 @@ TEST(BitVectorTest, bit_shift) {
 
         // check gtl::bit_view shift
         check_range(v, 3, 17);
+        check_range(v, 3, 128);
+        check_range(v, 128, 3);
         check_range(v, 17, 33);
         check_range(v, 111, 66);
         check_range(v, 127, 31);
