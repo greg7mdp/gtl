@@ -254,9 +254,7 @@ public:
     view& operator<<=(size_t cnt) { 
         if (cnt >= size())
             clear();
-        else if (!cnt)
-            return *this; 
-        else {
+        else if (cnt) {
             // -------- slow version for now [greg todo]
             size_t sz = size();
             for (size_t i=0; i<(sz - cnt); ++i)
@@ -264,6 +262,8 @@ public:
                     set(i);
                 else
                     clear(i);
+            for (size_t i=(sz - cnt); i < sz; ++i)
+                clear(i);
         }
         return *this;
     }
@@ -271,9 +271,7 @@ public:
     view& operator>>=(size_t cnt) { 
         if (cnt >= size())
             clear();
-        else if (!cnt)
-            return *this; 
-        else {
+        else if (cnt) {
             if (cnt == stride) {
                 size_t carry = 0;
                 _bv.storage().update(_first, _last, false, [&](uint64_t v, int ) { 

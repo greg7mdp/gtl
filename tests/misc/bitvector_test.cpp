@@ -234,6 +234,7 @@ TEST(BitVectorTest, bit_shift) {
         if (v.size() > width) {
             for (size_t i=0; i<v.size()-width; ++i) {
                 bitshift_check(v, shift, i, i+width);
+                bitshift_check(v, -shift, i, i+width);
             }
         }
     };
