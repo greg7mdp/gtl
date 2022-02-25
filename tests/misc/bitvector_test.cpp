@@ -196,7 +196,59 @@ TEST(BitVectorTest, bitwise_assign_op_on_full_bit_vector) {
         
 } 
 
-TEST(BitVectorTest, shift_operators_on_full_bit_vector) {
+TEST(BitVectorTest, bit_shift) {
+    auto check = [](const gtl::bit_vector &v1, const gtl::bit_vector &v2, int i_shift, size_t first, size_t last) {
+        if (i_shift >= 0) {
+            size_t shift = (size_t)i_shift;
+            EXPECT_TRUE(v2.view(first, std::min(first + shift, last)).none());
+
+            // EXPECT_TRUE(v2.view(shift) == v1.view(0));
+            for (size_t i=first+shift; i<std::min(last, v2.size()); ++i)
+                EXPECT_TRUE(v2[i] == v1[i - shift]);
+        }
+    };
+
+    auto bitshift_check = [&](const gtl::bit_vector &v_orig, int shift, size_t first=0, size_t last = gtl::bit_vector::end) {
+        if (last == gtl::bit_vector::end)
+            last = v_orig.size();
+        if (first == 0 && last == v_orig.size()) {
+            gtl::bit_vector v = (shift >= 0) ? (v_orig >> (size_t)shift) : (v_orig << (size_t)-shift);
+            check(v_orig, v, shift, first, last);
+        }
+        else
+        {
+            gtl::bit_vector v(v_orig);
+            if (shift >= 0)
+                v.view(first, last) >>= (size_t)shift;
+            else
+                v.view(first, last) <<= (size_t)-shift;
+            check(v_orig, v, shift, first, last);
+        }
+    };
+
+    auto check_range = [&](const gtl::bit_vector &v, int shift, size_t width) {
+        if (v.size() > width) {
+            for (size_t i=0; i<v.size()-width; ++i) {
+                bitshift_check(v, shift, i, i+width);
+            }
+        }
+    };
+
+    const std::vector<gtl::bit_vector>& testv = get_test_vector();
+    for (auto v : testv) {
+        // only right shift supported for now
+
+        // check fill bit_vector shift
+        for (size_t i=0; i<v.size(); ++i)
+            bitshift_check(v, (int)i);
+
+        // check gtl::bit_view shift
+        check_range(v, 3, 17);
+        check_range(v, 17, 33);
+        check_range(v, 111, 66);
+        check_range(v, 127, 31);
+    }
+        
 }
 
 TEST(BitVectorTest, unary_predicates_on_full_bit_vector) {
@@ -238,10 +290,12 @@ TEST(BitVectorTest, binary_predicates_on_full_bit_vector) {
     }
 }
 
-TEST(BitVectorTest, popcount_on_full_bit_vector) {
-    auto popcount_naive = [](const gtl::bit_vector &v) {
+TEST(BitVectorTest, popcount) {
+    auto popcount_naive = [](const gtl::bit_vector &v, size_t first=0, size_t last = gtl::bit_vector::end) {
         size_t n = 0; 
-        for (size_t i=0; i<v.size(); ++i) 
+        if (last == gtl::bit_vector::end)
+            last = v.size();
+        for (size_t i=first; i<last; ++i) 
             if (v[i]) 
                 ++n; 
         return n; 
@@ -255,6 +309,17 @@ TEST(BitVectorTest, popcount_on_full_bit_vector) {
             EXPECT_TRUE(v.popcount() == popcount_naive(v));
             if (i % 2)
                 v.clear(i);
+        }
+    }
+
+    // test view popcount
+    for (auto v : testv) {
+        size_t last = v.size();
+        for (size_t i=0; i<last; ++i) 
+            EXPECT_TRUE(v.view(i, last).popcount() == popcount_naive(v, i, last));
+        if (last) {
+            for (size_t i=last-1; i!= 0; --i) 
+                EXPECT_TRUE(v.view(0, i).popcount() == popcount_naive(v, 0, i));
         }
     }
 }

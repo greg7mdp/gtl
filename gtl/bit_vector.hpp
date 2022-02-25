@@ -26,8 +26,14 @@ static constexpr size_t   mod(size_t n) { return (n & 0x3f); }
 static constexpr size_t   slot_cnt(size_t n) { return (n + 63) >> 6; }
 static constexpr size_t   slot(size_t n)    { return n >> 6; }
 static constexpr uint64_t bitmask(size_t n) { return (uint64_t)1 << mod(n); } // a mask for this bit in its slot
-static constexpr uint64_t lowmask(size_t n) { return bitmask(n) - 1; }        // a mask for lower bits than n in slot
+static constexpr uint64_t lowmask (size_t n) { return bitmask(n) - 1; }        // a mask for lower bits than n in slot
 static constexpr uint64_t himask(size_t n)  { return ~lowmask(n); }           // a mask for higher bits than n-1 in slot
+
+static constexpr size_t _popcount64(uint64_t y) { // https://gist.github.com/enjoylife/4091854
+    y -= ((y >> 1) & 0x5555555555555555ull);
+    y = (y & 0x3333333333333333ull) + (y >> 2 & 0x3333333333333333ull);
+    return ((y + (y >> 4)) & 0xf0f0f0f0f0f0f0full) * 0x101010101010101ull >> 56;
+}
 
 // ---------------------------------------------------------------------------
 // implements bit storage class
@@ -75,15 +81,15 @@ public:
     // (>= 0 means left shift)
     // -----------------------------------------------------------------------
     template<class F>
-    void update(size_t first, size_t last, F f) { 
+    void update(size_t first, size_t last, bool oor_bits, F f) { 
         if (last <= first)
             return;
         size_t first_slot = slot(first);
         size_t last_slot  = slot(last);
         if (first_slot == last_slot) {
             uint64_t& s  = _s[first_slot]; 
-            uint64_t  fs = f(s, (int)mod(first)); 
             uint64_t  m  = ~(lowmask(first) ^ lowmask(last)); // m has ones on the bits we don't want to change
+            uint64_t  fs = f(oor_bits ? (s | m) : (s & ~m), (int)mod(first)); 
             s &= m;
             s |= fs & ~m;
         } else {
@@ -91,8 +97,8 @@ public:
             // ----------
             if (mod(first)) {
                 uint64_t& s  = _s[first_slot]; 
-                uint64_t  fs = f(s, (int)mod(first)); 
                 uint64_t  m  = lowmask(first);  // m has ones on the bits we don't want to change
+                uint64_t  fs = f(oor_bits ? (s | m) : (s & ~m), (int)mod(first)); 
                 s &= m;                         // zero bits to be changed
                 s |= fs & ~m;                   // copy masked new value
                 ++first_slot;
@@ -109,8 +115,8 @@ public:
             // ---------
             if (mod(last)) {
                 uint64_t& s  = _s[last_slot]; 
-                uint64_t  fs = f(s, -(int)(mod(first))); 
                 uint64_t  m  = himask(last);   // m has ones on the bits we don't want to change
+                uint64_t  fs = f(oor_bits ? (s | m) : (s & ~m), -(int)(mod(first))); 
                 s &= m;                        // zero bits to be changed
                 s |= fs & ~m;                  // copy masked new value
             }
@@ -226,23 +232,58 @@ public:
 
     // change whole view
     // -----------------
-    view& set()   { _bv.storage().update(_first, _last, [](uint64_t  , int) { return (uint64_t)-1; }); return *this; }
-    view& clear() { _bv.storage().update(_first, _last, [](uint64_t  , int) { return (uint64_t)0; });  return *this; }
-    view& flip()  { _bv.storage().update(_first, _last, [](uint64_t v, int) { return ~v; });           return *this; }
+    view& set()   { _bv.storage().update(_first, _last, false, [](uint64_t  , int) { return (uint64_t)-1; }); return *this; }
+    view& clear() { _bv.storage().update(_first, _last, false, [](uint64_t  , int) { return (uint64_t)0; });  return *this; }
+    view& flip()  { _bv.storage().update(_first, _last, false, [](uint64_t v, int) { return ~v; });           return *this; }
 
     view& set_uint64(uint64_t val) { 
         assert(size() <= 64);
-        _bv.storage().update(_first, _last, [val](uint64_t, int shl) { return shl >= 0 ? val << shl : val >> shl; });
+        _bv.storage().update(_first, _last, false, [val](uint64_t, int shl) { return shl >= 0 ? val << shl : val >> shl; });
         return *this; 
     }
 
     // bitwise assignment operators
     // ----------------------------
-    view& operator|=(const view &o) { assert(size() == o.size()); }
-    view& operator&=(const view &o);
-    view& operator^=(const view &o);
-    view& operator<<=(size_t cnt);
-    view& operator>>=(size_t cnt);
+    view& operator|=(const view &o); // { assert(size() == o.size()); } // todo
+    view& operator&=(const view &o); // todo
+    view& operator^=(const view &o); // todo
+
+    // shift operators. Zeroes are shifted in.
+    // ---------------------------------------
+    view& operator<<=(size_t ) { assert(0); return *this; } // todo
+
+    view& operator>>=(size_t cnt) { 
+        if (cnt >= size())
+            clear();
+        else if (!cnt)
+            return *this; 
+        else {
+            if (cnt == stride) {
+                size_t carry = 0;
+                _bv.storage().update(_first, _last, false, [&](uint64_t v, int ) { 
+                        size_t res = carry; 
+                        carry = v;
+                        return res;
+                    });
+            } else if (cnt <= stride) {
+                size_t carry = 0;
+                _bv.storage().update(_first, _last, false, [&](uint64_t v, int ) { 
+                        size_t res = (v << cnt) | carry; // yes we have to shift the opposite way!
+                        carry = (v >> (stride - cnt));
+                        return res;
+                    });
+            } else {
+                while(cnt) {
+                    size_t shift = std::min(cnt, stride);
+                    *this >>= shift;
+                    cnt -= shift;
+                }
+            }
+        }
+        return *this; 
+    }
+
+    view& operator=(const view &o); // todo
 
     // unary predicates: any, every, etc...
     // ------------------------------------
@@ -262,11 +303,15 @@ public:
 
     // binary predicates operator==(), contains, disjoint, ...
     // -------------------------------------------------------
-    bool operator==(const view &o) const;
+    bool operator==(const view &o) const; // todo
 
     // miscellaneous
     // -------------
-    size_t popcnt() const;
+    size_t popcount() const {
+        size_t cnt = 0;
+        _bv.storage().inspect(_first, _last, false, [&](uint64_t v) { cnt += _popcount64(v); return false; }); 
+        return cnt;
+    }
 
 private:
     vec_type&   _bv;
@@ -344,8 +389,8 @@ public:
         return *this;
     }
 
-    // shift operators
-    // ---------------
+    // shift operators. Zeroes are shifted in.
+    // ---------------------------------------
     vec& operator<<=(size_t cnt)  { view() <<= cnt; return *this; }
     vec& operator>>=(size_t cnt)  { view() >>= cnt; return *this; }
 
@@ -397,14 +442,12 @@ public:
 
     // miscellaneous
     // -------------
-    size_t popcount() const {                // should we use std::popcount?
+    size_t popcount() const {              // should we use std::popcount?
         size_t num_slots = slot_cnt(_sz), n = 0; 
         for (size_t i=0; i<num_slots; ++i) 
             n += _popcount64(_s[i]);       // we rely of the fact that the extra bits on the last slot are zeroes
         return n;
     }
-
-    size_t   popcnt_naive() const { size_t n = 0; for (size_t i=0; i<size(); ++i) if ((*this)[i]) ++n; return n; }
 
     size_t   size() const     { return _sz; }
     S&       storage()        { return _s; }
@@ -439,12 +482,6 @@ public:
     const bv_type view(size_t first = 0, size_t last = end) const { return bv_type(const_cast<vec&>(*this), first, last); }
 
 private:
-    static inline size_t _popcount64(uint64_t y) { // https://gist.github.com/enjoylife/4091854
-        y -= ((y >> 1) & 0x5555555555555555ull);
-        y = (y & 0x3333333333333333ull) + (y >> 2 & 0x3333333333333333ull);
-        return ((y + (y >> 4)) & 0xf0f0f0f0f0f0f0full) * 0x101010101010101ull >> 56;
-    }
-
     size_t _sz; // actual number of bits
     S      _s;
 };
