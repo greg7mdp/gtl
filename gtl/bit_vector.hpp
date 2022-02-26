@@ -12,6 +12,7 @@
 // ---------------------------------------------------------------------------
 #include <type_traits>
 #include <vector>
+#include <string>
 #include <cstdint>
 #include <cassert>
 #include <iostream>
@@ -257,16 +258,8 @@ public:
     view& flip()  { _bv.storage().visit<vt::none>(_first, _last, 
                                                   [](uint64_t v, int) { return ~v; });           return *this; }
 
-    // only works when view is within one slot
-    view& set_uint64(uint64_t val) { 
-        assert(size() <= 64 && slot(_first) ==  slot(_last - 1));
-        _bv.storage().visit<vt::none>(_first, _last, 
-                                      [val](uint64_t, int shl) { return shl >= 0 ? val << shl : val >> shl; });
-        return *this; 
-    }
-
-    // bitwise assignment operators
-    // ----------------------------
+    // compound assignment operators
+    // -----------------------------
     view& operator|=(const view &o); // { assert(size() == o.size()); } // todo
     view& operator&=(const view &o); // todo
     view& operator^=(const view &o); // todo
@@ -329,6 +322,28 @@ public:
             }
         }
         return *this; 
+    }
+
+    
+    // assignment operators
+    // --------------------
+    view& operator=(uint64_t val) { // only works for view width <= 64 bits
+        assert(size() <= 64);
+        _bv.storage().visit<vt::none>(_first, _last, 
+                                      [val](uint64_t, int shl) { return shl >= 0 ? val << shl : val >> shl; });
+        return *this; 
+    }
+
+    view& operator=(std::initializer_list<uint64_t> vals) {
+        size_t num_vals = vals.size();
+        auto v = vals.begin();
+        size_t start = _first;
+        for(size_t i=0; i<num_vals && start <= _last; ++i) {
+            size_t last = std::min(_last, start + stride);
+            _bv.view(start, last) = *v++;
+            start = last;
+        }
+        return *this;
     }
 
     view& operator=(const view &o) {
@@ -449,8 +464,8 @@ public:
     vec operator<<(size_t cnt)  const { vec res(*this); res <<= cnt; return res; } 
     vec operator>>(size_t cnt)  const { vec res(*this); res >>= cnt; return res; } 
 
-    // bitwise assignment operators on full bit_vector
-    // -----------------------------------------------
+    // compound assignment operators on full bit_vector
+    // ------------------------------------------------
     template <class F>
     vec& bin_assign(F &&f, const vec &o) { 
         assert(_sz == o._sz); 
@@ -464,6 +479,8 @@ public:
     vec& operator-=(const vec &o) { return bin_assign([](uint64_t a, uint64_t b) { return a & ~b; }, o); }
     vec& or_not(const vec &o)     { return bin_assign([](uint64_t a, uint64_t b) { return a | ~b; }, o); }
 
+    // assignment operators on full bit_vector
+    // ---------------------------------------
     vec& operator=(std::initializer_list<uint64_t> vals) {
         size_t num_vals = vals.size();
         auto v = vals.begin();
@@ -545,10 +562,10 @@ public:
 
     // print
     // -----
-    friend std::ostream& operator<<(std::ostream &s, const vec &v) { return s << v.print(); }
+    friend std::ostream& operator<<(std::ostream &s, const vec &v) { return s << (std::string)v; }
 
-    // returns string of  bit_vector in hexadecimal with v[0] last
-    std::string print() const 
+    // make bit_vector convertible to std::string
+    operator std::string() const 
     {
         if (_sz == 0)
             return "<empty>";
