@@ -77,11 +77,11 @@ public:
 
     // functional update/inspect  by bit range, last is 1 + last index to change
     // function f can modify the whole uint64_t, only relevant bits are copied
-    // the shift passed to F moves returned value in correct location
-    // (>= 0 means left shift)
-    // -----------------------------------------------------------------------
+    // the shift passed to F moves returned value in correct location(>= 0 means left shift)
+    // if do_update == false, this fn exits early when the callback returns true.
+    // ------------------------------------------------------------------------------------
     template<bool do_update, class F>
-    void update(size_t first, size_t last, bool oor_bits, F f,  bool forward = true) { 
+    void visit(size_t first, size_t last, bool oor_bits, F f, bool visit_forward = true) { 
         if (last <= first)
             return;
         size_t first_slot = slot(first);
@@ -95,7 +95,7 @@ public:
                 s |= fs & ~m;
             } else if (fs)
                 return;
-        } else if (forward) {
+        } else if (visit_forward) {
             // first slot
             // ----------
             if (mod(first)) {
@@ -232,14 +232,20 @@ public:
 
     // change whole view
     // -----------------
-    view& set()   { _bv.storage().update<true>(_first, _last, false, [](uint64_t  , int) { return (uint64_t)-1; }); return *this; }
-    view& clear() { _bv.storage().update<true>(_first, _last, false, [](uint64_t  , int) { return (uint64_t)0; });  return *this; }
-    view& flip()  { _bv.storage().update<true>(_first, _last, false, [](uint64_t v, int) { return ~v; });           return *this; }
+    view& set()   { _bv.storage().visit<true>(_first, _last, false, 
+                                              [](uint64_t  , int) { return (uint64_t)-1; }); return *this; }
+
+    view& clear() { _bv.storage().visit<true>(_first, _last, false,
+                                              [](uint64_t  , int) { return (uint64_t)0; });  return *this; }
+
+    view& flip()  { _bv.storage().visit<true>(_first, _last, false,
+                                              [](uint64_t v, int) { return ~v; });           return *this; }
 
     // only works when view is within one slot
     view& set_uint64(uint64_t val) { 
         assert(size() <= 64 && slot(_first) ==  slot(_last - 1));
-        _bv.storage().update<true>(_first, _last, false, [val](uint64_t, int shl) { return shl >= 0 ? val << shl : val >> shl; });
+        _bv.storage().visit<true>(_first, _last, false, 
+                                  [val](uint64_t, int shl) { return shl >= 0 ? val << shl : val >> shl; });
         return *this; 
     }
 
@@ -257,18 +263,20 @@ public:
         else if (cnt) {
             if (cnt == stride) {
                 size_t carry = 0;
-                _bv.storage().update<true>(_first, _last, false, [&](uint64_t v, int ) { 
-                        size_t res = carry; 
-                        carry = v;
-                        return res;
-                    }, false);
+                _bv.storage().visit<true>(_first, _last, false,
+                                          [&](uint64_t v, int ) { 
+                                              size_t res = carry; 
+                                              carry = v;
+                                              return res;
+                                          }, false);
             } else if (cnt <= stride) {
                 size_t carry = 0;
-                _bv.storage().update<true>(_first, _last, false, [&](uint64_t v, int ) { 
-                        size_t res = (v >> cnt) | carry; // yes we have to shift the opposite way!
-                        carry = (v << (stride - cnt));
-                        return res;
-                    }, false);
+                _bv.storage().visit<true>(_first, _last, false, 
+                                          [&](uint64_t v, int ) { 
+                                              size_t res = (v >> cnt) | carry; // yes we have to shift the opposite way!
+                                              carry = (v << (stride - cnt));
+                                              return res;
+                                          }, false);
             } else {
                 while(cnt) {
                     size_t shift = std::min(cnt, stride);
@@ -286,18 +294,20 @@ public:
         else if (cnt) {
             if (cnt == stride) {
                 size_t carry = 0;
-                _bv.storage().update<true>(_first, _last, false, [&](uint64_t v, int ) { 
-                        size_t res = carry; 
-                        carry = v;
-                        return res;
-                    });
+                _bv.storage().visit<true>(_first, _last, false, 
+                                          [&](uint64_t v, int ) { 
+                                              size_t res = carry; 
+                                              carry = v;
+                                              return res;
+                                          });
             } else if (cnt <= stride) {
                 size_t carry = 0;
-                _bv.storage().update<true>(_first, _last, false, [&](uint64_t v, int ) { 
-                        size_t res = (v << cnt) | carry; // yes we have to shift the opposite way!
-                        carry = (v >> (stride - cnt));
-                        return res;
-                    });
+                _bv.storage().visit<true>(_first, _last, false, 
+                                          [&](uint64_t v, int ) { 
+                                              size_t res = (v << cnt) | carry; // yes we have to shift the opposite way!
+                                              carry = (v >> (stride - cnt));
+                                              return res;
+                                          });
             } else {
                 while(cnt) {
                     size_t shift = std::min(cnt, stride);
@@ -347,13 +357,15 @@ public:
     // ------------------------------------
     bool any() const { 
         bool res = false;
-        _bv.storage().update<false>(_first, _last, false, [&](uint64_t v, int) { if (v) res = true; return res; }); 
+        _bv.storage().visit<false>(_first, _last, false, 
+                                   [&](uint64_t v, int) { if (v) res = true; return res; }); 
         return res; 
     }
 
     bool every() const { 
         bool res = true;
-        _bv.storage().update<false>(_first, _last, true, [&](uint64_t v, int) { if (v != (uint64_t)-1) res = false; return !res; }); 
+        _bv.storage().visit<false>(_first, _last, true, 
+                                   [&](uint64_t v, int) { if (v != (uint64_t)-1) res = false; return !res; }); 
         return res; 
     }
 
@@ -367,7 +379,8 @@ public:
     // -------------
     size_t popcount() const {
         size_t cnt = 0;
-        _bv.storage().update<false>(_first, _last, false, [&](uint64_t v, int) { cnt += _popcount64(v); return false; }); 
+        _bv.storage().visit<false>(_first, _last, false, 
+                                   [&](uint64_t v, int) { cnt += _popcount64(v); return false; }); 
         return cnt;
     }
 
