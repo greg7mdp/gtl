@@ -55,7 +55,6 @@ private:
         else
             return s | m;
     }
-        
 
 public:
     
@@ -531,6 +530,11 @@ public:
         for (size_t i=0; i<num_slots; ++i) 
             n += _popcount64(_s[i]);       // we rely of the fact that the extra bits on the last slot are zeroes
         return n;
+    }
+
+    void swap(vec &o) {
+        std::swap(_sz, o._sz);
+        _s.swap(o._s);
     }
 
     size_t   size() const     { return _sz; }
