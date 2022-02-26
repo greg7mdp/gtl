@@ -75,13 +75,13 @@ public:
         s |= fs & m;
     }
 
-    // functional update by bit range, last is 1 + last index to change
+    // functional update/inspect  by bit range, last is 1 + last index to change
     // function f can modify the whole uint64_t, only relevant bits are copied
     // the shift passed to F moves returned value in correct location
     // (>= 0 means left shift)
     // -----------------------------------------------------------------------
-    template<class F>
-    void update(size_t first, size_t last, bool oor_bits, F f, bool forward = true) { 
+    template<bool do_update, class F>
+    void update(size_t first, size_t last, bool oor_bits, F f,  bool forward = true) { 
         if (last <= first)
             return;
         size_t first_slot = slot(first);
@@ -89,18 +89,24 @@ public:
         if (first_slot == last_slot) {
             uint64_t& s  = _s[first_slot]; 
             uint64_t  m  = ~(lowmask(first) ^ lowmask(last)); // m has ones on the bits we don't want to change
-            uint64_t  fs = f(oor_bits ? (s | m) : (s & ~m), (int)mod(first)); 
-            s &= m;
-            s |= fs & ~m;
+            auto fs = f(oor_bits ? (s | m) : (s & ~m), (int)mod(first)); 
+            if constexpr (do_update) {
+                s &= m;
+                s |= fs & ~m;
+            } else if (fs)
+                return;
         } else if (forward) {
             // first slot
             // ----------
             if (mod(first)) {
                 uint64_t& s  = _s[first_slot]; 
                 uint64_t  m  = lowmask(first);  // m has ones on the bits we don't want to change
-                uint64_t  fs = f(oor_bits ? (s | m) : (s & ~m), (int)mod(first)); 
-                s &= m;                         // zero bits to be changed
-                s |= fs & ~m;                   // copy masked new value
+                auto fs = f(oor_bits ? (s | m) : (s & ~m), (int)mod(first)); 
+                if constexpr (do_update) {
+                    s &= m;                         // zero bits to be changed
+                    s |= fs & ~m;                   // copy masked new value
+                } else if (fs)
+                    return;
                 ++first_slot;
             }
             
@@ -108,7 +114,11 @@ public:
             // ----------
             for (size_t slot=first_slot; slot<last_slot; ++slot) {
                 uint64_t& s  = _s[slot]; 
-                s = f(s, 0); 
+                auto fs = f(s, 0); 
+                if constexpr (do_update)
+                    s = fs; 
+                else if (fs)
+                    return;
             }
 
             // last slot
@@ -116,9 +126,12 @@ public:
             if (mod(last)) {
                 uint64_t& s  = _s[last_slot]; 
                 uint64_t  m  = himask(last);   // m has ones on the bits we don't want to change
-                uint64_t  fs = f(oor_bits ? (s | m) : (s & ~m), -(int)(mod(first))); 
-                s &= m;                        // zero bits to be changed
-                s |= fs & ~m;                  // copy masked new value
+                auto  fs = f(oor_bits ? (s | m) : (s & ~m), -(int)(mod(first))); 
+                if constexpr (do_update) {
+                    s &= m;                        // zero bits to be changed
+                    s |= fs & ~m;                  // copy masked new value
+                } else if (fs)
+                    return;
             }
         } else {
             // last slot
@@ -126,9 +139,12 @@ public:
             if (mod(last)) {
                 uint64_t& s  = _s[last_slot]; 
                 uint64_t  m  = himask(last);   // m has ones on the bits we don't want to change
-                uint64_t  fs = f(oor_bits ? (s | m) : (s & ~m), -(int)(mod(first))); 
-                s &= m;                        // zero bits to be changed
-                s |= fs & ~m;                  // copy masked new value
+                auto fs = f(oor_bits ? (s | m) : (s & ~m), -(int)(mod(first))); 
+                if constexpr (do_update) {
+                    s &= m;                        // zero bits to be changed
+                    s |= fs & ~m;                  // copy masked new value
+                } else if (fs)
+                    return;
             }
             --last_slot;
 
@@ -136,69 +152,26 @@ public:
             // ----------
             for (size_t slot=last_slot; slot > first_slot; --slot) {
                 uint64_t& s  = _s[slot]; 
-                s = f(s, 0); 
+                auto fs = f(s, 0); 
+                if constexpr (do_update)
+                    s = fs;
+                else if (fs)
+                    return;
             }
 
             // first slot
             // ----------
             uint64_t& s  = _s[first_slot]; 
             uint64_t  m  = lowmask(first);  // m has ones on the bits we don't want to change
-            uint64_t  fs = f(oor_bits ? (s | m) : (s & ~m), (int)mod(first)); 
-            s &= m;                         // zero bits to be changed
-            s |= fs & ~m;                   // copy masked new value
-            ++first_slot;
-        }
-        _check_extra_bits();
-    }
-
-    // functional inspection by bit range, last is 1 + last index to change
-    // if function f returns true, we exit immediately 
-    // if oor_bits = true, out-of-range bits are set to 1, 0 otherwise
-    // -----------------------------------------------------------------------
-    template<class F>
-    void inspect(size_t first, size_t last, bool oor_bits, F f) { 
-        if (last <= first)
-            return;
-        size_t first_slot = slot(first);
-        size_t last_slot  = slot(last);
-        if (first_slot == last_slot) {
-            uint64_t m  = ~(lowmask(first) ^ lowmask(last)); // m has ones on the bits we don't want to change
-            uint64_t s  = _s[first_slot]; 
-            if (oor_bits) s |= m; else s &= ~m;
-            if (f(s))
+            auto fs = f(oor_bits ? (s | m) : (s & ~m), (int)mod(first)); 
+            if constexpr (do_update) {
+                s &= m;                         // zero bits to be changed
+                s |= fs & ~m;                   // copy masked new value
+            } else if (fs)
                 return;
-        } else {
-            // first slot
-            // ----------
-            if (mod(first)) {
-                uint64_t m  = lowmask(first);  // m has ones on the bits we don't want to change
-                uint64_t s  = _s[first_slot]; 
-                if (oor_bits) s |= m; else s &= ~m;
-                if (f(s))
-                    return;
-                ++first_slot;
-            }
-            
-            // full slots
-            // ----------
-            for (size_t slot=first_slot; slot<last_slot; ++slot) {
-                uint64_t s  = _s[slot]; 
-                if (f(s))
-                    return;
-            }
-
-            // last slot
-            // ---------
-            if (mod(last)) {
-                uint64_t m  = himask(last);   // m has ones on the bits we  don't want to change
-                uint64_t s  = _s[last_slot];
-                if (oor_bits) s |= m; else s &= ~m;
-                (void)f(s);
-            }
         }
         _check_extra_bits();
     }
-    
 
     // -----------------------------------------------------------------------
     template<class F>
@@ -259,14 +232,14 @@ public:
 
     // change whole view
     // -----------------
-    view& set()   { _bv.storage().update(_first, _last, false, [](uint64_t  , int) { return (uint64_t)-1; }); return *this; }
-    view& clear() { _bv.storage().update(_first, _last, false, [](uint64_t  , int) { return (uint64_t)0; });  return *this; }
-    view& flip()  { _bv.storage().update(_first, _last, false, [](uint64_t v, int) { return ~v; });           return *this; }
+    view& set()   { _bv.storage().update<true>(_first, _last, false, [](uint64_t  , int) { return (uint64_t)-1; }); return *this; }
+    view& clear() { _bv.storage().update<true>(_first, _last, false, [](uint64_t  , int) { return (uint64_t)0; });  return *this; }
+    view& flip()  { _bv.storage().update<true>(_first, _last, false, [](uint64_t v, int) { return ~v; });           return *this; }
 
     // only works when view is within one slot
     view& set_uint64(uint64_t val) { 
         assert(size() <= 64 && slot(_first) ==  slot(_last - 1));
-        _bv.storage().update(_first, _last, false, [val](uint64_t, int shl) { return shl >= 0 ? val << shl : val >> shl; });
+        _bv.storage().update<true>(_first, _last, false, [val](uint64_t, int shl) { return shl >= 0 ? val << shl : val >> shl; });
         return *this; 
     }
 
@@ -284,14 +257,14 @@ public:
         else if (cnt) {
             if (cnt == stride) {
                 size_t carry = 0;
-                _bv.storage().update(_first, _last, false, [&](uint64_t v, int ) { 
+                _bv.storage().update<true>(_first, _last, false, [&](uint64_t v, int ) { 
                         size_t res = carry; 
                         carry = v;
                         return res;
                     }, false);
             } else if (cnt <= stride) {
                 size_t carry = 0;
-                _bv.storage().update(_first, _last, false, [&](uint64_t v, int ) { 
+                _bv.storage().update<true>(_first, _last, false, [&](uint64_t v, int ) { 
                         size_t res = (v >> cnt) | carry; // yes we have to shift the opposite way!
                         carry = (v << (stride - cnt));
                         return res;
@@ -313,14 +286,14 @@ public:
         else if (cnt) {
             if (cnt == stride) {
                 size_t carry = 0;
-                _bv.storage().update(_first, _last, false, [&](uint64_t v, int ) { 
+                _bv.storage().update<true>(_first, _last, false, [&](uint64_t v, int ) { 
                         size_t res = carry; 
                         carry = v;
                         return res;
                     });
             } else if (cnt <= stride) {
                 size_t carry = 0;
-                _bv.storage().update(_first, _last, false, [&](uint64_t v, int ) { 
+                _bv.storage().update<true>(_first, _last, false, [&](uint64_t v, int ) { 
                         size_t res = (v << cnt) | carry; // yes we have to shift the opposite way!
                         carry = (v >> (stride - cnt));
                         return res;
@@ -374,13 +347,13 @@ public:
     // ------------------------------------
     bool any() const { 
         bool res = false;
-        _bv.storage().inspect(_first, _last, false, [&](uint64_t v) { if (v) res = true; return res; }); 
+        _bv.storage().update<false>(_first, _last, false, [&](uint64_t v, int) { if (v) res = true; return res; }); 
         return res; 
     }
 
     bool every() const { 
         bool res = true;
-        _bv.storage().inspect(_first, _last, true, [&](uint64_t v) { if (v != (uint64_t)-1) res = false; return !res; }); 
+        _bv.storage().update<false>(_first, _last, true, [&](uint64_t v, int) { if (v != (uint64_t)-1) res = false; return !res; }); 
         return res; 
     }
 
@@ -394,7 +367,7 @@ public:
     // -------------
     size_t popcount() const {
         size_t cnt = 0;
-        _bv.storage().inspect(_first, _last, false, [&](uint64_t v) { cnt += _popcount64(v); return false; }); 
+        _bv.storage().update<false>(_first, _last, false, [&](uint64_t v, int) { cnt += _popcount64(v); return false; }); 
         return cnt;
     }
 
