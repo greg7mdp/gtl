@@ -35,11 +35,28 @@ static constexpr size_t _popcount64(uint64_t y) { // https://gist.github.com/enj
     return ((y + (y >> 4)) & 0xf0f0f0f0f0f0f0full) * 0x101010101010101ull >> 56;
 }
 
+enum class vt { none=0, view=1, oor_ones=2, backward=4 }; // visitor flags
+
+using vt_type = std::underlying_type<vt>::type;
+
+constexpr bool operator&(vt a, vt b) { return      (vt_type)a & (vt_type)b; }
+constexpr vt   operator|(vt a, vt b) { return (vt)((vt_type)a | (vt_type)b); }
+
 // ---------------------------------------------------------------------------
 // implements bit storage class
 // bits default initialized to 0
 // ---------------------------------------------------------------------------
 class storage {
+private:
+    template<vt flags>
+    static constexpr inline uint64_t oor_bits(uint64_t s, uint64_t m) {
+        if constexpr (!(flags & vt::oor_ones))
+            return  (s & ~m);
+        else
+            return s | m;
+    }
+        
+
 public:
     
     storage(size_t num_bits = 0, bool val = false) { resize(num_bits, val); }
@@ -80,8 +97,8 @@ public:
     // the shift passed to F moves returned value in correct location(>= 0 means left shift)
     // if do_update == false, this fn exits early when the callback returns true.
     // ------------------------------------------------------------------------------------
-    template<bool do_update, class F>
-    void visit(size_t first, size_t last, bool oor_bits, F f, bool visit_forward = true) { 
+    template<vt flags, class F>
+    void visit(size_t first, size_t last, F f) { 
         if (last <= first)
             return;
         size_t first_slot = slot(first);
@@ -89,20 +106,20 @@ public:
         if (first_slot == last_slot) {
             uint64_t& s  = _s[first_slot]; 
             uint64_t  m  = ~(lowmask(first) ^ lowmask(last)); // m has ones on the bits we don't want to change
-            auto fs = f(oor_bits ? (s | m) : (s & ~m), (int)mod(first)); 
-            if constexpr (do_update) {
+            auto fs = f(oor_bits<flags>(s, m), (int)mod(first)); 
+            if constexpr (!(flags & vt::view)) {
                 s &= m;
                 s |= fs & ~m;
             } else if (fs)
                 return;
-        } else if (visit_forward) {
+        } else if constexpr (!(flags & vt::backward)) {
             // first slot
             // ----------
             if (mod(first)) {
                 uint64_t& s  = _s[first_slot]; 
                 uint64_t  m  = lowmask(first);  // m has ones on the bits we don't want to change
-                auto fs = f(oor_bits ? (s | m) : (s & ~m), (int)mod(first)); 
-                if constexpr (do_update) {
+                auto fs = f(oor_bits<flags>(s, m), (int)mod(first)); 
+                if constexpr (!(flags & vt::view)) {
                     s &= m;                         // zero bits to be changed
                     s |= fs & ~m;                   // copy masked new value
                 } else if (fs)
@@ -115,7 +132,7 @@ public:
             for (size_t slot=first_slot; slot<last_slot; ++slot) {
                 uint64_t& s  = _s[slot]; 
                 auto fs = f(s, 0); 
-                if constexpr (do_update)
+                if constexpr (!(flags & vt::view))
                     s = fs; 
                 else if (fs)
                     return;
@@ -126,8 +143,8 @@ public:
             if (mod(last)) {
                 uint64_t& s  = _s[last_slot]; 
                 uint64_t  m  = himask(last);   // m has ones on the bits we don't want to change
-                auto  fs = f(oor_bits ? (s | m) : (s & ~m), -(int)(mod(first))); 
-                if constexpr (do_update) {
+                auto  fs = f(oor_bits<flags>(s, m), -(int)(mod(first))); 
+                if constexpr (!(flags & vt::view)) {
                     s &= m;                        // zero bits to be changed
                     s |= fs & ~m;                  // copy masked new value
                 } else if (fs)
@@ -139,8 +156,8 @@ public:
             if (mod(last)) {
                 uint64_t& s  = _s[last_slot]; 
                 uint64_t  m  = himask(last);   // m has ones on the bits we don't want to change
-                auto fs = f(oor_bits ? (s | m) : (s & ~m), -(int)(mod(first))); 
-                if constexpr (do_update) {
+                auto fs = f(oor_bits<flags>(s, m), -(int)(mod(first))); 
+                if constexpr (!(flags & vt::view)) {
                     s &= m;                        // zero bits to be changed
                     s |= fs & ~m;                  // copy masked new value
                 } else if (fs)
@@ -153,7 +170,7 @@ public:
             for (size_t slot=last_slot; slot > first_slot; --slot) {
                 uint64_t& s  = _s[slot]; 
                 auto fs = f(s, 0); 
-                if constexpr (do_update)
+                if constexpr (!(flags & vt::view))
                     s = fs;
                 else if (fs)
                     return;
@@ -163,8 +180,8 @@ public:
             // ----------
             uint64_t& s  = _s[first_slot]; 
             uint64_t  m  = lowmask(first);  // m has ones on the bits we don't want to change
-            auto fs = f(oor_bits ? (s | m) : (s & ~m), (int)mod(first)); 
-            if constexpr (do_update) {
+            auto fs = f(oor_bits<flags>(s, m), (int)mod(first)); 
+            if constexpr (!(flags & vt::view)) {
                 s &= m;                         // zero bits to be changed
                 s |= fs & ~m;                   // copy masked new value
             } else if (fs)
@@ -232,20 +249,20 @@ public:
 
     // change whole view
     // -----------------
-    view& set()   { _bv.storage().visit<true>(_first, _last, false, 
-                                              [](uint64_t  , int) { return (uint64_t)-1; }); return *this; }
+    view& set()   { _bv.storage().visit<vt::none>(_first, _last, 
+                                                  [](uint64_t  , int) { return (uint64_t)-1; }); return *this; }
 
-    view& clear() { _bv.storage().visit<true>(_first, _last, false,
-                                              [](uint64_t  , int) { return (uint64_t)0; });  return *this; }
+    view& clear() { _bv.storage().visit<vt::none>(_first, _last, 
+                                                  [](uint64_t  , int) { return (uint64_t)0; });  return *this; }
 
-    view& flip()  { _bv.storage().visit<true>(_first, _last, false,
-                                              [](uint64_t v, int) { return ~v; });           return *this; }
+    view& flip()  { _bv.storage().visit<vt::none>(_first, _last, 
+                                                  [](uint64_t v, int) { return ~v; });           return *this; }
 
     // only works when view is within one slot
     view& set_uint64(uint64_t val) { 
         assert(size() <= 64 && slot(_first) ==  slot(_last - 1));
-        _bv.storage().visit<true>(_first, _last, false, 
-                                  [val](uint64_t, int shl) { return shl >= 0 ? val << shl : val >> shl; });
+        _bv.storage().visit<vt::none>(_first, _last, 
+                                      [val](uint64_t, int shl) { return shl >= 0 ? val << shl : val >> shl; });
         return *this; 
     }
 
@@ -263,20 +280,18 @@ public:
         else if (cnt) {
             if (cnt == stride) {
                 size_t carry = 0;
-                _bv.storage().visit<true>(_first, _last, false,
-                                          [&](uint64_t v, int ) { 
-                                              size_t res = carry; 
-                                              carry = v;
-                                              return res;
-                                          }, false);
+                _bv.storage().visit<vt::none | vt::backward>(_first, _last, [&](uint64_t v, int ) { 
+                        size_t res = carry; 
+                        carry = v;
+                        return res;
+                    });
             } else if (cnt <= stride) {
                 size_t carry = 0;
-                _bv.storage().visit<true>(_first, _last, false, 
-                                          [&](uint64_t v, int ) { 
-                                              size_t res = (v >> cnt) | carry; // yes we have to shift the opposite way!
-                                              carry = (v << (stride - cnt));
-                                              return res;
-                                          }, false);
+                _bv.storage().visit<vt::none | vt::backward>(_first, _last, [&](uint64_t v, int ) { 
+                        size_t res = (v >> cnt) | carry; // yes we have to shift the opposite way!
+                        carry = (v << (stride - cnt));
+                        return res;
+                    });
             } else {
                 while(cnt) {
                     size_t shift = std::min(cnt, stride);
@@ -294,20 +309,18 @@ public:
         else if (cnt) {
             if (cnt == stride) {
                 size_t carry = 0;
-                _bv.storage().visit<true>(_first, _last, false, 
-                                          [&](uint64_t v, int ) { 
-                                              size_t res = carry; 
-                                              carry = v;
-                                              return res;
-                                          });
+                _bv.storage().visit<vt::none>(_first, _last, [&](uint64_t v, int ) { 
+                        size_t res = carry; 
+                        carry = v;
+                        return res;
+                    });
             } else if (cnt <= stride) {
                 size_t carry = 0;
-                _bv.storage().visit<true>(_first, _last, false, 
-                                          [&](uint64_t v, int ) { 
-                                              size_t res = (v << cnt) | carry; // yes we have to shift the opposite way!
-                                              carry = (v >> (stride - cnt));
-                                              return res;
-                                          });
+                _bv.storage().visit<vt::none>(_first, _last, [&](uint64_t v, int ) { 
+                        size_t res = (v << cnt) | carry; // yes we have to shift the opposite way!
+                        carry = (v >> (stride - cnt));
+                        return res;
+                    });
             } else {
                 while(cnt) {
                     size_t shift = std::min(cnt, stride);
@@ -357,15 +370,15 @@ public:
     // ------------------------------------
     bool any() const { 
         bool res = false;
-        _bv.storage().visit<false>(_first, _last, false, 
-                                   [&](uint64_t v, int) { if (v) res = true; return res; }); 
+        _bv.storage().visit<vt::view>(_first, _last,
+                                      [&](uint64_t v, int) { if (v) res = true; return res; }); 
         return res; 
     }
 
     bool every() const { 
         bool res = true;
-        _bv.storage().visit<false>(_first, _last, true, 
-                                   [&](uint64_t v, int) { if (v != (uint64_t)-1) res = false; return !res; }); 
+        _bv.storage().visit<vt::view | vt::oor_ones>(_first, _last,
+                                                     [&](uint64_t v, int) { if (v != (uint64_t)-1) res = false; return !res; }); 
         return res; 
     }
 
@@ -379,8 +392,8 @@ public:
     // -------------
     size_t popcount() const {
         size_t cnt = 0;
-        _bv.storage().visit<false>(_first, _last, false, 
-                                   [&](uint64_t v, int) { cnt += _popcount64(v); return false; }); 
+        _bv.storage().visit<vt::view>(_first, _last,
+                                      [&](uint64_t v, int) { cnt += _popcount64(v); return false; }); 
         return cnt;
     }
 
