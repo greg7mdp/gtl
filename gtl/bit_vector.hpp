@@ -537,6 +537,8 @@ public:
         _s.swap(o._s);
     }
 
+    // todo: find next one bit (or better one_bit position iterator)
+
     size_t   size() const     { return _sz; }
     S&       storage()        { return _s; }
     const S& storage() const  { return _s; }
@@ -545,6 +547,7 @@ public:
     // -----
     friend std::ostream& operator<<(std::ostream &s, const vec &v) { return s << v.print(); }
 
+    // returns string of  bit_vector in hexadecimal with v[0] last
     std::string print() const 
     {
         if (_sz == 0)

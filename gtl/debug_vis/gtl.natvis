@@ -3,7 +3,8 @@
 <AutoVisualizer xmlns="http://schemas.microsoft.com/vstudio/debugger/natvis/2010">
   <!-- bit_vector  -->
   <Type            Name="gtl::bitv::vec&lt;*&gt;">  
-      <DisplayString>size = ({_sz,d}) {_s}</DisplayString>
+      <DisplayString Condition="_sz &gt; 14757395258967641291"> sz=unset {_s}</DisplayString>
+      <DisplayString>sz={_sz,d} {_s}</DisplayString>
   </Type>  
 
   <!-- bit_vector storage -->
@@ -11,10 +12,10 @@
           <Intrinsic Name="s" Expression="_s" />
           <Intrinsic Name="sz" Expression="_s.size()" />  
           <Intrinsic Name="ptr" Expression="_s._Mypair._Myval2._Myfirst" />  
-          <DisplayString Condition="sz() &gt; 4" Optional="false"> ... {_s._Mypair._Myval2._Myfirst+3,nax}{_s._Mypair._Myval2._Myfirst+2,nax}{_s._Mypair._Myval2._Myfirst+1,nax}{_s._Mypair._Myval2._Myfirst+0,nax}</DisplayString>
-          <DisplayString Condition="sz() &gt; 3" Optional="false">{_s._Mypair._Myval2._Myfirst+3,nax}{_s._Mypair._Myval2._Myfirst+2,nax}{_s._Mypair._Myval2._Myfirst+1,nax}{_s._Mypair._Myval2._Myfirst+0,nax}</DisplayString>
-          <DisplayString Condition="sz() &gt; 2" Optional="false">{_s._Mypair._Myval2._Myfirst+2,nax}{_s._Mypair._Myval2._Myfirst+1,nax}{_s._Mypair._Myval2._Myfirst+0,nax}</DisplayString>
-          <DisplayString Condition="sz() &gt; 1" Optional="false">{_s._Mypair._Myval2._Myfirst+1,nax}{_s._Mypair._Myval2._Myfirst+0,nax}</DisplayString>
+          <DisplayString Condition="sz() &gt; 4" Optional="false"> ... {_s._Mypair._Myval2._Myfirst+3,nax} {_s._Mypair._Myval2._Myfirst+2,nax} {_s._Mypair._Myval2._Myfirst+1,nax} {_s._Mypair._Myval2._Myfirst+0,nax}</DisplayString>
+          <DisplayString Condition="sz() &gt; 3" Optional="false">{_s._Mypair._Myval2._Myfirst+3,nax} {_s._Mypair._Myval2._Myfirst+2,nax} {_s._Mypair._Myval2._Myfirst+1,nax} {_s._Mypair._Myval2._Myfirst+0,nax}</DisplayString>
+          <DisplayString Condition="sz() &gt; 2" Optional="false">{_s._Mypair._Myval2._Myfirst+2,nax} {_s._Mypair._Myval2._Myfirst+1,nax} {_s._Mypair._Myval2._Myfirst+0,nax}</DisplayString>
+          <DisplayString Condition="sz() &gt; 1" Optional="false">{_s._Mypair._Myval2._Myfirst+1,nax} {_s._Mypair._Myval2._Myfirst+0,nax}</DisplayString>
           <DisplayString Condition="sz() &gt; 0" Optional="false">{_s._Mypair._Myval2._Myfirst+0,nax}</DisplayString>
           <Expand/>
   </Type>      
