@@ -354,9 +354,9 @@ TEST(BitVectorTest, print) {
     static constexpr size_t sz = 100;
     gtl::bit_vector v(sz);
     for (size_t i=0; i<sz; i+= 4)
-        v.view(i, i+4).set_uint64((i/4) % 16); // set to hex 0 -> f
+        v.view(i, i+4) = uint64_t((i/4) % 16); // set to hex 0 -> f
 
-    EXPECT_TRUE(v.print() == "0x0876543210fedcba9876543210");
+    EXPECT_TRUE((std::string)v == "0x0876543210fedcba9876543210");
     if (0) {
         // print test bit_vectors
         // ----------------------

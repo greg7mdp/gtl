@@ -95,7 +95,7 @@ public:
     // functional update/inspect  by bit range, last is 1 + last index to change
     // function f can modify the whole uint64_t, only relevant bits are copied
     // the shift passed to F moves returned value in correct location(>= 0 means left shift)
-    // if do_update == false, this fn exits early when the callback returns true.
+    // if (flags & vt::view), this fn exits early when the callback returns true.
     // ------------------------------------------------------------------------------------
     template<vt flags, class F>
     void visit(size_t first, size_t last, F f) { 
@@ -117,7 +117,7 @@ public:
             // ----------
             if (mod(first)) {
                 uint64_t& s  = _s[first_slot]; 
-                uint64_t  m  = lowmask(first);  // m has ones on the bits we don't want to change
+                uint64_t  m  = lowmask(first);      // m has ones on the bits we don't want to change
                 auto fs = f(oor_bits<flags>(s, m), (int)mod(first)); 
                 if constexpr (!(flags & vt::view)) {
                     s &= m;                         // zero bits to be changed
@@ -142,7 +142,7 @@ public:
             // ---------
             if (mod(last)) {
                 uint64_t& s  = _s[last_slot]; 
-                uint64_t  m  = himask(last);   // m has ones on the bits we don't want to change
+                uint64_t  m  = himask(last);       // m has ones on the bits we don't want to change
                 auto  fs = f(oor_bits<flags>(s, m), -(int)(mod(first))); 
                 if constexpr (!(flags & vt::view)) {
                     s &= m;                        // zero bits to be changed
@@ -155,7 +155,7 @@ public:
             // ---------
             if (mod(last)) {
                 uint64_t& s  = _s[last_slot]; 
-                uint64_t  m  = himask(last);   // m has ones on the bits we don't want to change
+                uint64_t  m  = himask(last);       // m has ones on the bits we don't want to change
                 auto fs = f(oor_bits<flags>(s, m), -(int)(mod(first))); 
                 if constexpr (!(flags & vt::view)) {
                     s &= m;                        // zero bits to be changed
@@ -191,17 +191,24 @@ public:
     }
 
     // -----------------------------------------------------------------------
-    template<class F>
+    template<vt flags, class F>
     void combine_all(size_t sz, const storage &o, F f) { 
         assert(size() == o.size());
         size_t num_slots = size();
         if (!num_slots)
             return;
         size_t slot;
-        for (slot=0; slot<num_slots-1; ++slot)
-            _s[slot] = f(_s[slot], o._s[slot]);
-        uint64_t m  = mod(sz) ? ~himask(sz) : (uint64_t)-1;
-        _s[slot] = f(_s[slot], o._s[slot]) & m; // mask last returned value so we don't set bits past end
+        for (slot=0; slot<num_slots-1; ++slot) {
+            auto fs = f(_s[slot], o._s[slot]);
+            if constexpr (!(flags & vt::view)) 
+                _s[slot] = fs;
+            else if (fs)
+                return;
+        }
+        uint64_t m  = mod(sz) ? himask(sz) : (uint64_t)0; // m has ones on the bits we don't want to change
+        auto fs = f(_s[slot], o._s[slot]);
+        if constexpr (!(flags & vt::view)) 
+            _s[slot] = fs & ~m;                           // mask last returned value so we don't set bits past end
         _check_extra_bits();
     }
 
@@ -469,7 +476,7 @@ public:
     template <class F>
     vec& bin_assign(F &&f, const vec &o) { 
         assert(_sz == o._sz); 
-        _s.combine_all(_sz, o._s, std::forward<F>(f)); 
+        _s.combine_all<vt::none>(_sz, o._s, std::forward<F>(f)); 
         return *this;
     }
 
@@ -485,7 +492,7 @@ public:
         size_t num_vals = vals.size();
         auto v = vals.begin();
         for(size_t i=0; i<num_vals; ++i)
-            view(i * stride, std::min((i+1) * stride, _sz)).set_uint64(*v++);
+            view(i * stride, std::min((i+1) * stride, _sz)) = *v++;
         return *this;
     }
 
@@ -509,11 +516,10 @@ public:
             return true;
         if (_sz != o._sz)
             return false;
-        size_t num_slots = _s.size();
-        for (size_t i=0; i<num_slots; ++i) 
-            if (_s[i] != o._s[i]) 
-                return false;
-        return true;
+        bool res = true;
+        const_cast<S&>(_s).combine_all<vt::view>(_sz, o._s, [&](uint64_t a, uint64_t b) { 
+                if (a != b) res = false; return !res; }); 
+        return res;
     }
 
     template <class S2> 
@@ -521,31 +527,29 @@ public:
 
     template <class S2>
     bool contains(const vec<S2> &o) const {
+        assert(_sz >= o._sz);
         if (_sz < o._sz)
             return false;
-        size_t num_slots = o._s.size();
-        for (size_t i=0; i<num_slots; ++i) 
-            if ((_s[i] | o._s[i]) != _s[i])  
-                return false;              // o._s[i] has some bits set that are not in _s[i]
-        return true;
+        bool res = true;
+        const_cast<S&>(_s).combine_all<vt::view>(o._sz, o._s, [&](uint64_t a, uint64_t b) { 
+                if ((a | b) != a) res = false; return !res; }); 
+        return res;
     }
 
     template <class S2>
     bool disjoint(const vec<S2> &o) const {
         size_t sz = std::min(_sz, o._sz);
-        size_t num_slots = slot_cnt(sz);
-        for (size_t i=0; i<num_slots; ++i) 
-            if (_s[i] & o._s[i])           // binary and == 0 => the two have no bit in common
-                return false;
-        return true;
+         bool res = true;
+        const_cast<S&>(_s).combine_all<vt::view>(sz, o._s, [&](uint64_t a, uint64_t b) { 
+                if (a & b) res = false; return !res; }); 
+        return res;
     }
 
     // miscellaneous
     // -------------
     size_t popcount() const {              // should we use std::popcount?
-        size_t num_slots = slot_cnt(_sz), n = 0; 
-        for (size_t i=0; i<num_slots; ++i) 
-            n += _popcount64(_s[i]);       // we rely of the fact that the extra bits on the last slot are zeroes
+        size_t n = 0; 
+        const_cast<S&>(_s).visit<vt::view>(0, _sz, [&](uint64_t v, int) { n += _popcount64(v); return false; });
         return n;
     }
 
