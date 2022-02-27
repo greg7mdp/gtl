@@ -47,9 +47,9 @@ constexpr vt   operator|(vt a, vt b) { return (vt)((vt_type)a | (vt_type)b); }
 // implements bit storage class
 // bits default initialized to 0
 // ---------------------------------------------------------------------------
+template <class A>
 class storage {
 public:
-    
     storage(size_t num_bits = 0, bool val = false) { resize(num_bits, val); }
     size_t size() const { return _s.size(); }          // size in slots
     void resize(size_t num_bits, bool val = false) { 
@@ -222,7 +222,7 @@ private:
 #endif
     }
 
-    std::vector<uint64_t> _s;
+    std::vector<uint64_t, A> _s;
     size_t _sz;
 };
 
@@ -601,8 +601,9 @@ private:
 } // namespace bitv
 
 // ---------------------------------------------------------------------------
-using bit_vector = bitv::vec<bitv::storage>;
-using bit_view   = bitv::view;
+using storage    = bitv::storage<std::allocator<uint64_t>>;
+using bit_vector = bitv::vec<storage>;
+using bit_view   = bitv::view<storage, bitv::vec>;
 
 
 
