@@ -22,7 +22,7 @@ namespace gtl {
 namespace bitv {
 
 static constexpr size_t   stride = 64;
-static constexpr uint64_t all_ones = (uint64_t)-1;
+static constexpr uint64_t ones = (uint64_t)-1;
 static constexpr size_t   mod(size_t n) { return (n & 0x3f); }
 static constexpr size_t   slot_cnt(size_t n) { return (n + 63) >> 6; }
 static constexpr size_t   slot(size_t n)    { return n >> 6; }
@@ -46,6 +46,8 @@ constexpr vt   operator|(vt a, vt b) { return (vt)((vt_type)a | (vt_type)b); }
 // ---------------------------------------------------------------------------
 // implements bit storage class
 // bits default initialized to 0
+// todo: implement sparse storage (maybe like https://github.com/thrunduil/DBS/tree/master/src/dbs
+//       or like what I did before)
 // ---------------------------------------------------------------------------
 template <class A>
 class storage {
@@ -55,7 +57,7 @@ public:
     void resize(size_t num_bits, bool val = false) { 
         _sz = num_bits;
         size_t num_slots = slot_cnt(num_bits);
-        _s.resize(num_slots, val ? (uint64_t)-1 : 0);
+        _s.resize(num_slots, val ? ones : 0);
         if (mod(num_bits))
             _s[num_slots - 1] &= ~himask(num_bits); // make sure to zero the remainder bits in last slot
         _check_extra_bits();
@@ -248,15 +250,15 @@ public:
 
     // single bit access
     // -----------------
-    void set(size_t idx)   { _bv.set(idx + _first); }
-    void clear(size_t idx) { _bv.clear(idx + _first); }
-    void flip(size_t idx)  { _bv.flip(idx + _first); }
+    view& set(size_t idx)   { _bv.set(idx + _first); return *this; }
+    view& clear(size_t idx) { _bv.clear(idx + _first); return *this; }
+    view& flip(size_t idx)  { _bv.flip(idx + _first); return *this; }
     bool operator[](size_t idx) const { return _bv[idx + _first]; }
 
     // change whole view
     // -----------------
     view& set()   { _bv.storage().visit<vt::none>(_first, _last, 
-                                                  [](uint64_t  , int) { return (uint64_t)-1; }); return *this; }
+                                                  [](uint64_t  , int) { return ones; }); return *this; }
 
     view& clear() { _bv.storage().visit<vt::none>(_first, _last, 
                                                   [](uint64_t  , int) { return (uint64_t)0; });  return *this; }
@@ -398,7 +400,7 @@ public:
     bool every() const { 
         bool res = true;
         _bv.storage().visit<vt::view | vt::oor_ones>(_first, _last,
-                                                     [&](uint64_t v, int) { if (v != (uint64_t)-1) res = false; return !res; }); 
+                                                     [&](uint64_t v, int) { if (v != ones) res = false; return !res; }); 
         return res; 
     }
 
@@ -445,17 +447,20 @@ public:
 
     // bit access
     // ----------
-    void set(size_t idx)   { assert(idx < _sz); _s.update_bit(idx, [](uint64_t  ) { return (uint64_t)-1; }); }
-    void clear(size_t idx) { assert(idx < _sz); _s.update_bit(idx, [](uint64_t  ) { return (uint64_t)0; }); }
-    void flip(size_t idx)  { assert(idx < _sz); _s.update_bit(idx, [](uint64_t v) { return ~v; }); }
+    vec& set(size_t idx)   { assert(idx < _sz); _s.update_bit(idx, [](uint64_t  ) { return ones; }); return *this; }
+    vec& clear(size_t idx) { assert(idx < _sz); _s.update_bit(idx, [](uint64_t  ) { return 0; }); return *this; }
+    vec& flip(size_t idx)  { assert(idx < _sz); _s.update_bit(idx, [](uint64_t v) { return ~v; }); return *this; }
     bool operator[](size_t idx) const { return !!(_s[slot(idx)] & bitmask(idx)); }
     unsigned char get_byte(size_t byte_idx) const { return (unsigned char)(_s[byte_idx >> 3] >> ((byte_idx & 7) << 3)); }
 
+    // either sets of clears the bit depending on val
+    vec& set(size_t idx, bool val) { assert(idx < _sz); _s.update_bit(idx, [](uint64_t  ) { return val ? ones : 0; }); return *this; }
+
     // change whole bit_vector
     // -----------------------
-    void set()   { view().set(); }
-    void clear() { view().clear(); }
-    void flip()  { view().flip(); }
+    vec& set()   { view().set(); return *this; }
+    vec& clear() { view().clear(); return *this; }
+    vec& flip()  { view().flip(); return *this; }
 
     // access bit value
     // ----------------
@@ -544,6 +549,9 @@ public:
         return res;
     }
 
+    template <class S2>
+    bool intersects(const vec<S2> &o) const { return !disjoint(o); }
+
     // miscellaneous
     // -------------
     size_t popcount() const {              // should we use std::popcount?
@@ -559,15 +567,30 @@ public:
 
     // todo: find next one bit (or better one_bit position iterator)
 
-    size_t   size() const     { return _sz; }
-    S&       storage()        { return _s; }
-    const S& storage() const  { return _s; }
+    size_t   size() const       { return _sz; }
+    S&       storage()          { return _s; }
+    const S& storage() const    { return _s; }
+    size_t   num_blocks() const { return slot_cnt(_sz); }
 
     // print
     // -----
     friend std::ostream& operator<<(std::ostream &s, const vec &v) { return s << (std::string)v; }
 
     // make bit_vector convertible to std::string
+    void append_to_string(std::string &res) const 
+    {
+        size_t num_bytes = (_sz + 7) >> 3;
+        res.reserve(res.size() + num_bytes * 2);
+
+        auto to_hex = [](unsigned char b) -> char { return (b > 9) ? 'a' + b - 10 : '0' + b; };
+
+        for (int i=(int)(num_bytes-1); i>= 0; --i) {
+            unsigned char val = get_byte(i);
+            res +=  to_hex(val >> 4);
+            res += to_hex(val & 0xf);
+        }
+    }
+
     operator std::string() const 
     {
         if (_sz == 0)
@@ -577,13 +600,7 @@ public:
         res.reserve(num_bytes * 2 + 2);
 
         res += "0x";
-        auto to_hex = [](unsigned char b) -> char { return (b > 9) ? 'a' + b - 10 : '0' + b; };
-
-        for (int i=(int)(num_bytes-1); i>= 0; --i) {
-            unsigned char val = get_byte(i);
-            res +=  to_hex(val >> 4);
-            res += to_hex(val & 0xf);
-        }
+        append_to_string(res);
         return res;
     }
     
