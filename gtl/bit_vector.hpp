@@ -48,15 +48,6 @@ constexpr vt   operator|(vt a, vt b) { return (vt)((vt_type)a | (vt_type)b); }
 // bits default initialized to 0
 // ---------------------------------------------------------------------------
 class storage {
-private:
-    template<vt flags>
-    static constexpr inline uint64_t oor_bits(uint64_t s, uint64_t m) {
-        if constexpr (!(flags & vt::oor_ones))
-            return  (s & ~m);
-        else
-            return s | m;
-    }
-
 public:
     
     storage(size_t num_bits = 0, bool val = false) { resize(num_bits, val); }
@@ -103,10 +94,18 @@ public:
             return;
         size_t first_slot = slot(first);
         size_t last_slot  = slot(last);
+
+        constexpr auto oor_bits = [](uint64_t s, uint64_t m) constexpr  -> uint64_t {
+            if constexpr (!(flags & vt::oor_ones))
+                return  (s & ~m);
+            else
+                return s | m;
+        };
+
         if (first_slot == last_slot) {
             uint64_t& s  = _s[first_slot]; 
             uint64_t  m  = ~(lowmask(first) ^ lowmask(last)); // m has ones on the bits we don't want to change
-            auto fs = f(oor_bits<flags>(s, m), (int)mod(first)); 
+            auto fs = f(oor_bits(s, m), (int)mod(first)); 
             if constexpr (!(flags & vt::view)) {
                 s &= m;
                 s |= fs & ~m;
@@ -118,7 +117,7 @@ public:
             if (mod(first)) {
                 uint64_t& s  = _s[first_slot]; 
                 uint64_t  m  = lowmask(first);      // m has ones on the bits we don't want to change
-                auto fs = f(oor_bits<flags>(s, m), (int)mod(first)); 
+                auto fs = f(oor_bits(s, m), (int)mod(first)); 
                 if constexpr (!(flags & vt::view)) {
                     s &= m;                         // zero bits to be changed
                     s |= fs & ~m;                   // copy masked new value
@@ -143,7 +142,7 @@ public:
             if (mod(last)) {
                 uint64_t& s  = _s[last_slot]; 
                 uint64_t  m  = himask(last);       // m has ones on the bits we don't want to change
-                auto  fs = f(oor_bits<flags>(s, m), -(int)(mod(first))); 
+                auto  fs = f(oor_bits(s, m), -(int)(mod(first))); 
                 if constexpr (!(flags & vt::view)) {
                     s &= m;                        // zero bits to be changed
                     s |= fs & ~m;                  // copy masked new value
@@ -156,7 +155,7 @@ public:
             if (mod(last)) {
                 uint64_t& s  = _s[last_slot]; 
                 uint64_t  m  = himask(last);       // m has ones on the bits we don't want to change
-                auto fs = f(oor_bits<flags>(s, m), -(int)(mod(first))); 
+                auto fs = f(oor_bits(s, m), -(int)(mod(first))); 
                 if constexpr (!(flags & vt::view)) {
                     s &= m;                        // zero bits to be changed
                     s |= fs & ~m;                  // copy masked new value
@@ -180,7 +179,7 @@ public:
             // ----------
             uint64_t& s  = _s[first_slot]; 
             uint64_t  m  = lowmask(first);  // m has ones on the bits we don't want to change
-            auto fs = f(oor_bits<flags>(s, m), (int)mod(first)); 
+            auto fs = f(oor_bits(s, m), (int)mod(first)); 
             if constexpr (!(flags & vt::view)) {
                 s &= m;                         // zero bits to be changed
                 s |= fs & ~m;                   // copy masked new value
