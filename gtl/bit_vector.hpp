@@ -248,7 +248,7 @@ public:
         _check_extra_bits();
     }
 
-    void swap(storage &o) { _s.swap(o._s); }
+    void swap(storage &o) { _s.swap(o._s); std::swap(_sz, o._sz); }
 
 private:
     void _check_extra_bits() const {
@@ -305,7 +305,7 @@ public:
     // -----------------------------
     template <class F>
     view& bin_assign(const view &o, F &&f) noexcept { 
-        assert(size() == o.size()); 
+        assert(size() == o.size()); (void)o;
         _bv.storage().visit<vt::none>(_first, _last, std::forward<F>(f)); 
         return *this;
     }
