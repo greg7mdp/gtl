@@ -27,8 +27,8 @@ static constexpr size_t   mod(size_t n) { return (n & 0x3f); }
 static constexpr size_t   slot_cnt(size_t n) { return (n + 63) >> 6; }
 static constexpr size_t   slot(size_t n)    { return n >> 6; }
 static constexpr uint64_t bitmask(size_t n) { return (uint64_t)1 << mod(n); } // a mask for this bit in its slot
-static constexpr uint64_t lowmask (size_t n) { return bitmask(n) - 1; }        // a mask for lower bits than n in slot
-static constexpr uint64_t himask(size_t n)  { return ~lowmask(n); }           // a mask for higher bits than n-1 in slot
+static constexpr uint64_t lowmask (size_t n) { return bitmask(n) - 1; }       // a mask for bits lower than n in slot
+static constexpr uint64_t himask(size_t n)  { return ~lowmask(n); }           // a mask for bits higher than n-1 in slot
 
 static constexpr size_t _popcount64(uint64_t y) { // https://gist.github.com/enjoylife/4091854
     y -= ((y >> 1) & 0x5555555555555555ull);
@@ -68,19 +68,21 @@ public:
     bool operator==(const storage &o) const { return _s == o._s; }
     uint64_t operator[](size_t slot) const  { assert(slot < _s.size()); return _s[slot]; }
 
-    // returns a sequence of bits starting at first, where the first uint64_t returned 
+    // returns a sequence of uint64_t simulating a view starting at a as_first index
+    // bits starting at first, where the first uint64_t returned 
     // contains the first init_lg bits of the sequence, shifted shift bits.
     // -------------------------------------------------------------------------------
     class bit_sequence {
     public:
-        bit_sequence(const storage &s, size_t first, size_t last, size_t init_lg, size_t shift) :
-            _s(s), _cur(first), _last(last), _init_lg(init_lg), _shift(shift)
+        bit_sequence(const storage &s, size_t first, size_t last, size_t as_first) :
+            _s(s), _cur(first), _last(last), 
+            _init_lg(mod(stride - mod(as_first))), // _init_lg will be the # of initial bits returned 
+            _shift(mod(as_first))                  // as if at end of a slot, so shifted left _shift bits
         {
             assert(last <= _s._sz);
-            assert(init_lg < 64); // the number of bits to return in the first call, following ones are 64 bits till last
+            assert(_init_lg < 64); // the number of bits to return in the first call, following ones are 64 bits till last
             assert(last >= first);
-            assert(last - first <= init_lg);
-            assert(init_lg + shift <= stride);
+            assert(_init_lg + _shift <= stride);
         }
         
         uint64_t operator()() {
@@ -92,7 +94,9 @@ public:
             }
             return get_next_bits(stride);
         }
-
+        
+        // returns the next std::min(lg, _last - _cur) of the bit sequence
+        // masked appropriately
         uint64_t get_next_bits(size_t lg) {
             lg = std::min(lg, _last - _cur);
             assert(lg);
@@ -105,11 +109,12 @@ public:
                 v = _s[slot_idx];
             } else if (lg <= stride - offset) {
                 // result all in this slot
-                v = (_s[slot_idx] & lowmask(_cur + lg - 1)) >> offset;
+                size_t last = _cur + lg;
+                v = (_s[slot_idx] & (mod(last) == 0 ? ones : lowmask(last))) >> offset;
             } else {
                 v = _s[slot_idx] >> offset;
                 size_t lg_left = lg - (stride - offset);
-                v |= (_s[slot_idx + 1] & ~himask(lg_left)) << (stride - offset);
+                v |= (_s[slot_idx + 1] & lowmask(lg_left)) << (stride - offset);
             }
             _cur += lg;
             return v;
@@ -312,33 +317,32 @@ public:
                                                   [](uint64_t  , int) { return ones; }); return *this; }
 
     view& clear() { _bv.storage().visit<vt::none>(_first, _last, 
-                                                  [](uint64_t  , int) { return (uint64_t)0; });  return *this; }
+                                                  [](uint64_t  , int) { return (uint64_t)0; }); return *this; }
 
     view& flip()  { _bv.storage().visit<vt::none>(_first, _last, 
-                                                  [](uint64_t v, int) { return ~v; });           return *this; }
+                                                  [](uint64_t v, int) { return ~v; }); return *this; }
 
     // compound assignment operators
     // -----------------------------
     template <class F>
     view& bin_assign(const view &o, F &&f) { 
         assert(size() == o.size()); 
-        
         _bv.storage().visit<vt::none>(_first, _last, std::forward<F>(f)); 
         return *this;
     }
 
     view& operator|=(const view &o) { 
-        typename S::bit_sequence seq(_bv.storage(), o._first, o._last, stride - mod(_first), mod(_first));
+        typename S::bit_sequence seq(o._bv.storage(), o._first, o._last, _first);
         return bin_assign(o, [&](uint64_t a, size_t) { return a | seq(); });
     } 
 
     view& operator&=(const view &o) {
-        typename S::bit_sequence seq(_bv.storage(), o._first, o._last, stride - mod(_first), mod(_first));
+        typename S::bit_sequence seq(o._bv.storage(), o._first, o._last, _first);
         return bin_assign(o, [&](uint64_t a, size_t) { return a & seq(); });
     } 
 
     view& operator^=(const view &o) {
-        typename S::bit_sequence seq(_bv.storage(), o._first, o._last, stride - mod(_first), mod(_first));
+        typename S::bit_sequence seq(o._bv.storage(), o._first, o._last, _first);
         return bin_assign(o, [&](uint64_t a, size_t) { return a ^ seq(); });
     } 
 
@@ -445,19 +449,17 @@ public:
         return *this; 
     }
 
-    bool operator==(const view &o) const {
-        if (this == &o) 
-            return true;
+    template <class View>
+    bool operator==(const View &o) const {
         if (size() != o.size())
             return false;
-
-        // -------- slow version for now [greg todo]
-        for (size_t i=0; i<size(); ++i)
-            if ((*this)[i] != o[i])
-                return false;
-        return true;
+        typename S::bit_sequence seq(o._bv.storage(), o._first, o._last, _first);
+        bool res = true;
+        _bv.storage().visit<vt::view>(_first, _last, 
+                                      [&](uint64_t v, int) { if (v != seq()) res = false; return !res; }); 
+        return res; 
     }
-        
+  
     // unary predicates: any, every, etc...
     // ------------------------------------
     bool any() const { 
@@ -478,11 +480,39 @@ public:
 
     // binary predicates: contains, disjoint, ...
     // ------------------------------------------
-    // todo
+    template <class View>
+    bool contains(const View &o) const {
+        assert(size() >= o.size());
+        if (size() < o.size())
+            return false;
+        bool res = true;
+        typename S::bit_sequence seq(o._bv.storage(), o._first, o._last, _first);
+        _bv.storage().visit<vt::view>(_first, _last, [&](uint64_t v, int) { 
+                if ((v | seq()) != v) res = false; return !res; }); 
+        return res;
+    }
+
+    template <class View>
+    bool disjoint(const View &o) const {
+        bool res = true;
+        if (size() <= o.size()) {
+            typename S::bit_sequence seq(o._bv.storage(), o._first, o._first + size(), _first);
+            _bv.storage().visit<vt::view>(_first, _last, [&](uint64_t v, int) { 
+                    if (v & seq()) res = false; return !res; }); 
+        } else {
+            typename S::bit_sequence seq(o._bv.storage(), o._first, o._last, _first);
+            _bv.storage().visit<vt::view>(_first, _first + o.size(), [&](uint64_t v, int) { 
+                    if (v & seq()) res = false; return !res; }); 
+        }
+        return res;
+    }
+
+    template <class View>
+    bool intersect(const View &o) const { return !disjoint(o);  }
 
     // miscellaneous
     // -------------
-    size_t popcount() const {
+    size_t popcount() const {              // should we use std::popcount?
         size_t cnt = 0;
         _bv.storage().visit<vt::view>(_first, _last,
                                       [&](uint64_t v, int) { cnt += _popcount64(v); return false; }); 
@@ -554,9 +584,15 @@ public:
         return *this;
     }
 
+#if 0
     vec& operator|=(const vec &o) { return bin_assign([](uint64_t a, uint64_t b) { return a | b; },  o); }
     vec& operator&=(const vec &o) { return bin_assign([](uint64_t a, uint64_t b) { return a & b; },  o); }
     vec& operator^=(const vec &o) { return bin_assign([](uint64_t a, uint64_t b) { return a ^ b; },  o); }
+#else
+    vec& operator|=(const vec &o) { view() |= o.view(); return *this; }
+    vec& operator&=(const vec &o) { view() &= o.view(); return *this; }
+    vec& operator^=(const vec &o) { view() ^= o.view(); return *this; }
+#endif
     vec& operator-=(const vec &o) { return bin_assign([](uint64_t a, uint64_t b) { return a & ~b; }, o); }
     vec& or_not(const vec &o)     { return bin_assign([](uint64_t a, uint64_t b) { return a | ~b; }, o); }
 
@@ -588,17 +624,31 @@ public:
     bool operator==(const vec<S2> &o) const {
         if (this == &o)
             return true;
+#if 1
+        return view() == o.view();
+#else
         if (_sz != o._sz)
             return false;
         bool res = true;
         const_cast<S&>(_s).combine_all<vt::view>(_sz, o._s, [&](uint64_t a, uint64_t b) { 
                 if (a != b) res = false; return !res; }); 
         return res;
+#endif
     }
 
     template <class S2> 
     bool operator!=(const vec<S2> &o) const { return !(*this == o); }
 
+#if 1
+    template <class S2> 
+    bool contains(const vec<S2> &o) const { return view().contains(o.view()); }
+    
+    template <class S2> 
+    bool disjoint(const vec<S2> &o) const { return view().disjoint(o.view()); }
+
+    template <class S2> 
+    bool intersect(const vec<S2> &o) const { return !disjoint(o); }
+#else
     template <class S2>
     bool contains(const vec<S2> &o) const {
         assert(_sz >= o._sz);
@@ -613,22 +663,19 @@ public:
     template <class S2>
     bool disjoint(const vec<S2> &o) const {
         size_t sz = std::min(_sz, o._sz);
-         bool res = true;
+        bool res = true;
         const_cast<S&>(_s).combine_all<vt::view>(sz, o._s, [&](uint64_t a, uint64_t b) { 
                 if (a & b) res = false; return !res; }); 
         return res;
     }
+#endif
 
     template <class S2>
     bool intersects(const vec<S2> &o) const { return !disjoint(o); }
 
     // miscellaneous
     // -------------
-    size_t popcount() const {              // should we use std::popcount?
-        size_t n = 0; 
-        const_cast<S&>(_s).visit<vt::view>(0, _sz, [&](uint64_t v, int) { n += _popcount64(v); return false; });
-        return n;
-    }
+    size_t popcount() const { return view().popcount(); }
 
     void swap(vec &o) {
         std::swap(_sz, o._sz);
