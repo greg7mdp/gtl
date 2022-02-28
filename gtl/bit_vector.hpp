@@ -247,6 +247,7 @@ public:
         _check_extra_bits();
     }
 
+#if 0
     // -----------------------------------------------------------------------
     template<vt flags, class F>
     void combine_all(size_t sz, const storage &o, F f) { 
@@ -268,6 +269,7 @@ public:
             _s[slot] = fs & ~m;                           // mask last returned value so we don't set bits past end
         _check_extra_bits();
     }
+#endif
 
     void swap(storage &o) { _s.swap(o._s); }
 
@@ -325,30 +327,40 @@ public:
     // compound assignment operators
     // -----------------------------
     template <class F>
-    view& bin_assign(const view &o, F &&f) { 
+    view& bin_assign(const view &o, F &&f) noexcept { 
         assert(size() == o.size()); 
         _bv.storage().visit<vt::none>(_first, _last, std::forward<F>(f)); 
         return *this;
     }
 
-    view& operator|=(const view &o) { 
+    view& operator|=(const view &o) noexcept { 
         typename S::bit_sequence seq(o._bv.storage(), o._first, o._last, _first);
         return bin_assign(o, [&](uint64_t a, size_t) { return a | seq(); });
     } 
 
-    view& operator&=(const view &o) {
+    view& operator&=(const view &o) noexcept {
         typename S::bit_sequence seq(o._bv.storage(), o._first, o._last, _first);
         return bin_assign(o, [&](uint64_t a, size_t) { return a & seq(); });
     } 
 
-    view& operator^=(const view &o) {
+    view& operator^=(const view &o) noexcept {
         typename S::bit_sequence seq(o._bv.storage(), o._first, o._last, _first);
         return bin_assign(o, [&](uint64_t a, size_t) { return a ^ seq(); });
     } 
 
+    view& operator-=(const view &o) noexcept {
+        typename S::bit_sequence seq(o._bv.storage(), o._first, o._last, _first);
+        return bin_assign(o, [&](uint64_t a, size_t) { return a & ~seq(); });
+    } 
+
+    view& or_not(const view &o) noexcept {
+        typename S::bit_sequence seq(o._bv.storage(), o._first, o._last, _first);
+        return bin_assign(o, [&](uint64_t a, size_t) { return a | ~seq(); });
+    } 
+
     // shift operators. Zeroes are shifted in.
     // ---------------------------------------
-    view& operator<<=(size_t cnt) { 
+    view& operator<<=(size_t cnt) noexcept { 
         if (cnt >= size())
             clear();
         else if (cnt) {
@@ -377,7 +389,7 @@ public:
         return *this;
     }
 
-    view& operator>>=(size_t cnt) { 
+    view& operator>>=(size_t cnt) noexcept { 
         if (cnt >= size())
             clear();
         else if (cnt) {
@@ -430,8 +442,23 @@ public:
 
     view& operator=(const view &o) {
         assert(size() == o.size());
-        
-        // ------ slow version for now [greg todo]
+        if ((&_bv != &o._bv) || (_first < o._first) || (_first <= o._last)) {
+            typename S::bit_sequence seq(o._bv.storage(), o._first, o._last, _first); 
+            _bv.storage().visit<vt::none>(_first, _last, 
+                                          [&](uint64_t, int) { return seq(); }); 
+        } else if (_first > o._first) {
+            // both views are on same bitmap, and we are copying backward with an overlap
+            typename S::bit_sequence seq(_bv.storage(), _first, _last, o._first); 
+            o._bv.storage().visit<vt::none>(o._first, o._last, 
+                                            [&](uint64_t, int) { return seq(); }); 
+        }
+        return *this; 
+    }
+
+    // debug version, do not use (instead use operator=() above)
+    view& copy_slow(const view &o) {
+        assert(size() == o.size());
+        // ------ slow version 
         if (&_bv != &o._bv) {
             clear();
             for (size_t i=0; i<size(); ++i)
@@ -567,16 +594,17 @@ public:
 
     // bitwise operators on full bit_vector
     // ------------------------------------
-    vec operator|(const vec &o) const { vec res(*this); res |= o;    return res; } 
-    vec operator&(const vec &o) const { vec res(*this); res &= o;    return res; } 
-    vec operator^(const vec &o) const { vec res(*this); res ^= o;    return res; } 
-    vec operator-(const vec &o) const { vec res(*this); res -= o;    return res; } 
-    vec operator~()             const { vec res(*this); res.flip();  return res; }
-    vec operator<<(size_t cnt)  const { vec res(*this); res <<= cnt; return res; } 
-    vec operator>>(size_t cnt)  const { vec res(*this); res >>= cnt; return res; } 
+    vec operator|(const vec &o) const noexcept { vec res(*this); res |= o;    return res; } 
+    vec operator&(const vec &o) const noexcept { vec res(*this); res &= o;    return res; } 
+    vec operator^(const vec &o) const noexcept { vec res(*this); res ^= o;    return res; } 
+    vec operator-(const vec &o) const noexcept { vec res(*this); res -= o;    return res; } 
+    vec operator~()             const noexcept { vec res(*this); res.flip();  return res; }
+    vec operator<<(size_t cnt)  const noexcept { vec res(*this); res <<= cnt; return res; } 
+    vec operator>>(size_t cnt)  const noexcept { vec res(*this); res >>= cnt; return res; } 
 
     // compound assignment operators on full bit_vector
     // ------------------------------------------------
+#if 0
     template <class F>
     vec& bin_assign(F &&f, const vec &o) { 
         assert(_sz == o._sz); 
@@ -584,17 +612,18 @@ public:
         return *this;
     }
 
-#if 0
     vec& operator|=(const vec &o) { return bin_assign([](uint64_t a, uint64_t b) { return a | b; },  o); }
     vec& operator&=(const vec &o) { return bin_assign([](uint64_t a, uint64_t b) { return a & b; },  o); }
     vec& operator^=(const vec &o) { return bin_assign([](uint64_t a, uint64_t b) { return a ^ b; },  o); }
-#else
-    vec& operator|=(const vec &o) { view() |= o.view(); return *this; }
-    vec& operator&=(const vec &o) { view() &= o.view(); return *this; }
-    vec& operator^=(const vec &o) { view() ^= o.view(); return *this; }
-#endif
     vec& operator-=(const vec &o) { return bin_assign([](uint64_t a, uint64_t b) { return a & ~b; }, o); }
     vec& or_not(const vec &o)     { return bin_assign([](uint64_t a, uint64_t b) { return a | ~b; }, o); }
+#else
+    vec& operator|=(const vec &o) noexcept { view() |= o.view(); return *this; }
+    vec& operator&=(const vec &o) noexcept { view() &= o.view(); return *this; }
+    vec& operator^=(const vec &o) noexcept { view() ^= o.view(); return *this; }
+    vec& operator-=(const vec &o) noexcept { view() -= o.view(); return *this; }
+    vec& or_not(const vec &o)     noexcept { view().or_not(o.view()); return *this; }
+#endif
 
     // assignment operators on full bit_vector
     // ---------------------------------------

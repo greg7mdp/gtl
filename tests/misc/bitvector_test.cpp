@@ -259,20 +259,62 @@ TEST(BitVectorTest, bit_shift) {
 }
 
 TEST(BitVectorTest, view_assignment) {
-    auto check_va = [](const gtl::bit_vector &v2, size_t div) {
+    auto check_va = [](const gtl::bit_vector &v2, size_t div, const size_t incr = 3) {
         size_t sz = v2.size();
         if (sz) {
-            gtl::bit_vector v(sz, false);
+            gtl::bit_vector v(sz, false), v1(sz);
             for (size_t i=0; i<div; ++i)
                 v.view((i*sz)/div, ((i+1)*sz)/div) = v2.view((i*sz)/div, ((i+1)*sz)/div);
             EXPECT_TRUE(v == v2);
+
+            for (size_t i=0; i<sz-1; ++i) {
+                if (sz > i + incr + 2) {
+                    v.view(i, i+incr) = v2.view(i+1, i+1+incr);
+                    i += incr - 1;
+                }
+                else   
+                    v.view(i, i+1) = v2.view(i+1, i+2);
+            }
+            v.view(sz-1, sz) = 0;
+            EXPECT_TRUE(v == v2 << 1);
+
+            v = v2;
+            for (size_t i=0; i<sz-1; ++i) {
+                if (sz > i + incr + 2) {
+                    v.view(i+1, i+1+incr) = v2.view(i, i+incr);
+                    i += incr - 1;
+                }
+                else   
+                    v.view(i+1, i+2) = v2.view(i, i+1);
+            }
+            v.view(0, 1) = 0;
+            EXPECT_TRUE(v == v2 >> 1);
+
+            v = v2;
+            v1 = v2;
+            for (size_t i=0; i<sz-1; ++i) {
+                if (sz > i + incr + 2) {
+                    v.view (i+1, i+1+incr) =         v.view (i, i+incr);
+                    v1.view(i+1, i+1+incr).copy_slow(v1.view(i, i+incr));
+                    EXPECT_TRUE(v == v1);
+                    i += incr - 1;
+                }
+                else {
+                    v.view (i+1, i+2) =         v.view (i, i+1);
+                    v1.view(i+1, i+2).copy_slow(v1.view(i, i+1));
+                    EXPECT_TRUE(v == v1);
+                }
+            }
+            
         }
     };
 
     const std::vector<gtl::bit_vector>& testv = get_test_vector();
     for (auto v : testv) {
         check_va(v, 3);
+        check_va(v, 5, 5);
         check_va(v, 7);
+        check_va(v, 9, 11);
         check_va(v, 17);
     }
 }
