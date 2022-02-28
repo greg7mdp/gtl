@@ -247,30 +247,6 @@ public:
         _check_extra_bits();
     }
 
-#if 0
-    // -----------------------------------------------------------------------
-    template<vt flags, class F>
-    void combine_all(size_t sz, const storage &o, F f) { 
-        assert(size() == o.size());
-        size_t num_slots = size();
-        if (!num_slots)
-            return;
-        size_t slot;
-        for (slot=0; slot<num_slots-1; ++slot) {
-            auto fs = f(_s[slot], o._s[slot]);
-            if constexpr (!(flags & vt::view)) 
-                _s[slot] = fs;
-            else if (fs)
-                return;
-        }
-        uint64_t m  = mod(sz) ? himask(sz) : (uint64_t)0; // m has ones on the bits we don't want to change
-        auto fs = f(_s[slot], o._s[slot]);
-        if constexpr (!(flags & vt::view)) 
-            _s[slot] = fs & ~m;                           // mask last returned value so we don't set bits past end
-        _check_extra_bits();
-    }
-#endif
-
     void swap(storage &o) { _s.swap(o._s); }
 
 private:
@@ -293,13 +269,13 @@ private:
 template <class S, template <class S> class BV>
 class view {
 public:
-    static constexpr size_t end = std::numeric_limits<size_t>::max();
+    static constexpr size_t npos = std::numeric_limits<size_t>::max();
     using vec_type = BV<S>;
 
-    explicit view(vec_type &bv, size_t first = 0, size_t last = end) : 
+    explicit view(vec_type &bv, size_t first = 0, size_t last = npos) : 
         _bv(bv), _first(first)
     {
-        _last = (last == end) ? _bv.size() : last;
+        _last = (last == npos) ? _bv.size() : last;
         assert(_last >= _first);
     }
 
@@ -546,6 +522,11 @@ public:
         return cnt;
     }
 
+    // find next one bit - returns npos if not found
+    // ---------------------------------------------
+    size_t find_first() const { return npos; }
+    size_t find_next(size_t ) const { return npos; }
+
 private:
     vec_type&   _bv;
     size_t      _first;
@@ -560,7 +541,7 @@ class vec {
 public:
     using storage_type = S;
     using bv_type = view<S, vec<S>>;
-    static constexpr size_t end = bv_type::end;
+    static constexpr size_t npos = bv_type::npos;
     
     explicit vec(size_t sz, bool val = false) : 
         _sz(sz), _s(sz, val) 
@@ -581,7 +562,9 @@ public:
     unsigned char get_byte(size_t byte_idx) const { return (unsigned char)(_s[byte_idx >> 3] >> ((byte_idx & 7) << 3)); }
 
     // either sets of clears the bit depending on val
-    vec& set(size_t idx, bool val) { assert(idx < _sz); _s.update_bit(idx, [](uint64_t  ) { return val ? ones : 0; }); return *this; }
+    vec& set(size_t idx, bool val) {
+        assert(idx < _sz); _s.update_bit(idx, [](uint64_t  ) { return val ? ones : 0; }); return *this;
+    }
 
     // change whole bit_vector
     // -----------------------
@@ -604,26 +587,11 @@ public:
 
     // compound assignment operators on full bit_vector
     // ------------------------------------------------
-#if 0
-    template <class F>
-    vec& bin_assign(F &&f, const vec &o) { 
-        assert(_sz == o._sz); 
-        _s.combine_all<vt::none>(_sz, o._s, std::forward<F>(f)); 
-        return *this;
-    }
-
-    vec& operator|=(const vec &o) { return bin_assign([](uint64_t a, uint64_t b) { return a | b; },  o); }
-    vec& operator&=(const vec &o) { return bin_assign([](uint64_t a, uint64_t b) { return a & b; },  o); }
-    vec& operator^=(const vec &o) { return bin_assign([](uint64_t a, uint64_t b) { return a ^ b; },  o); }
-    vec& operator-=(const vec &o) { return bin_assign([](uint64_t a, uint64_t b) { return a & ~b; }, o); }
-    vec& or_not(const vec &o)     { return bin_assign([](uint64_t a, uint64_t b) { return a | ~b; }, o); }
-#else
     vec& operator|=(const vec &o) noexcept { view() |= o.view(); return *this; }
     vec& operator&=(const vec &o) noexcept { view() &= o.view(); return *this; }
     vec& operator^=(const vec &o) noexcept { view() ^= o.view(); return *this; }
     vec& operator-=(const vec &o) noexcept { view() -= o.view(); return *this; }
     vec& or_not(const vec &o)     noexcept { view().or_not(o.view()); return *this; }
-#endif
 
     // assignment operators on full bit_vector
     // ---------------------------------------
@@ -650,54 +618,16 @@ public:
     // support comparing bit_vectors with different storage
     // -------------------------------------------------------
     template <class S2>
-    bool operator==(const vec<S2> &o) const {
-        if (this == &o)
-            return true;
-#if 1
-        return view() == o.view();
-#else
-        if (_sz != o._sz)
-            return false;
-        bool res = true;
-        const_cast<S&>(_s).combine_all<vt::view>(_sz, o._s, [&](uint64_t a, uint64_t b) { 
-                if (a != b) res = false; return !res; }); 
-        return res;
-#endif
-    }
+    bool operator==(const vec<S2> &o) const { return this == &o || view() == o.view(); }
 
     template <class S2> 
     bool operator!=(const vec<S2> &o) const { return !(*this == o); }
 
-#if 1
     template <class S2> 
     bool contains(const vec<S2> &o) const { return view().contains(o.view()); }
     
     template <class S2> 
     bool disjoint(const vec<S2> &o) const { return view().disjoint(o.view()); }
-
-    template <class S2> 
-    bool intersect(const vec<S2> &o) const { return !disjoint(o); }
-#else
-    template <class S2>
-    bool contains(const vec<S2> &o) const {
-        assert(_sz >= o._sz);
-        if (_sz < o._sz)
-            return false;
-        bool res = true;
-        const_cast<S&>(_s).combine_all<vt::view>(o._sz, o._s, [&](uint64_t a, uint64_t b) { 
-                if ((a | b) != a) res = false; return !res; }); 
-        return res;
-    }
-
-    template <class S2>
-    bool disjoint(const vec<S2> &o) const {
-        size_t sz = std::min(_sz, o._sz);
-        bool res = true;
-        const_cast<S&>(_s).combine_all<vt::view>(sz, o._s, [&](uint64_t a, uint64_t b) { 
-                if (a & b) res = false; return !res; }); 
-        return res;
-    }
-#endif
 
     template <class S2>
     bool intersects(const vec<S2> &o) const { return !disjoint(o); }
@@ -711,8 +641,6 @@ public:
         _s.swap(o._s);
     }
 
-    // todo: find next one bit (or better one_bit position iterator)
-
     size_t   size() const noexcept   { return _sz; }
     bool     empty() const noexcept  { return _sz == 0; }
     size_t   num_blocks() const noexcept { return slot_cnt(_sz); }
@@ -720,11 +648,15 @@ public:
     S&       storage()          { return _s; }
     const S& storage() const    { return _s; }
 
+    // find next one bit
+    // -----------------
+    size_t find_first() const { return view().find_first(); }
+    size_t find_next(size_t pos) const { return view().find_next(pos); }
+
     // print
     // -----
     friend std::ostream& operator<<(std::ostream &s, const vec &v) { return s << (std::string)v; }
 
-    // make bit_vector convertible to std::string
     void append_to_string(std::string &res) const 
     {
         size_t num_bytes = (_sz + 7) >> 3;
@@ -739,6 +671,7 @@ public:
         }
     }
 
+    // make bit_vector convertible to std::string
     operator std::string() const 
     {
         if (_sz == 0)
@@ -754,8 +687,8 @@ public:
     
     // access via gtl::bit_view
     // ------------------------
-    bv_type view(size_t first = 0, size_t last = end) { return bv_type(*this, first, last); }
-    const bv_type view(size_t first = 0, size_t last = end) const { return bv_type(const_cast<vec&>(*this), first, last); }
+    bv_type view(size_t first = 0, size_t last = npos) { return bv_type(*this, first, last); }
+    const bv_type view(size_t first = 0, size_t last = npos) const { return bv_type(const_cast<vec&>(*this), first, last); }
 
 private:
     size_t _sz; // actual number of bits
@@ -769,7 +702,6 @@ private:
 using storage    = bitv::storage<std::allocator<uint64_t>>;
 using bit_vector = bitv::vec<storage>;
 using bit_view   = bitv::view<storage, bitv::vec>;
-
 
 
 } // namespace gtl

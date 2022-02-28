@@ -212,8 +212,8 @@ TEST(BitVectorTest, bit_shift) {
 
     };
 
-    auto bitshift_check = [&](const gtl::bit_vector &v_orig, int shift, size_t first=0, size_t last = gtl::bit_vector::end) {
-        if (last == gtl::bit_vector::end)
+    auto bitshift_check = [&](const gtl::bit_vector &v_orig, int shift, size_t first=0, size_t last = gtl::bit_vector::npos) {
+        if (last == gtl::bit_vector::npos)
             last = v_orig.size();
         if (first == 0 && last == v_orig.size()) {
             gtl::bit_vector v = (shift >= 0) ? (v_orig >> (size_t)shift) : (v_orig << (size_t)-shift);
@@ -359,9 +359,9 @@ TEST(BitVectorTest, binary_predicates_on_full_bit_vector) {
 }
 
 TEST(BitVectorTest, popcount) {
-    auto popcount_naive = [](const gtl::bit_vector &v, size_t first=0, size_t last = gtl::bit_vector::end) {
+    auto popcount_naive = [](const gtl::bit_vector &v, size_t first=0, size_t last = gtl::bit_vector::npos) {
         size_t n = 0; 
-        if (last == gtl::bit_vector::end)
+        if (last == gtl::bit_vector::npos)
             last = v.size();
         for (size_t i=first; i<last; ++i) 
             if (v[i]) 
