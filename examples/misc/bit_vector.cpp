@@ -20,7 +20,12 @@ int main() {
         bv.clear();                      // clear all the bits
         assert((string)bv == "0x0000");
 
-        bv.view(0, 4) = 0x1;
+        bv.set(0).set(4).set(8);         // calls can often be chained 
+        assert((string)bv == "0x0111");
+
+        // quick look at views... more on that later
+        bv.clear();                      // clear all the bits
+        bv.view(0, 4)  = 0x1;
         bv.view(4, 8)  = 0x2;
         bv.view(8, 12) = 0x3;
         assert((string)bv == "0x0321");
@@ -68,8 +73,35 @@ int main() {
         // contains(), disjoint(), 
     }
 
+    {
+        // views are very powerful. You can create a view on a part of the bitmap
+        // and then query and change the bits on the view by themselves. 
+        // ----------------------------------------------------------------------
+        gtl::bit_vector bv { 0x0321 }; 
+        assert((string)bv == "0x0000000000000321");
 
+        bv.view(0, 4) = 0xf;
+        assert((string)bv == "0x000000000000032f");
 
+        bv.view(4, 12) = 0xde;
+        assert((string)bv == "0x0000000000000def");
+
+        bv.view(60, 64) = 0x7;
+        assert((string)bv == "0x7000000000000def");
+
+        bv.view(4, 20) >>= 8;
+        assert((string)bv == "0x70000000000de00f");
+
+        bv.view(4, 12) = bv.view(12, 20);
+        assert((string)bv == "0x70000000000dedef");
+
+        assert(bv.view( 0,  4).popcount() == 4); // count set bits
+        assert(bv.view(32, 64).popcount() == 3);
+
+        bv.view(56, 60) |= bv.view(60, 64);
+        assert((string)bv == "0x77000000000dedef");
+        
+    }
 
     return 0;
 }

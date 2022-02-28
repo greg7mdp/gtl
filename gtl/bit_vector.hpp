@@ -54,6 +54,8 @@ class storage {
 public:
     storage(size_t num_bits = 0, bool val = false) { resize(num_bits, val); }
     size_t size() const { return _s.size(); }          // size in slots
+
+    // -------------------------------------------------------------------------------
     void resize(size_t num_bits, bool val = false) { 
         _sz = num_bits;
         size_t num_slots = slot_cnt(num_bits);
@@ -66,17 +68,65 @@ public:
     bool operator==(const storage &o) const { return _s == o._s; }
     uint64_t operator[](size_t slot) const  { assert(slot < _s.size()); return _s[slot]; }
 
-    // functional update by slot
-    // -------------------------
-    template<class F>
-    void update_slot(size_t slot, F&& f) { 
-        uint64_t& s = _s[slot]; 
-        s = std::forward<F>(f)(s); 
-        _check_extra_bits();
-    }
+    // returns a sequence of bits starting at first, where the first uint64_t returned 
+    // contains the first init_lg bits of the sequence, shifted shift bits.
+    // -------------------------------------------------------------------------------
+    class bit_sequence {
+    public:
+        bit_sequence(const storage &s, size_t first, size_t last, size_t init_lg, size_t shift) :
+            _s(s), _cur(first), _last(last), _init_lg(init_lg), _shift(shift)
+        {
+            assert(last <= _s._sz);
+            assert(init_lg < 64); // the number of bits to return in the first call, following ones are 64 bits till last
+            assert(last >= first);
+            assert(last - first <= init_lg);
+            assert(init_lg + shift <= stride);
+        }
+        
+        uint64_t operator()() {
+            if (_init_lg) {
+                uint64_t res = get_next_bits(_init_lg);
+                _init_lg = 0;
+                res <<= _shift;
+                return res;
+            }
+            return get_next_bits(stride);
+        }
 
+        uint64_t get_next_bits(size_t lg) {
+            lg = std::min(lg, _last - _cur);
+            assert(lg);
+
+            size_t slot_idx = slot(_cur);
+            size_t offset = mod(_cur);
+            uint64_t v;
+
+            if (lg == stride && offset == 0) {
+                v = _s[slot_idx];
+            } else if (lg <= stride - offset) {
+                // result all in this slot
+                v = (_s[slot_idx] & lowmask(_cur + lg - 1)) >> offset;
+            } else {
+                v = _s[slot_idx] >> offset;
+                size_t lg_left = lg - (stride - offset);
+                v |= (_s[slot_idx + 1] & ~himask(lg_left)) << (stride - offset);
+            }
+            _cur += lg;
+            return v;
+        }
+        
+    private:
+        const storage &_s;
+        size_t _cur;
+        size_t _last;
+        size_t _init_lg;
+        size_t _shift;
+    };
+
+    // ------------------------------------------------------------------------------------
     template<class F>
     void update_bit(size_t idx, F f) { 
+        assert(idx < _sz);
         size_t slot_idx = slot(idx);
         uint64_t& s  = _s[slot_idx]; 
         uint64_t  fs = f(s); 
@@ -92,6 +142,7 @@ public:
     // ------------------------------------------------------------------------------------
     template<vt flags, class F>
     void visit(size_t first, size_t last, F f) { 
+        assert(last <= _sz);
         if (last <= first)
             return;
         size_t first_slot = slot(first);
@@ -268,9 +319,28 @@ public:
 
     // compound assignment operators
     // -----------------------------
-    view& operator|=(const view &o); // { assert(size() == o.size()); } // todo
-    view& operator&=(const view &o); // todo
-    view& operator^=(const view &o); // todo
+    template <class F>
+    view& bin_assign(const view &o, F &&f) { 
+        assert(size() == o.size()); 
+        
+        _bv.storage().visit<vt::none>(_first, _last, std::forward<F>(f)); 
+        return *this;
+    }
+
+    view& operator|=(const view &o) { 
+        typename S::bit_sequence seq(_bv.storage(), o._first, o._last, stride - mod(_first), mod(_first));
+        return bin_assign(o, [&](uint64_t a, size_t) { return a | seq(); });
+    } 
+
+    view& operator&=(const view &o) {
+        typename S::bit_sequence seq(_bv.storage(), o._first, o._last, stride - mod(_first), mod(_first));
+        return bin_assign(o, [&](uint64_t a, size_t) { return a & seq(); });
+    } 
+
+    view& operator^=(const view &o) {
+        typename S::bit_sequence seq(_bv.storage(), o._first, o._last, stride - mod(_first), mod(_first));
+        return bin_assign(o, [&](uint64_t a, size_t) { return a ^ seq(); });
+    } 
 
     // shift operators. Zeroes are shifted in.
     // ---------------------------------------
@@ -567,10 +637,12 @@ public:
 
     // todo: find next one bit (or better one_bit position iterator)
 
-    size_t   size() const       { return _sz; }
+    size_t   size() const noexcept   { return _sz; }
+    bool     empty() const noexcept  { return _sz == 0; }
+    size_t   num_blocks() const noexcept { return slot_cnt(_sz); }
+
     S&       storage()          { return _s; }
     const S& storage() const    { return _s; }
-    size_t   num_blocks() const { return slot_cnt(_sz); }
 
     // print
     // -----
