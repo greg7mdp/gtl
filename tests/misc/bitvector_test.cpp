@@ -392,6 +392,21 @@ TEST(BitVectorTest, popcount) {
     }
 }
 
+TEST(BitVectorTest, find_first) {
+    gtl::bit_vector v{ 0, 0, 0x020202 };
+    EXPECT_TRUE(v.find_first() == 129);
+    EXPECT_TRUE(v.view(10).find_first() == 119); // returns the index from start of view
+    EXPECT_TRUE(v.view(33).find_first() == 96);
+    EXPECT_TRUE(v.find_next(130) == 137);
+    EXPECT_TRUE(v.find_next(138) == 145);
+
+    gtl::bit_vector v2{ 0, 0, 0, 0, 0x020202 };
+    EXPECT_TRUE(v2.find_first() == 257);
+    EXPECT_TRUE(v2.view(67).find_first() == 190);
+    EXPECT_TRUE(v2.view(67).find_next(191) == 198);
+}
+
+
 TEST(BitVectorTest, print) {
     static constexpr size_t sz = 100;
     gtl::bit_vector v(sz);

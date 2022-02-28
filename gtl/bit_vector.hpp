@@ -14,6 +14,7 @@
 #include <vector>
 #include <string>
 #include <cstdint>
+#include <bit>
 #include <cassert>
 #include <iostream>
 
@@ -524,8 +525,28 @@ public:
 
     // find next one bit - returns npos if not found
     // ---------------------------------------------
-    size_t find_first() const { return npos; }
-    size_t find_next(size_t ) const { return npos; }
+    size_t find_first() const { 
+        size_t idx = _first;
+        _bv.storage().visit<vt::view>(_first, _last, [&](uint64_t v, int shift) { 
+                if (v) {
+                    idx += std::countr_zero(v) - shift; 
+                    return true; 
+                } else {
+                    idx += stride - shift;
+                    return false; 
+                }
+            }); 
+        if (idx < _last)
+            return idx - _first;
+        return npos; 
+    }
+
+    size_t find_next(size_t start) const { 
+        if (_first + start >= _last)
+            return npos; 
+        size_t res = _bv.view(_first + start, _last).find_first();
+        return (res == npos) ? npos : res + start;
+    }
 
 private:
     vec_type&   _bv;
