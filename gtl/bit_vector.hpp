@@ -303,6 +303,8 @@ public:
     view& flip(size_t idx)  { _bv.flip(idx + _first); return *this; }
     bool operator[](size_t idx) const { return _bv[idx + _first]; }
 
+    view& set(size_t idx, bool val) { _bv.set(idx + _first, val); return *this; }
+
     // change whole view
     // -----------------
     view& set()   { _bv.storage().visit<vt::none>(_first, _last, 
@@ -458,10 +460,10 @@ public:
             // same bv, be careful which way we iterate in case the views overlap
             if (_first < o._first)
                 for (size_t i=0; i<size(); ++i)
-                    if (o[i]) set(i); else clear(i);
+                    set(i, o[i]);
             else if (_first > o._first)
                 for (size_t i=size(); i-- > 0; )
-                    if (o[i]) set(i); else clear(i);
+                    set(i, o[i]);
         }
         return *this; 
     }
@@ -597,7 +599,7 @@ public:
 
     // either sets of clears the bit depending on val
     vec& set(size_t idx, bool val) {
-        assert(idx < _sz); _s.update_bit(idx, [](uint64_t  ) { return val ? ones : 0; }); return *this;
+        assert(idx < _sz); _s.update_bit(idx, [&](uint64_t  ) { return val ? ones : 0; }); return *this;
     }
 
     // change whole bit_vector
