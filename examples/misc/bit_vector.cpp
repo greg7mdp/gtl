@@ -17,14 +17,14 @@ int main() {
         bv.flip();                       // flip all bits
         assert((string)bv == "0xfffe");
 
-        bv.clear();                      // clear all the bits
+        bv.reset();                      // reset all the bits
         assert((string)bv == "0x0000");
 
         bv.set(0).set(4).set(8);         // calls can often be chained 
         assert((string)bv == "0x0111");
 
         // quick look at views... more on that later
-        bv.clear();                      // clear all the bits
+        bv.reset();                      // reset all the bits
         bv.view(0, 4)  = 0x1;
         bv.view(4, 8)  = 0x2;
         bv.view(8, 12) = 0x3;
@@ -61,11 +61,11 @@ int main() {
         // ---------------------------
         assert((bv & bv2).none());      // binary and => no one bit remains
         assert((string)(bv & bv2) == "0x0000000000000000");
-        assert((bv & bv2).popcount() == 0);
+        assert((bv & bv2).count() == 0);
 
         assert((bv | bv2).every());     // binary or => all bits are set
         assert((string)(bv | bv2) == "0xffffffffffffffff");
-        assert((bv | bv2).popcount() == 64);
+        assert((bv | bv2).count() == 64);
 
         assert((bv ^ bv2).every());     // binary xor => all bits are set
 
@@ -95,8 +95,8 @@ int main() {
         bv.view(4, 12) = bv.view(12, 20);
         assert((string)bv == "0x70000000000dedef");
 
-        assert(bv.view( 0,  4).popcount() == 4); // count set bits
-        assert(bv.view(32, 64).popcount() == 3);
+        assert(bv.view( 0,  4).count() == 4); // count set bits
+        assert(bv.view(32, 64).count() == 3);
 
         bv.view(56, 60) |= bv.view(60, 64);
         assert((string)bv == "0x77000000000dedef");

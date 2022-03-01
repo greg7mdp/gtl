@@ -24,10 +24,10 @@ namespace bitv {
 
 static constexpr size_t   stride = 64;
 static constexpr uint64_t ones = (uint64_t)-1;
-static constexpr size_t   mod(size_t n) { return (n & 0x3f); }
-static constexpr size_t   slot_cnt(size_t n) { return (n + 63) >> 6; }
-static constexpr size_t   slot(size_t n)    { return n >> 6; }
-static constexpr uint64_t bitmask(size_t n) { return (uint64_t)1 << mod(n); } // a mask for this bit in its slot
+static constexpr size_t   mod(size_t n)      { return (n & 0x3f); }
+static constexpr size_t   slot(size_t n)     { return n >> 6; }
+static constexpr size_t   slot_cnt(size_t n) { return slot(n + 63); }
+static constexpr uint64_t bitmask(size_t n)  { return (uint64_t)1 << mod(n); } // a mask for this bit in its slot
 static constexpr uint64_t lowmask (size_t n) { return bitmask(n) - 1; }       // a mask for bits lower than n in slot
 static constexpr uint64_t himask(size_t n)  { return ~lowmask(n); }           // a mask for bits higher than n-1 in slot
 
@@ -94,7 +94,7 @@ public:
             _shift(mod(as_first))                  // as if at end of a slot, so shifted left _shift bits
         {
             assert(last <= _s._sz);
-            assert(_init_lg < 64); // the number of bits to return in the first call, following ones are 64 bits till last
+            assert(_init_lg < stride); // the number of bits to return in the first call, following ones are 64 bits till last
             assert(last >= first);
             assert(_init_lg + _shift <= stride);
         }
@@ -299,7 +299,7 @@ public:
     // single bit access
     // -----------------
     view& set(size_t idx)   { _bv.set(idx + _first); return *this; }
-    view& clear(size_t idx) { _bv.clear(idx + _first); return *this; }
+    view& reset(size_t idx) { _bv.reset(idx + _first); return *this; }
     view& flip(size_t idx)  { _bv.flip(idx + _first); return *this; }
     bool operator[](size_t idx) const { return _bv[idx + _first]; }
 
@@ -310,7 +310,7 @@ public:
     view& set()   { _bv.storage().visit<vt::none>(_first, _last, 
                                                   [](uint64_t  , int) { return ones; }); return *this; }
 
-    view& clear() { _bv.storage().visit<vt::none>(_first, _last, 
+    view& reset() { _bv.storage().visit<vt::none>(_first, _last, 
                                                   [](uint64_t  , int) { return (uint64_t)0; }); return *this; }
 
     view& flip()  { _bv.storage().visit<vt::none>(_first, _last, 
@@ -354,7 +354,7 @@ public:
     // ---------------------------------------
     view& operator<<=(size_t cnt) noexcept { 
         if (cnt >= size())
-            clear();
+            reset();
         else if (cnt) {
             if (cnt == stride) {
                 size_t carry = 0;
@@ -383,7 +383,7 @@ public:
 
     view& operator>>=(size_t cnt) noexcept { 
         if (cnt >= size())
-            clear();
+            reset();
         else if (cnt) {
             if (cnt == stride) {
                 size_t carry = 0;
@@ -414,7 +414,7 @@ public:
     // assignment operators
     // --------------------
     view& operator=(uint64_t val) { // only works for view width <= 64 bits
-        assert(size() <= 64);
+        assert(size() <= stride);
         _bv.storage().visit<vt::none>(_first, _last, 
                                       [val](uint64_t, int shl) { return shl >= 0 ? val << shl : val >> shl; });
         return *this; 
@@ -452,7 +452,7 @@ public:
         assert(size() == o.size());
         // ------ slow version 
         if (&_bv != &o._bv) {
-            clear();
+            reset();
             for (size_t i=0; i<size(); ++i)
                 if (o[i])
                     set(i);
@@ -531,7 +531,7 @@ public:
 
     // miscellaneous
     // -------------
-    size_t popcount() const {              // we could use std::popcount in c++20
+    size_t count() const {              // we could use std::popcount in c++20
         size_t cnt = 0;
         _bv.storage().visit<vt::view>(_first, _last,
                                       [&](uint64_t v, int) { cnt += _popcount64(v); return false; }); 
@@ -592,12 +592,13 @@ public:
     // bit access
     // ----------
     vec& set(size_t idx)   { assert(idx < _sz); _s.update_bit(idx, [](uint64_t  ) { return ones; }); return *this; }
-    vec& clear(size_t idx) { assert(idx < _sz); _s.update_bit(idx, [](uint64_t  ) { return 0; }); return *this; }
+    vec& reset(size_t idx) { assert(idx < _sz); _s.update_bit(idx, [](uint64_t  ) { return 0; }); return *this; }
     vec& flip(size_t idx)  { assert(idx < _sz); _s.update_bit(idx, [](uint64_t v) { return ~v; }); return *this; }
+    bool test(size_t idx) const { return (*this)[idx]; }
     bool operator[](size_t idx) const { return !!(_s[slot(idx)] & bitmask(idx)); }
     unsigned char get_byte(size_t byte_idx) const { return (unsigned char)(_s[byte_idx >> 3] >> ((byte_idx & 7) << 3)); }
 
-    // either sets of clears the bit depending on val
+    // either sets or resets the bit depending on val
     vec& set(size_t idx, bool val) {
         assert(idx < _sz); _s.update_bit(idx, [&](uint64_t  ) { return val ? ones : 0; }); return *this;
     }
@@ -605,7 +606,7 @@ public:
     // change whole bit_vector
     // -----------------------
     vec& set()   { view().set(); return *this; }
-    vec& clear() { view().clear(); return *this; }
+    vec& reset() { view().reset(); return *this; }
     vec& flip()  { view().flip(); return *this; }
 
     // access bit value
@@ -670,7 +671,7 @@ public:
 
     // miscellaneous
     // -------------
-    size_t popcount() const { return view().popcount(); }
+    size_t count() const { return view().count(); }
 
     void swap(vec &o) {
         std::swap(_sz, o._sz);
@@ -680,6 +681,7 @@ public:
     size_t   size() const noexcept   { return _sz; }
     bool     empty() const noexcept  { return _sz == 0; }
     size_t   num_blocks() const noexcept { return slot_cnt(_sz); }
+    uint64_t block(size_t idx) const noexcept { return _s[idx]; }
 
     S&       storage()          { return _s; }
     const S& storage() const    { return _s; }
@@ -689,11 +691,32 @@ public:
     size_t find_first() const { return view().find_first(); }
     size_t find_next(size_t pos) const { return view().find_next(pos); }
 
+    // standard bitset conversions
+    // ---------------------------
+    template<class CharT = char, class Traits = std::char_traits<CharT>, class A = std::allocator<CharT>> 
+    std::basic_string<CharT, Traits, A> to_string(CharT zero = CharT('0'), CharT one = CharT('1')) const
+    {
+        std::basic_string<CharT, Traits, A> res(_sz, zero);
+        for (size_t i=0; i<_sz; ++i)
+            if (test(_sz - i - 1))
+                res[i] = one;
+        return res;
+    }
+
+    unsigned long long to_ullong() const { return _sz ? (unsigned long long)_s[0] : 0; }
+
+    unsigned long to_ulong() const { (unsigned long)to_ullong(); }
+
     // print
     // -----
-    friend std::ostream& operator<<(std::ostream &s, const vec &v) { return s << (std::string)v; }
+    template<class CharT = char, class Traits = std::char_traits<CharT>> 
+    friend std::basic_ostream<CharT, Traits>& operator<<(std::basic_ostream<CharT, Traits> &s, const vec &v) 
+    { 
+        return s << (std::string)v; 
+    }
 
-    void append_to_string(std::string &res) const 
+    template<class CharT = char, class Traits = std::char_traits<CharT>, class A = std::allocator<CharT>> 
+    void append_to_string(std::basic_string<CharT, Traits, A> &res) const 
     {
         size_t num_bytes = (_sz + 7) >> 3;
         res.reserve(res.size() + num_bytes * 2);
@@ -708,11 +731,12 @@ public:
     }
 
     // make bit_vector convertible to std::string
-    operator std::string() const 
+    template<class CharT = char, class Traits = std::char_traits<CharT>, class A = std::allocator<CharT>> 
+    operator std::basic_string<CharT, Traits, A>() const 
     {
         if (_sz == 0)
             return "<empty>";
-        std::string res;
+        std::basic_string<CharT, Traits, A> res;
         size_t num_bytes = (_sz + 7) >> 3;
         res.reserve(num_bytes * 2 + 2);
 
@@ -741,5 +765,22 @@ using bit_view   = bitv::view<storage, bitv::vec>;
 
 
 } // namespace gtl
+
+namespace std
+{
+    // inject specialization of std::hash for gtl::bit_vector into namespace std
+    // -------------------------------------------------------------------------
+    template<> struct hash<gtl::bit_vector>
+    {
+        size_t operator()(gtl::bit_vector const &bv) const
+        { 
+            size_t h = 0;
+            size_t num_blocks = bv.num_blocks();
+            for (size_t i=0; i<num_blocks; ++i)
+                h = h ^ (bv.block(i) + size_t(0xc6a4a7935bd1e995) + (h << 6) + (h >> 2));
+            return h;
+        }
+    };
+}
 
 #endif bit_vector_h_guard_

@@ -22,9 +22,9 @@ void flip_bits_naive(gtl::bit_vector &v, size_t first, size_t last) {
         v.flip(i);
 }    
 
-void clear_bits_naive(gtl::bit_vector &v, size_t first, size_t last) {
+void reset_bits_naive(gtl::bit_vector &v, size_t first, size_t last) {
     for (size_t i=first; i<last; ++i) {
-        v.clear(i);
+        v.reset(i);
         // EXPECT_FALSE(v[i]);
     }
 }    
@@ -128,8 +128,8 @@ TEST(BitVectorTest, bit_view_change) {
             set_bits_naive(v2, i, i + lg);
             EXPECT_TRUE(v1 == v2);
         
-            v1.view(i, i + lg).clear();
-            clear_bits_naive(v2, i, i + lg);
+            v1.view(i, i + lg).reset();
+            reset_bits_naive(v2, i, i + lg);
             EXPECT_TRUE(v1 == v2);
             EXPECT_TRUE(v1 == v3);
 
@@ -151,10 +151,10 @@ TEST(BitVectorTest, bitwise_op_on_bv) {
         gtl::bit_vector v1(sz), v2(sz), v3(sz);
         v1.set();
         for (size_t i=0; i<117; i+= 30)
-            v1.view(i, i+11).clear();
-        v1.view(200, 400).clear();
+            v1.view(i, i+11).reset();
+        v1.view(200, 400).reset();
 
-        v2.clear();
+        v2.reset();
         for (size_t i=0; i<117; i+= 30)
             v2.view(i, i+11).set();
         v2.view(200, 400).set();
@@ -330,9 +330,9 @@ TEST(BitVectorTest, unary_predicates_on_full_bit_vector) {
             EXPECT_FALSE(v.none());
             v.view().set();
             EXPECT_TRUE(v.every());
-            v.clear(i);
+            v.reset(i);
             EXPECT_FALSE(v.every());
-            v.view().clear();
+            v.view().reset();
         }
     };
 
@@ -358,8 +358,8 @@ TEST(BitVectorTest, binary_predicates_on_full_bit_vector) {
     }
 }
 
-TEST(BitVectorTest, popcount) {
-    auto popcount_naive = [](const gtl::bit_vector &v, size_t first=0, size_t last = gtl::bit_vector::npos) {
+TEST(BitVectorTest, count) {
+    auto count_naive = [](const gtl::bit_vector &v, size_t first=0, size_t last = gtl::bit_vector::npos) {
         size_t n = 0; 
         if (last == gtl::bit_vector::npos)
             last = v.size();
@@ -371,23 +371,23 @@ TEST(BitVectorTest, popcount) {
 
     const std::vector<gtl::bit_vector>& testv = get_test_vector();
     for (auto v : testv) {
-        EXPECT_TRUE(v.popcount() == popcount_naive(v));
+        EXPECT_TRUE(v.count() == count_naive(v));
         for (size_t i=0; i<v.size(); ++i) {
             v.set(i);
-            EXPECT_TRUE(v.popcount() == popcount_naive(v));
+            EXPECT_TRUE(v.count() == count_naive(v));
             if (i % 2)
-                v.clear(i);
+                v.reset(i);
         }
     }
 
-    // test view popcount
+    // test view count
     for (auto v : testv) {
         size_t last = v.size();
         for (size_t i=0; i<last; ++i) 
-            EXPECT_TRUE(v.view(i, last).popcount() == popcount_naive(v, i, last));
+            EXPECT_TRUE(v.view(i, last).count() == count_naive(v, i, last));
         if (last) {
             for (size_t i=last-1; i!= 0; --i) 
-                EXPECT_TRUE(v.view(0, i).popcount() == popcount_naive(v, 0, i));
+                EXPECT_TRUE(v.view(0, i).count() == count_naive(v, 0, i));
         }
     }
 }
@@ -407,13 +407,42 @@ TEST(BitVectorTest, find_first) {
 }
 
 
-TEST(BitVectorTest, print) {
+TEST(BitVectorTest, hash) {
+    gtl::bit_vector v { 0xfafafaull, 0ull, 0x4444444444444444ull };
+    auto x = std::hash<gtl::bit_vector>()(v);
+
+    v.set(66);
+    auto y = std::hash<gtl::bit_vector>()(v);
+    EXPECT_TRUE(x != y);
+
+    v.set(191);
+    auto z = std::hash<gtl::bit_vector>()(v);
+    EXPECT_TRUE(z != y);
+}
+
+
+TEST(BitVectorTest, conversions) {
     static constexpr size_t sz = 100;
     gtl::bit_vector v(sz);
     for (size_t i=0; i<sz; i+= 4)
         v.view(i, i+4) = uint64_t((i/4) % 16); // set to hex 0 -> f
 
     EXPECT_TRUE((std::string)v == "0x0876543210fedcba9876543210");
+    
+    {
+        // to_string
+        gtl::bit_vector x(8); 
+        x = { 42 };
+        EXPECT_TRUE(x.to_string()    == "00101010");
+        EXPECT_TRUE(x.to_string('*') == "**1*1*1*");
+    }
+
+    {
+        // to_ullong
+        gtl::bit_vector x { 0x123456789abcdef0LL };
+        EXPECT_TRUE(x.to_ullong()    == 0x123456789abcdef0LL);
+    }
+
     if (0) {
         // print test bit_vectors
         // ----------------------
