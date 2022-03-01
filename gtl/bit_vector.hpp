@@ -154,6 +154,21 @@ public:
         s |= fs & m;
     }
 
+    template<bool val>
+    void update_bit(size_t idx) { 
+        assert(idx < _sz);
+        uint64_t& s  = _s[slot(idx)]; 
+        uint64_t  m  = bitmask(idx);
+        bool old = (s & m);
+        if constexpr (val) {
+            if (!old)
+                s |= m;
+        } else {
+            if (old)
+                s &= ~m;
+        }
+    }
+
     template<vt flags>
     constexpr uint64_t oor_bits(uint64_t s, uint64_t m) {
         if constexpr (!(flags & vt::oor_ones))
@@ -613,16 +628,16 @@ public:
 
     // bit access
     // ----------
-    vec& set(size_t idx)   { assert(idx < _sz); _s.update_bit(idx, [](uint64_t  ) { return ones; }); return *this; }
-    vec& reset(size_t idx) { assert(idx < _sz); _s.update_bit(idx, [](uint64_t  ) { return 0; }); return *this; }
-    vec& flip(size_t idx)  { assert(idx < _sz); _s.update_bit(idx, [](uint64_t v) { return ~v; }); return *this; }
+    vec& set(size_t idx)   { _s.update_bit<true>(idx); return *this; }
+    vec& reset(size_t idx) { _s.update_bit<false>(idx); return *this; }
+    vec& flip(size_t idx)  { _s.update_bit(idx, [](uint64_t v) { return ~v; }); return *this; }
     bool test(size_t idx) const { return (*this)[idx]; }
     bool operator[](size_t idx) const { return !!(_s[slot(idx)] & bitmask(idx)); }
     unsigned char get_byte(size_t byte_idx) const { return (unsigned char)(_s[byte_idx >> 3] >> ((byte_idx & 7) << 3)); }
 
     // either sets or resets the bit depending on val
     vec& set(size_t idx, bool val) {
-        assert(idx < _sz); _s.update_bit(idx, [&](uint64_t  ) { return val ? ones : 0; }); return *this;
+        if (val) _s.update_bit<true>(idx); else _s.update_bit<false>(idx); return *this;
     }
 
     // change whole bit_vector
@@ -669,19 +684,19 @@ public:
 
     // unary predicates any, every, etc...
     // -----------------------------------
-    bool any()   const { 
+    bool any() const {     // "return view().any();" would work, but this is faster  
         bool res = false;
         const_cast<S&>(_s).visit_all<vt::view>(_sz, [&](uint64_t v) { if (v) res = true; return res; }); 
         return res; 
     }
 
-    bool every() const { 
+    bool every() const {   // "return view().every();" would work, but this is faster 
         bool res = true;
         const_cast<S&>(_s).visit_all<vt::view | vt::oor_ones>(_sz, [&](uint64_t v) { if (v != ones) res = false; return !res; }); 
         return res; 
     }
 
-    bool none()  const { return !any(); }
+    bool none() const { return !any(); }
 
     // binary predicates operator==(), contains, disjoint, ...
     // support comparing bit_vectors with different storage
@@ -703,7 +718,7 @@ public:
 
     // miscellaneous
     // -------------
-    size_t count() const { 
+    size_t count() const { // "return view().count();" would work, but this is faster 
         size_t cnt = 0;
         const_cast<S&>(_s).visit_all<vt::view>(_sz, [&](uint64_t v) { if (v) cnt += _popcount64(v); return false; }); 
         return cnt;

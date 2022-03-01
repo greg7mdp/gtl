@@ -22,6 +22,18 @@ namespace
 {
     static constexpr size_t num_iter = 1000000;
 
+    size_t nextPowerOf2(size_t n) 
+    {
+        n--;
+        n |= n >> 1;
+        n |= n >> 2;
+        n |= n >> 4;
+        n |= n >> 8;
+        n |= n >> 16;
+        n++;
+        return n;
+    }
+
 	template <class Bitset>
 	size_t TestSet(stopwatch& sw, Bitset& b)
 	{
@@ -32,11 +44,12 @@ namespace
 	}
 
 	template <class Bitset>
-	size_t TestSetIndex(stopwatch& sw, Bitset& b, size_t index)
+	size_t TestSetIndex(stopwatch& sw, Bitset& b)
 	{
+        size_t mask = (nextPowerOf2(b.size()) >> 1) - 1;
 		gtl::start_snap x(sw);
 		for(size_t i = 0; i < num_iter; ++i)
-			b.set(index);
+			b.set(i & mask);
         return b.count();
 	}
 
@@ -158,26 +171,26 @@ int main()
         // ------------------------------------------
         // Test set(index)
         // ------------------------------------------
-        x += TestSetIndex(sw1, std_bs15, 13);
-        x += TestSetIndex(sw2, gtl_bs15, 13);
+        x += TestSetIndex(sw1, std_bs15);
+        x += TestSetIndex(sw2, gtl_bs15);
 
         if(i == 1)
             show_res("bitset<15>/set(i)", sw1, sw2);
 
-        x += TestSetIndex(sw1, std_bs150, 127);
-        x += TestSetIndex(sw2, gtl_bs150, 127);
+        x += TestSetIndex(sw1, std_bs150);
+        x += TestSetIndex(sw2, gtl_bs150);
 
         if(i == 1)
             show_res("bitset<150>/set(i)", sw1, sw2);
 
-        x += TestSetIndex(sw1, std_bs1500, 730);
-        x += TestSetIndex(sw2, gtl_bs1500, 730);
+        x += TestSetIndex(sw1, std_bs1500);
+        x += TestSetIndex(sw2, gtl_bs1500);
 
         if(i == 1)
             show_res("bitset<1500>/set(i)", sw1, sw2);
 
-        x += TestSetIndex(sw1, std_bs15000, 73);
-        x += TestSetIndex(sw2, gtl_bs15000, 73);
+        x += TestSetIndex(sw1, std_bs15000);
+        x += TestSetIndex(sw2, gtl_bs15000);
 
         if(i == 1)
             show_res("bitset<15000>/set(i)", sw1, sw2);
