@@ -44,8 +44,9 @@ export(EXPORT ${PROJECT_NAME}-targets
        FILE "${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}Targets.cmake")
 
 ## ------------------------- building tests and examples -------------
-option(GTL_BUILD_TESTS    "Whether or not to build the tests"    OFF)
-option(GTL_BUILD_EXAMPLES "Whether or not to build the examples" OFF)
+option(GTL_BUILD_TESTS      "Whether or not to build the tests"    OFF)
+option(GTL_BUILD_EXAMPLES   "Whether or not to build the examples" OFF)
+option(GTL_BUILD_BENCHMARKS "Whether or not to build the benchmarks" OFF)
 
 if(MSVC)
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /bigobj")
@@ -135,3 +136,6 @@ endif()
     target_link_libraries(ex_bench Threads::Threads)
 endif()
 
+if (GTL_BUILD_BENCHMARKS)
+    add_executable(bench_bit_vector benchmarks/bitvector_bench.cpp gtl/debug_vis/gtl.natvis)
+endif()

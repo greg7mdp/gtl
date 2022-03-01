@@ -774,7 +774,7 @@ namespace std
     {
         size_t operator()(gtl::bit_vector const &bv) const
         { 
-            size_t h = 0;
+            size_t h = bv.size();
             size_t num_blocks = bv.num_blocks();
             for (size_t i=0; i<num_blocks; ++i)
                 h = h ^ (bv.block(i) + size_t(0xc6a4a7935bd1e995) + (h << 6) + (h >> 2));
