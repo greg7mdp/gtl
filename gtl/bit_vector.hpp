@@ -14,7 +14,7 @@
 #include <vector>
 #include <string>
 #include <cstdint>
-#include <bit>
+//#include <bit>
 #include <cassert>
 #include <iostream>
 
@@ -35,6 +35,19 @@ static constexpr size_t _popcount64(uint64_t y) { // https://gist.github.com/enj
     y -= ((y >> 1) & 0x5555555555555555ull);
     y = (y & 0x3333333333333333ull) + (y >> 2 & 0x3333333333333333ull);
     return ((y + (y >> 4)) & 0xf0f0f0f0f0f0f0full) * 0x101010101010101ull >> 56;
+}
+
+// De Bruijn Multiplication With separated LS1B - author Kim Walisch (2012)
+unsigned countr_zero(uint64_t bb) {
+    const unsigned index64[64] = {
+         0, 47,  1, 56, 48, 27,  2, 60, 57, 49, 41, 37, 28, 16,  3, 61,
+        54, 58, 35, 52, 50, 42, 21, 44, 38, 32, 29, 23, 17, 11,  4, 62,
+        46, 55, 26, 59, 40, 36, 15, 53, 34, 51, 20, 43, 31, 22, 10, 45,
+        25, 39, 14, 33, 19, 30,  9, 24, 13, 18,  8, 12,  7,  6,  5, 63
+    };
+    const uint64_t debruijn64 = 0x03f79d71b4cb0a89ull;
+    assert (bb != 0);
+    return index64[((bb ^ (bb-1)) * debruijn64) >> 58];
 }
 
 enum class vt { none=0, view=1, oor_ones=2, backward=4 }; // visitor flags
@@ -516,7 +529,7 @@ public:
 
     // miscellaneous
     // -------------
-    size_t popcount() const {              // should we use std::popcount?
+    size_t popcount() const {              // we could use std::popcount in c++20
         size_t cnt = 0;
         _bv.storage().visit<vt::view>(_first, _last,
                                       [&](uint64_t v, int) { cnt += _popcount64(v); return false; }); 
@@ -529,7 +542,7 @@ public:
         size_t idx = _first;
         _bv.storage().visit<vt::view>(_first, _last, [&](uint64_t v, int shift) { 
                 if (v) {
-                    idx += std::countr_zero(v) - shift; 
+                    idx += countr_zero(v) - shift; // we could use std::countr_zero in c++20
                     return true; 
                 } else {
                     idx += stride - shift;
