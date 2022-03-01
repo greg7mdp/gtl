@@ -543,7 +543,7 @@ public:
         _bv.storage().visit<vt::view>(_first, _last, [&](uint64_t v, int shift) { 
                 if (v) {
                     idx += countr_zero(v) - shift; // we could use std::countr_zero in c++20
-                    return true; 
+                    return true; // stop iterating
                 } else {
                     idx += stride - shift;
                     return false; 
