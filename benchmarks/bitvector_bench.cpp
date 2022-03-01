@@ -105,22 +105,24 @@ int main()
     std::bitset<15>   std_bs15;
     gtl::bit_vector   gtl_bs15(15);
 
-    std::bitset<35>   std_bs35;
-    gtl::bit_vector   gtl_bs35(35);
-
-    std::bitset<75>   std_bs75;
-    gtl::bit_vector   gtl_bs75(75);
+    std::bitset<150>   std_bs150;
+    gtl::bit_vector   gtl_bs150(150);
 
     std::bitset<1500> std_bs1500;
     gtl::bit_vector   gtl_bs1500(1500);
 
+    std::bitset<15000>   std_bs15000;
+    gtl::bit_vector   gtl_bs15000(15000);
+
     auto show_res = [](const char *s, stopwatch &sw1, stopwatch &sw2) {
-        printf("%-20s %10.2f %10.2f %10.2f\n", s, 
+        printf("%-20s %14.2f %16.2f %10.2f\n", s, 
                sw1.start_to_snap(), 
                sw2.start_to_snap(), 
                sw1.start_to_snap()/sw2.start_to_snap());
     };
     size_t x = 0;
+
+    printf("%-20s %14s %16s %10s\n", "time", "std::bitset", "gtl::bit_vector", "ratio");
 
     for(int i = 0; i < 2; ++i)
     {
@@ -134,17 +136,17 @@ int main()
         if(i == 1) 
             show_res("bitset<15>/set()", sw1, sw2);
 
-        TestSet(sw1, std_bs35);
-        TestSet(sw2, gtl_bs35);
+        TestSet(sw1, std_bs150);
+        TestSet(sw2, gtl_bs150);
 
         if(i == 1) 
-            show_res("bitset<35>/set()", sw1, sw2);
+            show_res("bitset<150>/set()", sw1, sw2);
 
-        TestSet(sw1, std_bs75);
-        TestSet(sw2, gtl_bs75);
+        TestSet(sw1, std_bs15000);
+        TestSet(sw2, gtl_bs15000);
 
         if(i == 1)
-            show_res("bitset<75>/set()", sw1, sw2);
+            show_res("bitset<15000>/set()", sw1, sw2);
 
         TestSet(sw1, std_bs1500);
         TestSet(sw2, gtl_bs1500);
@@ -162,23 +164,23 @@ int main()
         if(i == 1)
             show_res("bitset<15>/set(i)", sw1, sw2);
 
-        x += TestSetIndex(sw1, std_bs35, 33);
-        x += TestSetIndex(sw2, gtl_bs35, 33);
+        x += TestSetIndex(sw1, std_bs150, 127);
+        x += TestSetIndex(sw2, gtl_bs150, 127);
 
         if(i == 1)
-            show_res("bitset<35>/set(i)", sw1, sw2);
-
-        x += TestSetIndex(sw1, std_bs75, 73);
-        x += TestSetIndex(sw2, gtl_bs75, 73);
-
-        if(i == 1)
-            show_res("bitset<75>/set(i)", sw1, sw2);
+            show_res("bitset<150>/set(i)", sw1, sw2);
 
         x += TestSetIndex(sw1, std_bs1500, 730);
         x += TestSetIndex(sw2, gtl_bs1500, 730);
 
         if(i == 1)
             show_res("bitset<1500>/set(i)", sw1, sw2);
+
+        x += TestSetIndex(sw1, std_bs15000, 73);
+        x += TestSetIndex(sw2, gtl_bs15000, 73);
+
+        if(i == 1)
+            show_res("bitset<15000>/set(i)", sw1, sw2);
 
 
         // ------------------------------------------
@@ -190,23 +192,23 @@ int main()
         if(i == 1)
             show_res("bitset<15>/reset", sw1, sw2);
 
-        x += TestReset(sw1, std_bs35);
-        x += TestReset(sw2, gtl_bs35);
+        x += TestReset(sw1, std_bs150);
+        x += TestReset(sw2, gtl_bs150);
 
         if(i == 1)
-            show_res("bitset<35>/reset", sw1, sw2);
-
-        x += TestReset(sw1, std_bs75);
-        x += TestReset(sw2, gtl_bs75);
-
-        if(i == 1)
-            show_res("bitset<75>/reset", sw1, sw2);
+            show_res("bitset<150>/reset", sw1, sw2);
 
         x += TestReset(sw1, std_bs1500);
         x += TestReset(sw2, gtl_bs1500);
 
         if(i == 1)
             show_res("bitset<1500>/reset", sw1, sw2);
+
+        x += TestReset(sw1, std_bs15000);
+        x += TestReset(sw2, gtl_bs15000);
+
+        if(i == 1)
+            show_res("bitset<15000>/reset", sw1, sw2);
 
 
         // ------------------------------------------
@@ -218,23 +220,23 @@ int main()
         if(i == 1)
             show_res("bitset<15>/flip", sw1, sw2);
 
-        x += TestFlip(sw1, std_bs35);
-        x += TestFlip(sw2, gtl_bs35);
+        x += TestFlip(sw1, std_bs150);
+        x += TestFlip(sw2, gtl_bs150);
 
         if(i == 1)
-            show_res("bitset<35>/flip", sw1, sw2);
-
-        x += TestFlip(sw1, std_bs75);
-        x += TestFlip(sw2, gtl_bs75);
-
-        if(i == 1)
-            show_res("bitset<75>/flip", sw1, sw2);
+            show_res("bitset<150>/flip", sw1, sw2);
 
         x += TestFlip(sw1, std_bs1500);
         x += TestFlip(sw2, gtl_bs1500);
 
         if(i == 1)
             show_res("bitset<1500>/flip", sw1, sw2);
+
+        x += TestFlip(sw1, std_bs15000);
+        x += TestFlip(sw2, gtl_bs15000);
+
+        if(i == 1)
+            show_res("bitset<15000>/flip", sw1, sw2);
 
 
         // ------------------------------------------
@@ -246,23 +248,23 @@ int main()
         if(i == 1)
             show_res("bitset<15>/test", sw1, sw2);
 
-        x += TestTest(sw1, std_bs35, 31);
-        x += TestTest(sw2, gtl_bs35, 31);
+        x += TestTest(sw1, std_bs150, 31);
+        x += TestTest(sw2, gtl_bs150, 31);
 
         if(i == 1)
-            show_res("bitset<35>/test", sw1, sw2);
-
-        x += TestTest(sw1, std_bs75, 63);
-        x += TestTest(sw2, gtl_bs75, 63);
-
-        if(i == 1)
-            show_res("bitset<75>/test", sw1, sw2);
+            show_res("bitset<150>/test", sw1, sw2);
 
         x += TestTest(sw1, std_bs1500, 1023);
         x += TestTest(sw2, gtl_bs1500, 1023);
 
         if(i == 1)
             show_res("bitset<1500>/test", sw1, sw2);
+
+        x += TestTest(sw1, std_bs15000, 998);
+        x += TestTest(sw2, gtl_bs15000, 998);
+
+        if(i == 1)
+            show_res("bitset<15000>/test", sw1, sw2);
 
 
         // ------------------------------------------
@@ -274,23 +276,23 @@ int main()
         if(i == 1)
             show_res("bitset<15>/count", sw1, sw2);
 
-        x += TestCount(sw1, std_bs35);
-        x += TestCount(sw2, gtl_bs35);
+        x += TestCount(sw1, std_bs150);
+        x += TestCount(sw2, gtl_bs150);
 
         if(i == 1)
-            show_res("bitset<35>/count", sw1, sw2);
-
-        x += TestCount(sw1, std_bs75);
-        x += TestCount(sw2, gtl_bs75);
-
-        if(i == 1)
-            show_res("bitset<75>/count", sw1, sw2);
+            show_res("bitset<150>/count", sw1, sw2);
 
         x += TestCount(sw1, std_bs1500);
         x += TestCount(sw2, gtl_bs1500);
 
         if(i == 1)
             show_res("bitset<1500>/count", sw1, sw2);
+
+        x += TestCount(sw1, std_bs15000);
+        x += TestCount(sw2, gtl_bs15000);
+
+        if(i == 1)
+            show_res("bitset<15000>/count", sw1, sw2);
 
 
         // ------------------------------------------
@@ -302,23 +304,23 @@ int main()
         if(i == 1)
             show_res("bitset<15>/>>=/1", sw1, sw2);
 
-        x += TestRightShift(sw1, std_bs35, 1);
-        x += TestRightShift(sw2, gtl_bs35, 1);
+        x += TestRightShift(sw1, std_bs150, 1);
+        x += TestRightShift(sw2, gtl_bs150, 1);
 
         if(i == 1)
-            show_res("bitset<35>/>>=/1", sw1, sw2);
-
-        x += TestRightShift(sw1, std_bs75, 1);
-        x += TestRightShift(sw2, gtl_bs75, 1);
-
-        if(i == 1)
-            show_res("bitset<75>/>>=/1", sw1, sw2);
+            show_res("bitset<150>/>>=/1", sw1, sw2);
 
         x += TestRightShift(sw1, std_bs1500, 1);
         x += TestRightShift(sw2, gtl_bs1500, 1);
 
         if(i == 1)
             show_res("bitset<1500>/>>=/1", sw1, sw2);
+
+        x += TestRightShift(sw1, std_bs15000, 1);
+        x += TestRightShift(sw2, gtl_bs15000, 1);
+
+        if(i == 1)
+            show_res("bitset<15000>/>>=/1", sw1, sw2);
             
     }
     return (int)x;

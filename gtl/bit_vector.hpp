@@ -154,6 +154,14 @@ public:
         s |= fs & m;
     }
 
+    template<vt flags>
+    constexpr uint64_t oor_bits(uint64_t s, uint64_t m) {
+        if constexpr (!(flags & vt::oor_ones))
+            return  (s & ~m);
+        else
+            return s | m;
+    }
+
     // functional update/inspect  by bit range, last is 1 + last index to change
     // function f can modify the whole uint64_t, only relevant bits are copied
     // the shift passed to F moves returned value in correct location(>= 0 means left shift)
@@ -167,17 +175,10 @@ public:
         size_t first_slot = slot(first);
         size_t last_slot  = slot(last);
 
-        constexpr auto oor_bits = [](uint64_t s, uint64_t m) constexpr  -> uint64_t {
-            if constexpr (!(flags & vt::oor_ones))
-                return  (s & ~m);
-            else
-                return s | m;
-        };
-
         if (first_slot == last_slot) {
             uint64_t& s  = _s[first_slot]; 
             uint64_t  m  = ~(lowmask(first) ^ lowmask(last)); // m has ones on the bits we don't want to change
-            auto fs = f(oor_bits(s, m), (int)mod(first)); 
+            auto fs = f(oor_bits<flags>(s, m), (int)mod(first)); 
             if constexpr (!(flags & vt::view)) {
                 s &= m;
                 s |= fs & ~m;
@@ -189,7 +190,7 @@ public:
             if (mod(first)) {
                 uint64_t& s  = _s[first_slot]; 
                 uint64_t  m  = lowmask(first);      // m has ones on the bits we don't want to change
-                auto fs = f(oor_bits(s, m), (int)mod(first)); 
+                auto fs = f(oor_bits<flags>(s, m), (int)mod(first)); 
                 if constexpr (!(flags & vt::view)) {
                     s &= m;                         // zero bits to be changed
                     s |= fs & ~m;                   // copy masked new value
@@ -214,7 +215,7 @@ public:
             if (mod(last)) {
                 uint64_t& s  = _s[last_slot]; 
                 uint64_t  m  = himask(last);       // m has ones on the bits we don't want to change
-                auto  fs = f(oor_bits(s, m), -(int)(mod(first))); 
+                auto  fs = f(oor_bits<flags>(s, m), -(int)(mod(first))); 
                 if constexpr (!(flags & vt::view)) {
                     s &= m;                        // zero bits to be changed
                     s |= fs & ~m;                  // copy masked new value
@@ -227,7 +228,7 @@ public:
             if (mod(last)) {
                 uint64_t& s  = _s[last_slot]; 
                 uint64_t  m  = himask(last);       // m has ones on the bits we don't want to change
-                auto fs = f(oor_bits(s, m), -(int)(mod(first))); 
+                auto fs = f(oor_bits<flags>(s, m), -(int)(mod(first))); 
                 if constexpr (!(flags & vt::view)) {
                     s &= m;                        // zero bits to be changed
                     s |= fs & ~m;                  // copy masked new value
@@ -251,13 +252,34 @@ public:
             // ----------
             uint64_t& s  = _s[first_slot]; 
             uint64_t  m  = lowmask(first);  // m has ones on the bits we don't want to change
-            auto fs = f(oor_bits(s, m), (int)mod(first)); 
+            auto fs = f(oor_bits<flags>(s, m), (int)mod(first)); 
             if constexpr (!(flags & vt::view)) {
                 s &= m;                         // zero bits to be changed
                 s |= fs & ~m;                   // copy masked new value
             } else if (fs)
                 return;
         }
+        _check_extra_bits();
+    }
+
+    // -----------------------------------------------------------------------
+    template<vt flags, class F>
+    void visit_all(size_t sz,  F f) { 
+        size_t num_slots = size();
+        if (!num_slots)
+            return;
+        size_t slot;
+        for (slot=0; slot<num_slots-1; ++slot) {
+            auto fs = f(_s[slot]);
+            if constexpr (!(flags & vt::view)) 
+                _s[slot] = fs;
+            else if (fs)
+                return;
+        }
+        uint64_t m  = mod(sz) ? himask(sz) : (uint64_t)0; // m has ones on the bits we don't want to change
+        auto fs = f(oor_bits<flags>(_s[slot], m));
+        if constexpr (!(flags & vt::view)) 
+            _s[slot] = fs & ~m;                           // mask last returned value so we don't set bits past end
         _check_extra_bits();
     }
 
@@ -605,9 +627,9 @@ public:
 
     // change whole bit_vector
     // -----------------------
-    vec& set()   { view().set(); return *this; }
-    vec& reset() { view().reset(); return *this; }
-    vec& flip()  { view().flip(); return *this; }
+    vec& set()   { _s.visit_all<vt::none>(_sz, [](uint64_t)   { return ones; }); return *this; }
+    vec& reset() { _s.visit_all<vt::none>(_sz, [](uint64_t)   { return 0; }); return *this; }
+    vec& flip()  { _s.visit_all<vt::none>(_sz, [](uint64_t v) { return ~v; }); return *this; }
 
     // access bit value
     // ----------------
@@ -647,8 +669,18 @@ public:
 
     // unary predicates any, every, etc...
     // -----------------------------------
-    bool any()   const { return view().any(); }
-    bool every() const { return view().every(); }
+    bool any()   const { 
+        bool res = false;
+        const_cast<S&>(_s).visit_all<vt::view>(_sz, [&](uint64_t v) { if (v) res = true; return res; }); 
+        return res; 
+    }
+
+    bool every() const { 
+        bool res = true;
+        const_cast<S&>(_s).visit_all<vt::view | vt::oor_ones>(_sz, [&](uint64_t v) { if (v != ones) res = false; return !res; }); 
+        return res; 
+    }
+
     bool none()  const { return !any(); }
 
     // binary predicates operator==(), contains, disjoint, ...
@@ -671,7 +703,11 @@ public:
 
     // miscellaneous
     // -------------
-    size_t count() const { return view().count(); }
+    size_t count() const { 
+        size_t cnt = 0;
+        const_cast<S&>(_s).visit_all<vt::view>(_sz, [&](uint64_t v) { if (v) cnt += _popcount64(v); return false; }); 
+        return cnt;
+    }
 
     void swap(vec &o) {
         std::swap(_sz, o._sz);
