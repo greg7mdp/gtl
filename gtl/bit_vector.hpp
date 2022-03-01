@@ -50,7 +50,7 @@ unsigned countr_zero(uint64_t bb) {
     return index64[((bb ^ (bb-1)) * debruijn64) >> 58];
 }
 
-enum class vt { none=0, view=1, oor_ones=2, backward=4 }; // visitor flags
+    enum class vt { none=0, view=1, oor_ones=2, backward=4, true_ = 8, false_ = 16 }; // visitor flags
 
 using vt_type = std::underlying_type<vt>::type;
 
@@ -280,21 +280,31 @@ public:
     // -----------------------------------------------------------------------
     template<vt flags, class F>
     void visit_all(size_t sz,  F f) { 
-        size_t num_slots = size();
-        if (!num_slots)
-            return;
-        size_t slot;
-        for (slot=0; slot<num_slots-1; ++slot) {
-            auto fs = f(_s[slot]);
-            if constexpr (!(flags & vt::view)) 
-                _s[slot] = fs;
-            else if (fs)
+        size_t num_slots = slot_cnt(_sz);
+        if constexpr (flags & vt::false_) {
+            // std::fill(&_s[0], &_s[0] + num_slots, 0);
+            memset(&_s[0], 0, num_slots * sizeof(uint64_t));
+        } else if constexpr (flags & vt::true_) {
+            // std::fill(&_s[0], &_s[0] + num_slots, ones);
+            memset(&_s[0], 0xff, num_slots * sizeof(uint64_t));
+            uint64_t m  = mod(sz) ? himask(sz) : (uint64_t)0;
+            _s[num_slots-1] &= ~m;  // mask last bits to 0
+        } else {
+            if (!num_slots)
                 return;
+            size_t slot;
+            for (slot=0; slot<num_slots-1; ++slot) {
+                auto fs = f(_s[slot]);
+                if constexpr (!(flags & vt::view)) 
+                    _s[slot] = fs;
+                else if (fs)
+                    return;
+            }
+            uint64_t m  = mod(sz) ? himask(sz) : (uint64_t)0; // m has ones on the bits we don't want to change
+            auto fs = f(oor_bits<flags>(_s[slot], m));
+            if constexpr (!(flags & vt::view)) 
+                _s[slot] = fs & ~m;                           // mask last returned value so we don't set bits past end
         }
-        uint64_t m  = mod(sz) ? himask(sz) : (uint64_t)0; // m has ones on the bits we don't want to change
-        auto fs = f(oor_bits<flags>(_s[slot], m));
-        if constexpr (!(flags & vt::view)) 
-            _s[slot] = fs & ~m;                           // mask last returned value so we don't set bits past end
         _check_extra_bits();
     }
 
@@ -642,8 +652,8 @@ public:
 
     // change whole bit_vector
     // -----------------------
-    vec& set()   { _s.visit_all<vt::none>(_sz, [](uint64_t)   { return ones; }); return *this; }
-    vec& reset() { _s.visit_all<vt::none>(_sz, [](uint64_t)   { return 0; }); return *this; }
+    vec& set()   { _s.visit_all<vt::true_>(_sz, nullptr); return *this; }
+    vec& reset() { _s.visit_all<vt::false_>(_sz, nullptr); return *this; }
     vec& flip()  { _s.visit_all<vt::none>(_sz, [](uint64_t v) { return ~v; }); return *this; }
 
     // access bit value

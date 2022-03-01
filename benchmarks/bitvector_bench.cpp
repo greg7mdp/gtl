@@ -57,20 +57,26 @@ namespace
 	template <class Bitset>
 	size_t TestReset(stopwatch& sw, Bitset& b)
 	{
+        size_t mask = (nextPowerOf2(b.size()) >> 1) - 1;
 		gtl::start_snap x(sw);
-		for(size_t i = 0; i < num_iter; ++i)
+		for(size_t i = 0; i < num_iter; ++i) {
 			b.reset();
-        return b.count();
+            if (i & 0x800) b.set(i & mask);
+        }
+        return b[0];
 	}
 
 
 	template <class Bitset>
 	size_t TestFlip(stopwatch& sw, Bitset& b)
 	{
+        size_t mask = (nextPowerOf2(b.size()) >> 1) - 1;
 		gtl::start_snap x(sw);
-		for(size_t i = 0; i < num_iter; ++i)
+		for(size_t i = 0; i < num_iter; ++i) {
 			b.flip();
-        return b.count();
+            if (i & 0x800) b.set(i & mask);
+        }
+        return b[0];
 	}
 
 
@@ -90,9 +96,12 @@ namespace
 	size_t TestCount(stopwatch& sw, Bitset& b)
 	{
 		size_t temp = 0;
+        size_t mask = (nextPowerOf2(b.size()) >> 1) - 1;
 		gtl::start_snap x(sw);
-		for(size_t i = 0; i < num_iter; ++i)
+		for(size_t i = 0; i < num_iter; ++i) {
 			temp += b.count();
+            if (i & 0x800) b.set(i & mask);
+        }
         return temp;
 	}
 
@@ -155,17 +164,17 @@ int main()
         if(i == 1) 
             show_res("bitset<150>/set()", sw1, sw2);
 
-        TestSet(sw1, std_bs15000);
-        TestSet(sw2, gtl_bs15000);
-
-        if(i == 1)
-            show_res("bitset<15000>/set()", sw1, sw2);
-
         TestSet(sw1, std_bs1500);
         TestSet(sw2, gtl_bs1500);
             
         if(i == 1) 
             show_res("bitset<1500>/set()", sw1, sw2);
+
+        TestSet(sw1, std_bs15000);
+        TestSet(sw2, gtl_bs15000);
+
+        if(i == 1)
+            show_res("bitset<15000>/set()", sw1, sw2);
 
             
         // ------------------------------------------
