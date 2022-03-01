@@ -50,7 +50,7 @@ unsigned countr_zero(uint64_t bb) {
     return index64[((bb ^ (bb-1)) * debruijn64) >> 58];
 }
 
-    enum class vt { none=0, view=1, oor_ones=2, backward=4, true_ = 8, false_ = 16 }; // visitor flags
+enum class vt { none=0, view=1, oor_ones=2, backward=4, true_ = 8, false_ = 16 }; // visitor flags
 
 using vt_type = std::underlying_type<vt>::type;
 
@@ -282,9 +282,11 @@ public:
     void visit_all(size_t sz,  F f) { 
         size_t num_slots = slot_cnt(_sz);
         if constexpr (flags & vt::false_) {
+            // set all bits to 0
             // std::fill(&_s[0], &_s[0] + num_slots, 0);
             memset(&_s[0], 0, num_slots * sizeof(uint64_t));
         } else if constexpr (flags & vt::true_) {
+            // set all bits to 1
             // std::fill(&_s[0], &_s[0] + num_slots, ones);
             memset(&_s[0], 0xff, num_slots * sizeof(uint64_t));
             uint64_t m  = mod(sz) ? himask(sz) : (uint64_t)0;
