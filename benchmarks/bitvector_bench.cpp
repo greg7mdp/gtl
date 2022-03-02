@@ -1,13 +1,17 @@
 // -------------------------------------------------------
 // Copyright (c) Electronic Arts Inc. All rights reserved.
 // -------------------------------------------------------
-
-
 /*
  *  Used under electronicarts/EASTL BSD 3-Clause "New" or "Revised" License
  *  see: https://github.com/electronicarts/EASTL/blob/master/LICENSE
- *
+ */
+
+
+/*
  *  Modified by: Gregory Popovitch (greg7mdp@gmail.com)
+ * 
+ *  Because we have a dynamic bitset whose size is not known at compile time, it will be difficult 
+ *  to match the speed of std::bitset in some cases.
  */
 
 
@@ -35,12 +39,22 @@ namespace
     }
 
 	template <class Bitset>
-	size_t TestSet(stopwatch& sw, Bitset& b)
+	size_t TestChangeAll(stopwatch& sw, Bitset& b)
 	{
+        size_t mask = (nextPowerOf2(b.size()) >> 1) - 1;
 		gtl::start_snap x(sw);
-		for(size_t i = 0; i < num_iter; ++i)
+        size_t cnt = 0;
+		for(size_t i = 0; i < num_iter; ++i) {
+            bool check = (i & 0xff) == 0;
+			b.reset(); 
+            if (check) b.flip(i & mask);
 			b.set();
-		return b.count();
+            if (check) b.set(i & mask);
+            b.flip();
+            if (check) b.set(i & mask);
+            cnt += b[0];
+        }
+		return cnt;
 	}
 
 	template <class Bitset>
@@ -51,32 +65,6 @@ namespace
 		for(size_t i = 0; i < num_iter; ++i)
 			b.set(i & mask);
         return b.count();
-	}
-
-
-	template <class Bitset>
-	size_t TestReset(stopwatch& sw, Bitset& b)
-	{
-        size_t mask = (nextPowerOf2(b.size()) >> 1) - 1;
-		gtl::start_snap x(sw);
-		for(size_t i = 0; i < num_iter; ++i) {
-			b.reset();
-            if (i & 0x800) b.set(i & mask);
-        }
-        return b[0];
-	}
-
-
-	template <class Bitset>
-	size_t TestFlip(stopwatch& sw, Bitset& b)
-	{
-        size_t mask = (nextPowerOf2(b.size()) >> 1) - 1;
-		gtl::start_snap x(sw);
-		for(size_t i = 0; i < num_iter; ++i) {
-			b.flip();
-            if (i & 0x800) b.set(i & mask);
-        }
-        return b[0];
 	}
 
 
@@ -100,7 +88,7 @@ namespace
 		gtl::start_snap x(sw);
 		for(size_t i = 0; i < num_iter; ++i) {
 			temp += b.count();
-            if (i & 0x800) b.set(i & mask);
+            if ((i & 0xff) == 0) b.set(i & mask);
         }
         return temp;
 	}
@@ -137,14 +125,14 @@ int main()
     gtl::bit_vector   gtl_bs15000(15000);
 
     auto show_res = [](const char *s, stopwatch &sw1, stopwatch &sw2) {
-        printf("%-20s %14.2f %16.2f %10.2f\n", s, 
+        printf("%-24s %14.2f %16.2f %10.2f\n", s, 
                sw1.start_to_snap(), 
                sw2.start_to_snap(), 
                sw1.start_to_snap()/sw2.start_to_snap());
     };
     size_t x = 0;
 
-    printf("%-20s %14s %16s %10s\n", "time", "std::bitset", "gtl::bit_vector", "ratio");
+    printf("%-24s %14s %16s %10s\n", "time", "std::bitset", "gtl::bit_vector", "ratio");
 
     for(int i = 0; i < 2; ++i)
     {
@@ -152,29 +140,29 @@ int main()
         // Test set()
         // ------------------------------------------
 
-        x += TestSet(sw1, std_bs15);
-        x += TestSet(sw2, gtl_bs15);
+        x += TestChangeAll(sw1, std_bs15);
+        x += TestChangeAll(sw2, gtl_bs15);
 
         if(i == 1) 
-            show_res("bitset<15>/set()", sw1, sw2);
+            show_res("bitset<15>/set/flip", sw1, sw2);
 
-        TestSet(sw1, std_bs150);
-        TestSet(sw2, gtl_bs150);
+        TestChangeAll(sw1, std_bs150);
+        TestChangeAll(sw2, gtl_bs150);
 
         if(i == 1) 
-            show_res("bitset<150>/set()", sw1, sw2);
+            show_res("bitset<150>/set/flip", sw1, sw2);
 
-        TestSet(sw1, std_bs1500);
-        TestSet(sw2, gtl_bs1500);
+        TestChangeAll(sw1, std_bs1500);
+        TestChangeAll(sw2, gtl_bs1500);
             
         if(i == 1) 
-            show_res("bitset<1500>/set()", sw1, sw2);
+            show_res("bitset<1500>/set/flip", sw1, sw2);
 
-        TestSet(sw1, std_bs15000);
-        TestSet(sw2, gtl_bs15000);
+        TestChangeAll(sw1, std_bs15000);
+        TestChangeAll(sw2, gtl_bs15000);
 
         if(i == 1)
-            show_res("bitset<15000>/set()", sw1, sw2);
+            show_res("bitset<15000>/set/flip", sw1, sw2);
 
             
         // ------------------------------------------
@@ -203,62 +191,6 @@ int main()
 
         if(i == 1)
             show_res("bitset<15000>/set(i)", sw1, sw2);
-
-
-        // ------------------------------------------
-        // Test reset()
-        // ------------------------------------------
-        x += TestReset(sw1, std_bs15);
-        x += TestReset(sw2, gtl_bs15);
-
-        if(i == 1)
-            show_res("bitset<15>/reset", sw1, sw2);
-
-        x += TestReset(sw1, std_bs150);
-        x += TestReset(sw2, gtl_bs150);
-
-        if(i == 1)
-            show_res("bitset<150>/reset", sw1, sw2);
-
-        x += TestReset(sw1, std_bs1500);
-        x += TestReset(sw2, gtl_bs1500);
-
-        if(i == 1)
-            show_res("bitset<1500>/reset", sw1, sw2);
-
-        x += TestReset(sw1, std_bs15000);
-        x += TestReset(sw2, gtl_bs15000);
-
-        if(i == 1)
-            show_res("bitset<15000>/reset", sw1, sw2);
-
-
-        // ------------------------------------------
-        // Test flip
-        // ------------------------------------------
-        x += TestFlip(sw1, std_bs15);
-        x += TestFlip(sw2, gtl_bs15);
-
-        if(i == 1)
-            show_res("bitset<15>/flip", sw1, sw2);
-
-        x += TestFlip(sw1, std_bs150);
-        x += TestFlip(sw2, gtl_bs150);
-
-        if(i == 1)
-            show_res("bitset<150>/flip", sw1, sw2);
-
-        x += TestFlip(sw1, std_bs1500);
-        x += TestFlip(sw2, gtl_bs1500);
-
-        if(i == 1)
-            show_res("bitset<1500>/flip", sw1, sw2);
-
-        x += TestFlip(sw1, std_bs15000);
-        x += TestFlip(sw2, gtl_bs15000);
-
-        if(i == 1)
-            show_res("bitset<15000>/flip", sw1, sw2);
 
 
         // ------------------------------------------

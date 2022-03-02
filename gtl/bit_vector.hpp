@@ -146,10 +146,10 @@ public:
     template<class F>
     void update_bit(size_t idx, F f) { 
         assert(idx < _sz);
-        size_t slot_idx = slot(idx);
+        const size_t slot_idx = slot(idx);
         uint64_t& s  = _s[slot_idx]; 
-        uint64_t  fs = f(s); 
-        uint64_t  m  = bitmask(idx);
+        const uint64_t  fs = f(s); 
+        const uint64_t  m  = bitmask(idx);
         s &= ~m;
         s |= fs & m;
     }
@@ -183,32 +183,39 @@ public:
     // if (flags & vt::view), this fn exits early when the callback returns true.
     // ------------------------------------------------------------------------------------
     template<vt flags, class F>
-    void visit(size_t first, size_t last, F f) { 
+    void visit(const size_t first, const size_t last, F f) { 
         assert(last <= _sz);
         if (last <= first)
             return;
         size_t first_slot = slot(first);
         size_t last_slot  = slot(last);
+        const size_t shift = mod(first);
 
         if (first_slot == last_slot) {
-            uint64_t& s  = _s[first_slot]; 
-            uint64_t  m  = ~(lowmask(first) ^ lowmask(last)); // m has ones on the bits we don't want to change
-            auto fs = f(oor_bits<flags>(s, m), (int)mod(first)); 
+            const uint64_t s  = _s[first_slot]; 
+            const uint64_t  m  = ~(lowmask(first) ^ lowmask(last)); // m has ones on the bits we don't want to change
+            const auto fs = f(oor_bits<flags>(s, m), (int)shift); 
             if constexpr (!(flags & vt::view)) {
-                s &= m;
-                s |= fs & ~m;
+                if (s != fs) {
+                    uint64_t &d = _s[first_slot];
+                    d &= m;
+                    d |= fs & ~m;
+                }
             } else if (fs)
                 return;
         } else if constexpr (!(flags & vt::backward)) {
             // first slot
             // ----------
-            if (mod(first)) {
-                uint64_t& s  = _s[first_slot]; 
-                uint64_t  m  = lowmask(first);      // m has ones on the bits we don't want to change
-                auto fs = f(oor_bits<flags>(s, m), (int)mod(first)); 
+            if (shift) {
+                const uint64_t s  = _s[first_slot]; 
+                const uint64_t m  = lowmask(first);      // m has ones on the bits we don't want to change
+                const auto fs = f(oor_bits<flags>(s, m), (int)shift); 
                 if constexpr (!(flags & vt::view)) {
-                    s &= m;                         // zero bits to be changed
-                    s |= fs & ~m;                   // copy masked new value
+                    if (s != fs) {
+                        uint64_t &d = _s[first_slot];
+                        d &= m;                         // zero bits to be changed
+                        d |= fs & ~m;                   // copy masked new value
+                    }
                 } else if (fs)
                     return;
                 ++first_slot;
@@ -217,23 +224,27 @@ public:
             // full slots
             // ----------
             for (size_t slot=first_slot; slot<last_slot; ++slot) {
-                uint64_t& s  = _s[slot]; 
-                auto fs = f(s, 0); 
-                if constexpr (!(flags & vt::view))
-                    s = fs; 
-                else if (fs)
+                const uint64_t s  = _s[slot]; 
+                const auto fs = f(s, 0); 
+                if constexpr (!(flags & vt::view)) {
+                    if (s != fs)
+                        _s[slot] = fs; 
+                } else if (fs)
                     return;
             }
 
             // last slot
             // ---------
             if (mod(last)) {
-                uint64_t& s  = _s[last_slot]; 
-                uint64_t  m  = himask(last);       // m has ones on the bits we don't want to change
-                auto  fs = f(oor_bits<flags>(s, m), -(int)(mod(first))); 
+                const uint64_t s  = _s[last_slot]; 
+                const uint64_t m  = himask(last);       // m has ones on the bits we don't want to change
+                const auto  fs = f(oor_bits<flags>(s, m), -(int)(shift)); 
                 if constexpr (!(flags & vt::view)) {
-                    s &= m;                        // zero bits to be changed
-                    s |= fs & ~m;                  // copy masked new value
+                    if (s != fs) {
+                        uint64_t &d = _s[last_slot];
+                        d &= m;                        // zero bits to be changed
+                        d |= fs & ~m;                  // copy masked new value
+                    }
                 } else if (fs)
                     return;
             }
@@ -241,13 +252,16 @@ public:
             // last slot
             // ---------
             if (mod(last)) {
-                uint64_t& s  = _s[last_slot]; 
-                uint64_t  m  = himask(last);       // m has ones on the bits we don't want to change
-                auto fs = f(oor_bits<flags>(s, m), -(int)(mod(first))); 
+                const uint64_t s  = _s[last_slot]; 
+                const uint64_t m  = himask(last);       // m has ones on the bits we don't want to change
+                const auto fs = f(oor_bits<flags>(s, m), -(int)(shift)); 
                 if constexpr (!(flags & vt::view)) {
-                    s &= m;                        // zero bits to be changed
-                    s |= fs & ~m;                  // copy masked new value
-                } else if (fs)
+                    if (s != fs) {
+                        uint64_t &d = _s[last_slot];
+                        d &= m;                        // zero bits to be changed
+                        d |= fs & ~m;                  // copy masked new value
+                    }
+                } else if (fs) 
                     return;
             }
             --last_slot;
@@ -255,22 +269,26 @@ public:
             // full slots
             // ----------
             for (size_t slot=last_slot; slot > first_slot; --slot) {
-                uint64_t& s  = _s[slot]; 
-                auto fs = f(s, 0); 
-                if constexpr (!(flags & vt::view))
-                    s = fs;
-                else if (fs)
+                const uint64_t s  = _s[slot]; 
+                const auto fs = f(s, 0); 
+                if constexpr (!(flags & vt::view)) {
+                    if (s != fs) 
+                        _s[slot] = fs;
+                } else if (fs)
                     return;
             }
 
             // first slot
             // ----------
-            uint64_t& s  = _s[first_slot]; 
-            uint64_t  m  = lowmask(first);  // m has ones on the bits we don't want to change
-            auto fs = f(oor_bits<flags>(s, m), (int)mod(first)); 
+            const uint64_t s  = _s[first_slot]; 
+            const uint64_t m  = lowmask(first);  // m has ones on the bits we don't want to change
+            const auto fs = f(oor_bits<flags>(s, m), (int)shift); 
             if constexpr (!(flags & vt::view)) {
-                s &= m;                         // zero bits to be changed
-                s |= fs & ~m;                   // copy masked new value
+                if (s != fs) {
+                    uint64_t &d = _s[first_slot];
+                    d &= m;                         // zero bits to be changed
+                    d |= fs & ~m;                   // copy masked new value
+                }
             } else if (fs)
                 return;
         }
@@ -279,7 +297,7 @@ public:
 
     // -----------------------------------------------------------------------
     template<vt flags, class F>
-    void visit_all(size_t sz,  F f) { 
+    void visit_all(F f) { 
         size_t num_slots = slot_cnt(_sz);
         if constexpr (flags & vt::false_) {
             // set all bits to 0
@@ -289,23 +307,29 @@ public:
             // set all bits to 1
             // std::fill(&_s[0], &_s[0] + num_slots, ones);
             memset(&_s[0], 0xff, num_slots * sizeof(uint64_t));
-            uint64_t m  = mod(sz) ? himask(sz) : (uint64_t)0;
-            _s[num_slots-1] &= ~m;  // mask last bits to 0
+            if (mod(_sz)) {
+                uint64_t m  = himask(_sz);
+                _s[num_slots-1] &= ~m;  // mask last bits to 0
+            }
         } else {
             if (!num_slots)
                 return;
             size_t slot;
             for (slot=0; slot<num_slots-1; ++slot) {
-                auto fs = f(_s[slot]);
-                if constexpr (!(flags & vt::view)) 
-                    _s[slot] = fs;
-                else if (fs)
+                const uint64_t s  = _s[slot];
+                const auto fs = f(s);
+                if constexpr (!(flags & vt::view)) {
+                    if (s != fs)
+                       _s[slot] = fs;
+                } else if (fs)
                     return;
             }
-            uint64_t m  = mod(sz) ? himask(sz) : (uint64_t)0; // m has ones on the bits we don't want to change
-            auto fs = f(oor_bits<flags>(_s[slot], m));
+            const uint64_t m  = mod(_sz) ? himask(_sz) : (uint64_t)0; // m has ones on the bits we don't want to change
+            const uint64_t s  = _s[slot];
+            const auto fs = f(oor_bits<flags>(s, m));
             if constexpr (!(flags & vt::view)) 
-                _s[slot] = fs & ~m;                           // mask last returned value so we don't set bits past end
+                if (s != fs) 
+                    _s[slot] = fs & ~m;                         // mask last returned value so we don't set bits past end
         }
         _check_extra_bits();
     }
@@ -654,9 +678,9 @@ public:
 
     // change whole bit_vector
     // -----------------------
-    vec& set()   { _s.visit_all<vt::true_>(_sz, nullptr); return *this; }
-    vec& reset() { _s.visit_all<vt::false_>(_sz, nullptr); return *this; }
-    vec& flip()  { _s.visit_all<vt::none>(_sz, [](uint64_t v) { return ~v; }); return *this; }
+    vec& set()   { _s.visit_all<vt::true_>(nullptr); return *this; }
+    vec& reset() { _s.visit_all<vt::false_>(nullptr); return *this; }
+    vec& flip()  { _s.visit_all<vt::none>([](uint64_t v) { return ~v; }); return *this; }
 
     // access bit value
     // ----------------
@@ -698,13 +722,13 @@ public:
     // -----------------------------------
     bool any() const {     // "return view().any();" would work, but this is faster  
         bool res = false;
-        const_cast<S&>(_s).visit_all<vt::view>(_sz, [&](uint64_t v) { if (v) res = true; return res; }); 
+        const_cast<S&>(_s).visit_all<vt::view>([&](uint64_t v) { if (v) res = true; return res; }); 
         return res; 
     }
 
     bool every() const {   // "return view().every();" would work, but this is faster 
         bool res = true;
-        const_cast<S&>(_s).visit_all<vt::view | vt::oor_ones>(_sz, [&](uint64_t v) { if (v != ones) res = false; return !res; }); 
+        const_cast<S&>(_s).visit_all<vt::view | vt::oor_ones>([&](uint64_t v) { if (v != ones) res = false; return !res; }); 
         return res; 
     }
 
@@ -732,7 +756,7 @@ public:
     // -------------
     size_t count() const { // "return view().count();" would work, but this is faster 
         size_t cnt = 0;
-        const_cast<S&>(_s).visit_all<vt::view>(_sz, [&](uint64_t v) { if (v) cnt += _popcount64(v); return false; }); 
+        const_cast<S&>(_s).visit_all<vt::view>([&](uint64_t v) { if (v) cnt += _popcount64(v); return false; }); 
         return cnt;
     }
 
