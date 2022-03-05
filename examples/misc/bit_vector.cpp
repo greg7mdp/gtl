@@ -59,19 +59,33 @@ int main() {
 
         // let's try bitwise operators
         // ---------------------------
-        assert((bv & bv2).none());      // binary and => no one bit remains
+        assert((bv & bv2).none());                  // binary and => no one bit remains
         assert((string)(bv & bv2) == "0x0000000000000000");
         assert((bv & bv2).count() == 0);
 
-        assert((bv | bv2).every());     // binary or => all bits are set
+        assert((bv | bv2).every());                 // binary or => all bits are set
         assert((string)(bv | bv2) == "0xffffffffffffffff");
         assert((bv | bv2).count() == 64);
 
-        assert((bv ^ bv2).every());     // binary xor => all bits are set
+        assert((bv ^ bv2).every());                 // binary xor => all bits are set
 
-        // there are more operators (-, |=, &=, ^=, ==) and methods like
+        // there are more operators |=, &=, ^=, ==) and methods like
         // contains(), disjoint(), 
+
     }
+
+    {
+        // we also have find_first() and find_next(), allowing to iterate over set bits
+        // ----------------------------------------------------------------------------
+        gtl::bit_vector bv { 0, 0xf00, 0x0321 }; 
+        assert(bv.size() == 192);
+        assert((string)bv == "0x00000000000003210000000000000f000000000000000000");
+
+        assert(bv.find_first() == 72);              // find_first is equivalent to std::countr_zero
+        assert(bv.find_next(73) == 73);
+        assert(bv.find_next(77) == 128);
+    }
+        
 
     {
         // views are very powerful. You can create a view on a part of the bitmap
@@ -80,8 +94,8 @@ int main() {
         gtl::bit_vector bv { 0x0321 }; 
         assert((string)bv == "0x0000000000000321");
 
-        bv.view(0, 4) = 0xf;
-        assert((string)bv == "0x000000000000032f");
+        bv.view(0, 4) = 0xf;                         // create a view on bv, and assign a value to its bits
+        assert((string)bv == "0x000000000000032f");  // modifies underlying bit_vector
 
         bv.view(4, 12) = 0xde;
         assert((string)bv == "0x0000000000000def");
@@ -89,19 +103,24 @@ int main() {
         bv.view(60, 64) = 0x7;
         assert((string)bv == "0x7000000000000def");
 
-        bv.view(4, 20) >>= 8;
+        bv.view(4, 20) >>= 8;                        // you can bit-shift a view, changing only the "viewed" bits
         assert((string)bv == "0x70000000000de00f");
 
-        bv.view(4, 12) = bv.view(12, 20);
+        bv.view(4, 12) = bv.view(12, 20);            // or assign a view to another one - they have to be the same size
         assert((string)bv == "0x70000000000dedef");
 
-        assert(bv.view( 0,  4).count() == 4); // count set bits
+        assert(bv.view( 0,  4).count() == 4);        // count set bits in a view
         assert(bv.view(32, 64).count() == 3);
 
-        bv.view(56, 60) |= bv.view(60, 64);
+        bv.view(56, 60) |= bv.view(60, 64);          // or a view with the content of another one
         assert((string)bv == "0x77000000000dedef");
-        
+
+        // anything you can do on a gtl::bit_vector also works on a gtl::bit_view. 
+        gtl::bit_view view(bv.view(4, 12));
+        assert((string)view == "0xde");              // it can also be converted to a string or output on a strem
+
     }
+
 
     return 0;
 }

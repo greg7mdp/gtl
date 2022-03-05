@@ -14,6 +14,7 @@
 #include <vector>
 #include <string>
 #include <cstdint>
+#include <cstddef>
 //#include <bit>
 #include <cassert>
 #include <iostream>
@@ -636,6 +637,55 @@ public:
         return (res == npos) ? npos : res + start;
     }
 
+    // print
+    // -----
+    template<class CharT = char, class Traits = std::char_traits<CharT>> 
+    friend std::basic_ostream<CharT, Traits>& operator<<(std::basic_ostream<CharT, Traits> &s, const view &v) 
+    { 
+        return s << (std::string)view; 
+    }
+
+    // conversion to std::string 
+    // -------------------------
+    template<class CharT = char, class Traits = std::char_traits<CharT>, class A = std::allocator<CharT>> 
+    void append_to_string(std::basic_string<CharT, Traits, A> &res) const 
+    {
+        size_t num_bytes = (size() + 7) >> 3;
+        size_t start = res.size();
+        size_t cur = start + num_bytes * 2;
+        res.resize(cur);
+
+        auto to_hex = [](unsigned char b) -> char { return (b > 9) ? 'a' + b - 10 : '0' + b; };
+        typename S::bit_sequence seq(_bv.storage(), _first, _last, 0);
+
+        while (cur > start) {
+            uint64_t v = seq();
+            for (size_t i=0; i<8; ++i) {
+                if (cur == start)
+                    break;
+                unsigned char b = (unsigned char)v;
+                v >>= 8;
+                res[--cur] = to_hex(b & 0xf);
+                res[--cur] = to_hex(b >> 4);
+            }
+        }
+    }
+
+    // make bit_vector convertible to std::string
+    template<class CharT = char, class Traits = std::char_traits<CharT>, class A = std::allocator<CharT>> 
+    operator std::basic_string<CharT, Traits, A>() const 
+    {
+        if (size() == 0)
+            return "<empty>";
+        std::basic_string<CharT, Traits, A> res;
+        size_t num_bytes = (size() + 7) >> 3;
+        res.reserve(num_bytes * 2 + 2);
+
+        res += "0x";
+        append_to_string(res);
+        return res;
+    }
+
 private:
     vec_type&   _bv;
     size_t      _first;
@@ -669,7 +719,6 @@ public:
     vec& flip(size_t idx)  { _s.update_bit(idx, [](uint64_t v) { return ~v; }); return *this; }
     bool test(size_t idx) const { return (*this)[idx]; }
     bool operator[](size_t idx) const { return !!(_s[slot(idx)] & bitmask(idx)); }
-    unsigned char get_byte(size_t byte_idx) const { return (unsigned char)(_s[byte_idx >> 3] >> ((byte_idx & 7) << 3)); }
 
     // either sets or resets the bit depending on val
     vec& set(size_t idx, bool val) {
@@ -805,31 +854,14 @@ public:
     template<class CharT = char, class Traits = std::char_traits<CharT>, class A = std::allocator<CharT>> 
     void append_to_string(std::basic_string<CharT, Traits, A> &res) const 
     {
-        size_t num_bytes = (_sz + 7) >> 3;
-        res.reserve(res.size() + num_bytes * 2);
-
-        auto to_hex = [](unsigned char b) -> char { return (b > 9) ? 'a' + b - 10 : '0' + b; };
-
-        for (int i=(int)(num_bytes-1); i>= 0; --i) {
-            unsigned char val = get_byte(i);
-            res +=  to_hex(val >> 4);
-            res += to_hex(val & 0xf);
-        }
+        view().append_to_string(res);
     }
 
     // make bit_vector convertible to std::string
     template<class CharT = char, class Traits = std::char_traits<CharT>, class A = std::allocator<CharT>> 
     operator std::basic_string<CharT, Traits, A>() const 
     {
-        if (_sz == 0)
-            return "<empty>";
-        std::basic_string<CharT, Traits, A> res;
-        size_t num_bytes = (_sz + 7) >> 3;
-        res.reserve(num_bytes * 2 + 2);
-
-        res += "0x";
-        append_to_string(res);
-        return res;
+        return static_cast<std::basic_string<CharT, Traits, A>>(view());
     }
     
     // access via gtl::bit_view
