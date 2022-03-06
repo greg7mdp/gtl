@@ -87,7 +87,9 @@ int main()
    a. reduced peak memory usage (when resizing), and  
    b. multithreading support (and inherent internal parallelism)
 
+**Acknowledgements** 
 
+Thanks to Google and the "Swiss table" team for the original [implementation](https://github.com/abseil/abseil-cpp) from which ours is derived. 
 
 ## Parallel hash containers
 
@@ -128,15 +130,22 @@ Btree containers will usually be preferable to the default red-black trees of th
 When an ordering is not needed, a hash container is typically a better choice than a btree one.
 
 
-## Bit vector (or dynamic bitset)
+## bit_vector (or dynamic bitset)
 
-[Gtl](https://github.com/greg7mdp/gtl) provides `bit_vector`, which is an alternative to `std::vector<bool>` and `std::bitset`, as it provides both dynamic resizing, and a good assortment of bit manipulation primitives.
+[Gtl](https://github.com/greg7mdp/gtl) provides `bit_vector`, which is an alternative to `std::vector<bool>` or `std::bitset`, as it provides both dynamic resizing, and a good assortment of bit manipulation primitives.
 
-I implemented this container because I often needed the functionality it provides, and didn't find an open-source implementation I like which didn't require pulling in a big library. The `gtl::bit_vector` implementation is self-contained in a single header [file](https://github.com/greg7mdp/gtl/blob/main/gtl/bit_vector.hpp) which can trivially  be added to any project (it currently requires a C++17 compiler). 
+I implemented this container because I often needed the functionality it provides, and didn't find an open-source implementation I liked which didn't require pulling in a big library. The `gtl::bit_vector` implementation is self-contained in a single header [file](https://github.com/greg7mdp/gtl/blob/main/gtl/bit_vector.hpp) which can trivially  be added to any project (it currently requires a C++17 compiler). 
 
 In addition, I dreamed of the `gtl::bit_view` functionality, similar to `std::string_view` for strings, to refer and operate on a subset of a full `gtl::bit_vector`, and I thought it would be fun implementing it.
 
 Click [here](https://github.com/greg7mdp/gtl/blob/main/examples/misc/bit_vector.cpp) for an example demonstrating some of the capabilities of `gtl::bit_vector`.
 
 
+## lru_cache
+
+This is an unordered map container into which you insert (key, value) pairs, but which will keep a maximum number of pairs. When the maximum number of pairs is reached, every insertion of a new key cause the removal of the least recently accessed pair.
+
+This class is useful for implementing caches. 
+
+Thanks to Alexander Ponomarev for the original [implementation](https://github.com/lamerman) from which ours is derived. 
 
