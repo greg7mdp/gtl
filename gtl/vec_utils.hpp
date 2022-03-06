@@ -52,7 +52,7 @@ auto slice(V&& v, int first = 0, int last = -1, int stride = 1)
 // ---------------------------------------------------------------------------------------
 // apply a unary function to every element of a vector, returning the vector of results
 // ---------------------------------------------------------------------------------------
-template<class F, class E, class A, template <class E, class A> class V>
+template<class F, class E, class A, template <class, class> class V>
 requires std::invocable<F&, E>
 auto map(F &&f, const V<E, A>& v) 
 {
