@@ -50,8 +50,8 @@ The full types with template parameters can be found in the [gtl/phmap_fwd_decl.
 
 |  type                 |    memory usage   | additional *peak* memory usage when resizing  |
 |-----------------------|-------------------|-----------------------------------------------|
-| flat tables           | ![flat_mem_usage](https://github.com/greg7mdp/gtl/blob/master/html/img/flat_mem_usage.png?raw=true) | ![flat_peak_usage](https://github.com/greg7mdp/gtl/blob/master/html/img/flat_peak.png?raw=true) |
-| node tables           | ![node_mem_usage](https://github.com/greg7mdp/gtl/blob/master/html/img/node_mem_usage.png?raw=true) | ![node_peak_usage](https://github.com/greg7mdp/gtl/blob/master/html/img/node_peak.png?raw=true) |
+| flat tables           | ![flat_mem_usage](https://github.com/greg7mdp/gtl/blob/main/html/img/flat_mem_usage.png?raw=true) | ![flat_peak_usage](https://github.com/greg7mdp/gtl/blob/main/html/img/flat_peak.png?raw=true) |
+| node tables           | ![node_mem_usage](https://github.com/greg7mdp/gtl/blob/main/html/img/node_mem_usage.png?raw=true) | ![node_peak_usage](https://github.com/greg7mdp/gtl/blob/main/html/img/node_peak.png?raw=true) |
 
 
 - *size()* is the number of values in the container, as returned by the size() method

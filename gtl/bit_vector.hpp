@@ -653,7 +653,7 @@ public:
         size_t num_bytes = (size() + 7) >> 3;
         size_t start = res.size();
         size_t cur = start + num_bytes * 2;
-        res.resize(cur);
+        res.resize(cur); // resize string as we display bits right to left, lsb is the rightmost
 
         auto to_hex = [](unsigned char b) -> char { return (b > 9) ? 'a' + b - 10 : '0' + b; };
         typename S::bit_sequence seq(_bv.storage(), _first, _last, 0);
@@ -663,6 +663,8 @@ public:
             for (size_t i=0; i<8; ++i) {
                 if (cur == start)
                     break;
+
+                // lsb is rightmost... populate string from the end
                 unsigned char b = (unsigned char)v;
                 v >>= 8;
                 res[--cur] = to_hex(b & 0xf);
