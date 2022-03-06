@@ -130,11 +130,11 @@ When an ordering is not needed, a hash container is typically a better choice th
 
 ## Bit vector (or dynamic bitset)
 
-[Gtl](https://github.com/greg7mdp/gtl) provides `bit_vector`, which is an alternative to `std::vector<bool>` and `std::bitset`, as it provides both dynamic resizing, and a good numberassortment of bit manipulation primitives.
+[Gtl](https://github.com/greg7mdp/gtl) provides `bit_vector`, which is an alternative to `std::vector<bool>` and `std::bitset`, as it provides both dynamic resizing, and a good assortment of bit manipulation primitives.
 
-I implemented this container because i often needed the functionality it provides, and didn't find an open-source implementation I like which didn't require pulling a big library. The `gtl::bit_vector` implementation is self-contained in a single header file (`gtl/bit_vector.hpp`) which can trivially  be added to any project (it currently requires a C++17 compiler). 
+I implemented this container because I often needed the functionality it provides, and didn't find an open-source implementation I like which didn't require pulling in a big library. The `gtl::bit_vector` implementation is self-contained in a single header [file](https://github.com/greg7mdp/gtl/blob/main/gtl/bit_vector.hpp) which can trivially  be added to any project (it currently requires a C++17 compiler). 
 
-In addition, I wished to have the `gtl::bit_view` functionality, similar to `std::string_view` for strings, to refer and operate on a subset of a full `gtl::bit_vector`.
+In addition, I dreamed of the `gtl::bit_view` functionality, similar to `std::string_view` for strings, to refer and operate on a subset of a full `gtl::bit_vector`, and I thought it would be fun implementing it.
 
 Click [here](https://github.com/greg7mdp/gtl/blob/main/examples/misc/bit_vector.cpp) for an example demonstrating some of the capabilities of `gtl::bit_vector`.
 
