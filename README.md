@@ -42,6 +42,9 @@ The four provided hash containers are:
 
 For more information on the hash containers, please see [gtl hash containers](https://github.com/greg7mdp/gtl/tree/main/docs/hmap.md)
 
+> if using Visual Studio, make sure to add the [gtl natvis](https://github.com/greg7mdp/gtl/blob/main/gtl/debug_vis/gtl.natvis) file to your projects, which provides a user-friendly visualization of the content of gtl set and map containers. Debug visualizers are available for gdb and lldb as well.
+
+
 Here is a very basic example of using the gtl::flat_hash_map:
 
 ```c++
@@ -105,8 +108,6 @@ For a full writeup explaining the design and benefits of the parallel hash conta
 
 For more information on the implementation, usage and characteristics of the parallel hash containers, please see [gtl parallel hash containers](https://github.com/greg7mdp/gtl/tree/main/docs/phmap.md)
 
-Here is a very basic example of using the gtl::flat_hash_map:
-
 
 ## Btree containers
 
@@ -140,6 +141,7 @@ In addition, I dreamed of the `gtl::bit_view` functionality, similar to `std::st
 
 Click [here](https://github.com/greg7mdp/gtl/blob/main/examples/misc/bit_vector.cpp) for an example demonstrating some of the capabilities of `gtl::bit_vector`.
 
+> if using Visual Studio, make sure to add the [gtl natvis](https://github.com/greg7mdp/gtl/blob/main/gtl/debug_vis/gtl.natvis) file to your projects, which provides a user-friendly visualization of the content of a `gtl::bit_vector`.
 
 ## lru_cache
 
