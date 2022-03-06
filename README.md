@@ -92,7 +92,7 @@ int main()
 
 **Acknowledgements** 
 
-Thanks to Google and the "Swiss table" team for the original [implementation](https://github.com/abseil/abseil-cpp) from which ours is derived. 
+Thanks to Google and the "Swiss table" team for the original [implementation](https://github.com/abseil/abseil-cpp), from which ours is derived. 
 
 ## Parallel hash containers
 
@@ -149,5 +149,5 @@ This is an unordered map container into which you insert (key, value) pairs, but
 
 This class is useful for implementing caches. 
 
-Thanks to Alexander Ponomarev for the original [implementation](https://github.com/lamerman) from which ours is derived. 
+Thanks to Alexander Ponomarev for the original [implementation](https://github.com/lamerman), from which ours is derived. 
 
