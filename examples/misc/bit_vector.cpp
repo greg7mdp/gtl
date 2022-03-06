@@ -117,10 +117,9 @@ int main() {
 
         // anything you can do on a gtl::bit_vector also works on a gtl::bit_view. 
         gtl::bit_view view(bv.view(4, 12));
-        assert((string)view == "0xde");              // it can also be converted to a string or output on a strem
+        assert((string)view == "0xde");              // it can also be converted to a string or output on a stream
 
     }
-
 
     return 0;
 }

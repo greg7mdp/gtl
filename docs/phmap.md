@@ -13,8 +13,8 @@
 
 |  type                 |    memory usage   | additional *peak* memory usage when resizing  |
 |-----------------------|-------------------|-----------------------------------------------|
-| parallel flat tables  | ![flat_mem_usage](https://github.com/greg7mdp/gtl/blob/master/html/img/flat_mem_usage.png?raw=true) | ![parallel_flat_peak](https://github.com/greg7mdp/gtl/blob/master/html/img/parallel_flat_peak.png?raw=true) |
-| parallel node tables  | ![node_mem_usage](https://github.com/greg7mdp/gtl/blob/master/html/img/node_mem_usage.png?raw=true) | ![parallel_node_peak](https://github.com/greg7mdp/gtl/blob/master/html/img/parallel_node_peak.png?raw=true) |
+| parallel flat tables  | ![flat_mem_usage](https://github.com/greg7mdp/gtl/blob/main/html/img/flat_mem_usage.png?raw=true) | ![parallel_flat_peak](https://github.com/greg7mdp/gtl/blob/main/html/img/parallel_flat_peak.png?raw=true) |
+| parallel node tables  | ![node_mem_usage](https://github.com/greg7mdp/gtl/blob/main/html/img/node_mem_usage.png?raw=true) | ![parallel_node_peak](https://github.com/greg7mdp/gtl/blob/main/html/img/parallel_node_peak.png?raw=true) |
 
 
 
