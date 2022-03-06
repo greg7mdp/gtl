@@ -384,13 +384,13 @@ public:
     // change whole view
     // -----------------
     _view& set()   { _bv.storage().template visit<vt::none>(_first, _last, 
-                                                  [](uint64_t  , int) { return ones; }); return *this; }
+                                                            [](uint64_t  , int) { return ones; }); return *this; }
 
     _view& reset() { _bv.storage().template visit<vt::none>(_first, _last, 
-                                                  [](uint64_t  , int) { return (uint64_t)0; }); return *this; }
+                                                            [](uint64_t  , int) { return (uint64_t)0; }); return *this; }
 
     _view& flip()  { _bv.storage().template visit<vt::none>(_first, _last, 
-                                                  [](uint64_t v, int) { return ~v; }); return *this; }
+                                                            [](uint64_t v, int) { return ~v; }); return *this; }
 
     // compound assignment operators
     // -----------------------------
@@ -492,7 +492,7 @@ public:
     _view& operator=(uint64_t val) { // only works for view width <= 64 bits
         assert(size() <= stride);
         _bv.storage().template visit<vt::none>(_first, _last, 
-                                      [val](uint64_t, int shl) { return shl >= 0 ? val << shl : val >> shl; });
+                                               [val](uint64_t, int shl) { return shl >= 0 ? val << shl : val >> shl; });
         return *this; 
     }
 
@@ -513,12 +513,12 @@ public:
         if ((&_bv != &o._bv) || (_first < o._first) || (_first <= o._last)) {
             typename S::bit_sequence seq(o._bv.storage(), o._first, o._last, _first); 
             _bv.storage().template visit<vt::none>(_first, _last, 
-                                          [&](uint64_t, int) { return seq(); }); 
+                                                   [&](uint64_t, int) { return seq(); }); 
         } else if (_first > o._first) {
             // both views are on same bitmap, and we are copying backward with an overlap
             typename S::bit_sequence seq(_bv.storage(), _first, _last, o._first); 
             o._bv.storage().template visit<vt::none>(o._first, o._last, 
-                                            [&](uint64_t, int) { return seq(); }); 
+                                                     [&](uint64_t, int) { return seq(); }); 
         }
         return *this; 
     }
@@ -551,7 +551,7 @@ public:
         typename S::bit_sequence seq(o._bv.storage(), o._first, o._last, _first);
         bool res = true;
         _bv.storage().template visit<vt::view>(_first, _last, 
-                                      [&](uint64_t v, int) { if (v != seq()) res = false; return !res; }); 
+                                               [&](uint64_t v, int) { if (v != seq()) res = false; return !res; }); 
         return res; 
     }
   
@@ -560,14 +560,14 @@ public:
     bool any() const { 
         bool res = false;
         _bv.storage().template visit<vt::view>(_first, _last,
-                                      [&](uint64_t v, int) { if (v) res = true; return res; }); 
+                                               [&](uint64_t v, int) { if (v) res = true; return res; }); 
         return res; 
     }
 
     bool every() const { 
         bool res = true;
         _bv.storage().template visit<vt::view | vt::oor_ones>(_first, _last,
-                                                     [&](uint64_t v, int) { if (v != ones) res = false; return !res; }); 
+                                                              [&](uint64_t v, int) { if (v != ones) res = false; return !res; }); 
         return res; 
     }
 
@@ -610,7 +610,7 @@ public:
     size_t count() const {              // we could use std::popcount in c++20
         size_t cnt = 0;
         _bv.storage().template visit<vt::view>(_first, _last,
-                                      [&](uint64_t v, int) { cnt += _popcount64(v); return false; }); 
+                                               [&](uint64_t v, int) { cnt += _popcount64(v); return false; }); 
         return cnt;
     }
 
@@ -720,7 +720,7 @@ public:
     // ----------
     vec& set(size_t idx)   { _s.template update_bit<true>(idx); return *this; }
     vec& reset(size_t idx) { _s.template update_bit<false>(idx); return *this; }
-    vec& flip(size_t idx)  { _s.template update_bit(idx, [](uint64_t v) { return ~v; }); return *this; }
+    vec& flip(size_t idx)  { _s.update_bit(idx, [](uint64_t v) { return ~v; }); return *this; }
     bool test(size_t idx) const { return (*this)[idx]; }
     bool operator[](size_t idx) const { return !!(_s[slot(idx)] & bitmask(idx)); }
 
@@ -728,8 +728,9 @@ public:
     vec& set(size_t idx, bool val) {
         if (val) 
             _s.template update_bit<true>(idx); 
-	else _s.template update_bit<false>(idx); 
-	return *this;
+        else 
+            _s.template update_bit<false>(idx); 
+        return *this;
     }
 
     // change whole bit_vector
