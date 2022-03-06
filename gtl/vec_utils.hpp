@@ -11,7 +11,15 @@
 //      https://www.apache.org/licenses/LICENSE-2.0
 // ---------------------------------------------------------------------------
 #include <type_traits>
+#include <concepts>
 #include <vector>
+
+
+// ---------------------------------------------------------------------------
+// Some utilities to more easily code recursive algorithms using std::vector 
+// when you are not concerned with performance, and miss the simplicity
+// of python lists
+// ---------------------------------------------------------------------------
 
 namespace gtl {
 
