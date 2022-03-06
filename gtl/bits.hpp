@@ -269,8 +269,8 @@ inline void UnalignedStore64(void *p, uint64_t v) { memcpy(p, &v, sizeof v); }
 
 namespace gtl {
 
-GTL_FORCEINLINE int CountLeadingZeros64Slow(uint64_t n) {
-    int zeroes = 60;
+GTL_FORCEINLINE uint32_t CountLeadingZeros64Slow(uint64_t n) {
+    uint32_t zeroes = 60;
     if (n >> 32) zeroes -= 32, n >>= 32;
     if (n >> 16) zeroes -= 16, n >>= 16;
     if (n >> 8) zeroes -= 8, n >>= 8;
@@ -278,12 +278,12 @@ GTL_FORCEINLINE int CountLeadingZeros64Slow(uint64_t n) {
     return "\4\3\2\2\1\1\1\1\0\0\0\0\0\0\0"[n] + zeroes;
 }
 
-GTL_FORCEINLINE int CountLeadingZeros64(uint64_t n) {
+GTL_FORCEINLINE uint32_t CountLeadingZeros64(uint64_t n) {
 #if defined(_MSC_VER) && defined(_M_X64)
     // MSVC does not have __buitin_clzll. Use _BitScanReverse64.
     unsigned long result = 0;  // NOLINT(runtime/int)
     if (_BitScanReverse64(&result, n)) {
-        return (int)(63 - result);
+        return (uint32_t)(63 - result);
     }
     return 64;
 #elif defined(_MSC_VER) && !defined(__clang__)
@@ -314,19 +314,19 @@ GTL_FORCEINLINE int CountLeadingZeros64(uint64_t n) {
 #endif
 }
 
-GTL_FORCEINLINE int CountLeadingZeros32Slow(uint64_t n) {
-    int zeroes = 28;
+GTL_FORCEINLINE uint32_t CountLeadingZeros32Slow(uint64_t n) {
+    uint32_t zeroes = 28;
     if (n >> 16) zeroes -= 16, n >>= 16;
     if (n >> 8) zeroes -= 8, n >>= 8;
     if (n >> 4) zeroes -= 4, n >>= 4;
     return "\4\3\2\2\1\1\1\1\0\0\0\0\0\0\0"[n] + zeroes;
 }
 
-GTL_FORCEINLINE int CountLeadingZeros32(uint32_t n) {
+GTL_FORCEINLINE uint32_t CountLeadingZeros32(uint32_t n) {
 #if defined(_MSC_VER) && !defined(__clang__)
     unsigned long result = 0;  // NOLINT(runtime/int)
     if (_BitScanReverse(&result, n)) {
-        return (int)(31 - result);
+        return (uint32_t)(31 - result);
     }
     return 32;
 #elif defined(__GNUC__) || defined(__clang__)
@@ -347,8 +347,8 @@ GTL_FORCEINLINE int CountLeadingZeros32(uint32_t n) {
 #endif
 }
 
-GTL_FORCEINLINE int CountTrailingZerosNonZero64Slow(uint64_t n) {
-    int c = 63;
+GTL_FORCEINLINE uint32_t CountTrailingZerosNonZero64Slow(uint64_t n) {
+    uint32_t c = 63;
     n &= ~n + 1;
     if (n & 0x00000000FFFFFFFF) c -= 32;
     if (n & 0x0000FFFF0000FFFF) c -= 16;
@@ -359,11 +359,11 @@ GTL_FORCEINLINE int CountTrailingZerosNonZero64Slow(uint64_t n) {
     return c;
 }
 
-GTL_FORCEINLINE int CountTrailingZerosNonZero64(uint64_t n) {
+GTL_FORCEINLINE uint32_t CountTrailingZerosNonZero64(uint64_t n) {
 #if defined(_MSC_VER) && !defined(__clang__) && defined(_M_X64)
     unsigned long result = 0;  // NOLINT(runtime/int)
     _BitScanForward64(&result, n);
-    return (int)result;
+    return (uint32_t)result;
 #elif defined(_MSC_VER) && !defined(__clang__)
     unsigned long result = 0;  // NOLINT(runtime/int)
     if (static_cast<uint32_t>(n) == 0) {
@@ -381,8 +381,8 @@ GTL_FORCEINLINE int CountTrailingZerosNonZero64(uint64_t n) {
 #endif
 }
 
-GTL_FORCEINLINE int CountTrailingZerosNonZero32Slow(uint32_t n) {
-    int c = 31;
+GTL_FORCEINLINE uint32_t CountTrailingZerosNonZero32Slow(uint32_t n) {
+    uint32_t c = 31;
     n &= ~n + 1;
     if (n & 0x0000FFFF) c -= 16;
     if (n & 0x00FF00FF) c -= 8;
@@ -392,11 +392,11 @@ GTL_FORCEINLINE int CountTrailingZerosNonZero32Slow(uint32_t n) {
     return c;
 }
 
-GTL_FORCEINLINE int CountTrailingZerosNonZero32(uint32_t n) {
+GTL_FORCEINLINE uint32_t CountTrailingZerosNonZero32(uint32_t n) {
 #if defined(_MSC_VER) && !defined(__clang__)
     unsigned long result = 0;  // NOLINT(runtime/int)
     _BitScanForward(&result, n);
-    return (int)result;
+    return (uint32_t)result;
 #elif defined(__GNUC__) || defined(__clang__)
     static_assert(sizeof(int) == sizeof(n),
                   "__builtin_ctz does not take 32-bit arg");
