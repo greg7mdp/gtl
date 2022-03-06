@@ -61,7 +61,9 @@ auto slice(V&& v, int first = 0, int last = -1, int stride = 1)
 // apply a unary function to every element of a vector, returning the vector of results
 // ---------------------------------------------------------------------------------------
 template<class F, class T, class A, template <class, class> class V>
-requires std::invocable<F, T>
+#ifndef _LIBCPP_VERSION  // until this is available 
+requires std::invocable<F&, T>
+#endif
 auto map(F &&f, const V<T, A>& v) 
 {
     using result_type = std::invoke_result_t<F, T>;
