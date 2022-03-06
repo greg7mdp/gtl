@@ -24,7 +24,7 @@
 namespace gtl {
 
 template<class T>  concept VectorLike = 
-    requires(T v) { /* v.reserve(1); */ v.begin(); v.end(); (void)v[0]; };
+requires(T v) { /* v.reserve(1); */ v.begin(); v.end(); (void)v[0]; };
 
 // ----------------------------------------------------------------------------------
 // returns a new vector which is the concatenation of the vectors passed as arguments
@@ -60,11 +60,11 @@ auto slice(V&& v, int first = 0, int last = -1, int stride = 1)
 // ---------------------------------------------------------------------------------------
 // apply a unary function to every element of a vector, returning the vector of results
 // ---------------------------------------------------------------------------------------
-template<class F, class E, class A, template <class, class> class V>
-requires std::invocable<F&, E>
-auto map(F &&f, const V<E, A>& v) 
+template<class F, class T, class A, template <class, class> class V>
+requires std::invocable<F, T>
+auto map(F &&f, const V<T, A>& v) 
 {
-    using result_type = std::invoke_result_t<F, E>;
+    using result_type = std::invoke_result_t<F, T>;
     V<result_type, std::allocator<result_type>> res;
     res.reserve(v.size());
     for (const auto& x : v)

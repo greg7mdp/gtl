@@ -143,6 +143,8 @@ Click [here](https://github.com/greg7mdp/gtl/blob/main/examples/misc/bit_vector.
 
 > if using Visual Studio, make sure to add the [gtl natvis](https://github.com/greg7mdp/gtl/blob/main/gtl/debug_vis/gtl.natvis) file to your projects, which provides a user-friendly visualization of the content of a `gtl::bit_vector`.
 
+When printed, converted to `std::string`, or displayed in the debugger with the [gtl natvis](https://github.com/greg7mdp/gtl/blob/main/gtl/debug_vis/gtl.natvis), bits are displayed right to left, so for example a `gtl::bit_vector` of size 16, with the fist two bits set (index 0 and 1) would be displayed as `0x00000003`.
+
 ## lru_cache
 
 This is an unordered map container into which you insert (key, value) pairs, but which will keep a maximum number of pairs. When the maximum number of pairs is reached, every insertion of a new key cause the removal of the least recently accessed pair.
