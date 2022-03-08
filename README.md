@@ -9,13 +9,15 @@
 
 This repository aims to provide many classes that are commonly needed in substantial C++ projects, but that are either not available in the C++ standard library, or have a specification which makes them slower than they could beslow implementation. In some cases, the C++ standard requirements prevents from providing faster alternatives (for example the  pointer stability requirement for unordered maps or sets prevents providing implementations using open addressing).
 
-Among the many classes offered by [gtl](https://github.com/greg7mdp/gtl), we have a set of excellent **hash map** implementations, as well as a **btree** alternative to `std::map` and `std::set`. These are *drop-in replacements* for the standard C++ classes and provide the same API, but are significantly faster and use less memory.
+Among the many classes offered by [gtl](https://github.com/greg7mdp/gtl), we have a set of excellent **hash map** implementations, as well as a **btree** alternative to `std::map` and `std::set`. These are *drop-in replacements* for the standard C++ classes and provide the same API, but are significantly faster and use less memory. 
+
+We also have a fast `bit_vector` implementation, which is an alternative to `std::vector<bool>` or `std::bitset`, providing both dynamic resizing and a good assortment of bit manipulation primitives, as well as a novel `bit_view` class allowing to operate on subsets of the `bit_vector`.
 
 We are happy to integrate new classes into [gtl](https://github.com/greg7mdp/gtl), provided the license is compatible with ours, and we feel they will be useful to most users. Often, when integrating classes from other sources, we are able to improve their performance both in time and space by using other classes already available in [gtl](https://github.com/greg7mdp/gtl) (such as hash maps, btree, bit_vector, etc...)  instead of the spandard ones.
 
-[gtl](https://github.com/greg7mdp/gtl) requires a C++20 compiler. We currently support:  `Visual Studio 2019 +`, `gcc 11.1 +`, and `clang from Xcode 13.2+`.
+[gtl](https://github.com/greg7mdp/gtl) requires a C++20 compiler. We currently support:  `Visual Studio 2019 +`, `gcc 11.1 +`, and `clang 13 +` (or Xcode 13.2 + on MacOS).
 
-Because [gtl](https://github.com/greg7mdp/gtl) is a header only library, installation is trivial, just copy the `gtl` directory to your project and you are good to go. We also support common package managers such as [Conan](https://conan.io/) and [vcpkg](https://vcpkg.io/en/index.html).
+Because [gtl](https://github.com/greg7mdp/gtl) is a header only library, installation is trivial, just copy the `gtl` directory to your project somewhere in your include path and you are good to go. We also support common package managers such as [Conan](https://conan.io/) and [vcpkg](https://vcpkg.io/en/index.html).
 
 ## Installation
 
@@ -92,7 +94,7 @@ int main()
 
 **Acknowledgements** 
 
-Thanks to Google and the "Swiss table" team for the original [implementation](https://github.com/abseil/abseil-cpp) from which ours is derived. 
+Thanks to Google and the "Swiss table" team for the original [implementation](https://github.com/abseil/abseil-cpp), from which ours is derived. 
 
 ## Parallel hash containers
 
@@ -143,11 +145,13 @@ Click [here](https://github.com/greg7mdp/gtl/blob/main/examples/misc/bit_vector.
 
 > if using Visual Studio, make sure to add the [gtl natvis](https://github.com/greg7mdp/gtl/blob/main/gtl/debug_vis/gtl.natvis) file to your projects, which provides a user-friendly visualization of the content of a `gtl::bit_vector`.
 
+When printed, converted to `std::string`, or displayed in the debugger with the [gtl natvis](https://github.com/greg7mdp/gtl/blob/main/gtl/debug_vis/gtl.natvis), bits are displayed right to left, so for example a `gtl::bit_vector` of size 16, with the fist two bits set (index 0 and 1) would be displayed as `0x00000003`.
+
 ## lru_cache
 
 This is an unordered map container into which you insert (key, value) pairs, but which will keep a maximum number of pairs. When the maximum number of pairs is reached, every insertion of a new key cause the removal of the least recently accessed pair.
 
 This class is useful for implementing caches. 
 
-Thanks to Alexander Ponomarev for the original [implementation](https://github.com/lamerman) from which ours is derived. 
+Thanks to Alexander Ponomarev for the original [implementation](https://github.com/lamerman), from which ours is derived. 
 

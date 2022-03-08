@@ -468,7 +468,7 @@ public:
         constexpr size_t Offset() const {
         static_assert(N < NumOffsets, "Index out of bounds");
         return adl_barrier::Align(
-            Offset<N - 1>() + SizeOf<ElementType<N - 1>>() * size_[N - 1],
+            Offset<N - 1>() + SizeOf<ElementType<N - 1>>::value * size_[N - 1],
             ElementAlignment<N>::value);
     }
 
@@ -671,7 +671,7 @@ public:
     constexpr size_t AllocSize() const {
         static_assert(NumTypes == NumSizes, "You must specify sizes of all fields");
         return Offset<NumTypes - 1>() +
-            SizeOf<ElementType<NumTypes - 1>>() * size_[NumTypes - 1];
+            SizeOf<ElementType<NumTypes - 1>>::value * size_[NumTypes - 1];
     }
 
     // If built with --config=asan, poisons padding bytes (if any) in the
@@ -696,7 +696,7 @@ public:
         // The `if` is an optimization. It doesn't affect the observable behaviour.
         if (ElementAlignment<N - 1>::value % ElementAlignment<N>::value) {
             size_t start =
-                Offset<N - 1>() + SizeOf<ElementType<N - 1>>() * size_[N - 1];
+                Offset<N - 1>() + SizeOf<ElementType<N - 1>>::value * size_[N - 1];
             ASAN_POISON_MEMORY_REGION(p + start, Offset<N>() - start);
         }
 #endif

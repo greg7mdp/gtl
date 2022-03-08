@@ -118,6 +118,26 @@
 
 #define GTL_BRANCHLESS 1
 
+#ifdef __has_feature
+#define PHMAP_HAVE_FEATURE(f) __has_feature(f)
+#else
+#define PHMAP_HAVE_FEATURE(f) 0
+#endif
+
+// Portable check for GCC minimum version:
+// https://gcc.gnu.org/onlinedocs/cpp/Common-Predefined-Macros.html
+#if defined(__GNUC__) && defined(__GNUC_MINOR__)
+    #define PHMAP_INTERNAL_HAVE_MIN_GNUC_VERSION(x, y) (__GNUC__ > (x) || __GNUC__ == (x) && __GNUC_MINOR__ >= (y))
+#else
+    #define PHMAP_INTERNAL_HAVE_MIN_GNUC_VERSION(x, y) 0
+#endif
+
+#if defined(__clang__) && defined(__clang_major__) && defined(__clang_minor__)
+    #define PHMAP_INTERNAL_HAVE_MIN_CLANG_VERSION(x, y) (__clang_major__ > (x) || __clang_major__ == (x) && __clang_minor__ >= (y))
+#else
+    #define PHMAP_INTERNAL_HAVE_MIN_CLANG_VERSION(x, y) 0
+#endif
+
 // ------------------------------------------------------------
 // Checks whether the __int128 compiler extension for a 128-bit 
 // integral type is supported.
