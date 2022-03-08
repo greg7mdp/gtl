@@ -43,7 +43,7 @@ endif()
   # Add all Abseil targets to a a folder in the IDE for organization.
   set_property(TARGET ${_NAME} PROPERTY FOLDER ${GTL_IDE_FOLDER}/test)
 
-  set_property(TARGET ${_NAME} PROPERTY CXX_STANDARD ${GTL_CXX_STANDARD})
+  set_property(TARGET ${_NAME} PROPERTY CXX_STANDARD 20)
   set_property(TARGET ${_NAME} PROPERTY CXX_STANDARD_REQUIRED ON)
 
   add_test(NAME ${_NAME} COMMAND ${_NAME})
