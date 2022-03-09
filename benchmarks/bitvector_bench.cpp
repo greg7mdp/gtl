@@ -124,11 +124,11 @@ int main()
     std::bitset<15000>   std_bs15000;
     gtl::bit_vector   gtl_bs15000(15000);
 
-    auto show_res = [](const char *s, stopwatch &sw1, stopwatch &sw2) {
+    auto show_res = [](const char *s, stopwatch &s1, stopwatch &s2) {
         printf("%-24s %14.2f %16.2f %10.2f\n", s, 
-               sw1.start_to_snap(), 
-               sw2.start_to_snap(), 
-               sw1.start_to_snap()/sw2.start_to_snap());
+               s1.start_to_snap(), 
+               s2.start_to_snap(), 
+               s1.start_to_snap() / s2.start_to_snap());
     };
     size_t x = 0;
 
