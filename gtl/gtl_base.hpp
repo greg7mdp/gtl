@@ -45,7 +45,6 @@
 #include <functional>
 #include <tuple>
 #include <utility>
-#include <span>
 #include <memory>
 
 #include "gtl_config.hpp"
@@ -335,11 +334,6 @@ using Contains = std::disjunction<std::is_same<T, Ts>...>;
 template <class From, class To>
 using CopyConst = typename std::conditional_t<std::is_const_v<From>, const To, To>;
 
-// Note: We're not qualifying this with gtl:: because it doesn't compile under
-// MSVC.
-template <class T>
-using SliceType = std::span<T>;
-
 // This namespace contains no types. It prevents functions defined in it from
 // being found by ADL.
 // ----------------------------------------------------------------------------
@@ -594,70 +588,6 @@ public:
         Pointers(Char* p) const {
         return std::tuple<CopyConst<Char, ElementType<OffsetSeq>>*...>(
             Pointer<OffsetSeq>(p)...);
-    }
-
-    // The Nth array.
-    //
-    // `Char` must be `[const] [signed|unsigned] char`.
-    //
-    //   // int[3], 4 bytes of padding, double[4].
-    //   Layout<int, double> x(3, 4);
-    //   unsigned char* p = new unsigned char[x.AllocSize()];
-    //   Span<int> ints = x.Slice<0>(p);
-    //   Span<double> doubles = x.Slice<1>(p);
-    //
-    // Requires: `N < NumSizes`.
-    // Requires: `p` is aligned to `Alignment()`.
-    // ----------------------------------------------------------------------------
-    template <size_t N, class Char>
-        SliceType<CopyConst<Char, ElementType<N>>> Slice(Char* p) const {
-        return SliceType<CopyConst<Char, ElementType<N>>>(Pointer<N>(p), Size<N>());
-    }
-
-    // The array with the specified element type. There must be exactly one
-    // such array and its zero-based index must be less than `NumSizes`.
-    //
-    // `Char` must be `[const] [signed|unsigned] char`.
-    //
-    //   // int[3], 4 bytes of padding, double[4].
-    //   Layout<int, double> x(3, 4);
-    //   unsigned char* p = new unsigned char[x.AllocSize()];
-    //   Span<int> ints = x.Slice<int>(p);
-    //   Span<double> doubles = x.Slice<double>(p);
-    //
-    // Requires: `p` is aligned to `Alignment()`.
-    // ----------------------------------------------------------------------------
-    template <class T, class Char>
-        SliceType<CopyConst<Char, T>> Slice(Char* p) const {
-        return Slice<ElementIndex<T>()>(p);
-    }
-
-    // All arrays with known sizes.
-    //
-    // `Char` must be `[const] [signed|unsigned] char`.
-    //
-    //   // int[3], 4 bytes of padding, double[4].
-    //   Layout<int, double> x(3, 4);
-    //   unsigned char* p = new unsigned char[x.AllocSize()];
-    //
-    //   Span<int> ints;
-    //   Span<double> doubles;
-    //   std::tie(ints, doubles) = x.Slices(p);
-    //
-    // Requires: `p` is aligned to `Alignment()`.
-    //
-    // Note: We're not using ElementType alias here because it does not compile
-    // under MSVC.
-    // ----------------------------------------------------------------------------
-    template <class Char>
-        std::tuple<SliceType<CopyConst<
-                                 Char, typename std::tuple_element<SizeSeq, ElementTypes>::type>>...>
-        Slices(Char* p) const {
-        // Workaround for https://gcc.gnu.org/bugzilla/show_bug.cgi?id=63875 (fixed
-        // in 6.1).
-        (void)p;
-        return std::tuple<SliceType<CopyConst<Char, ElementType<SizeSeq>>>...>(
-            Slice<SizeSeq>(p)...);
     }
 
     // The size of the allocation that fits all arrays.
