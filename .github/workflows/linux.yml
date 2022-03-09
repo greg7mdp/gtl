@@ -11,7 +11,7 @@ jobs:
     strategy:
       matrix:
         os: [ubuntu-latest]
-        compiler: [g++-11, clang++-13]
+        compiler: [g++-11, clang++-10]
         flags: [-std=c++20]
         optimize: [-O2]
     steps:
@@ -22,7 +22,7 @@ jobs:
     - name: Set up Clang
       uses: egor-tensin/setup-clang@v1
       with:
-        version: 13
+        version: 10
         platform: x64
     - name: Build and test
       env:
