@@ -12,7 +12,6 @@ jobs:
       matrix:
         os: [ubuntu-latest]
         compiler: [g++, clang++-10]
-        #flags: [-std=c++20]
         optimize: [-O2]
     steps:
     - name: Checkout

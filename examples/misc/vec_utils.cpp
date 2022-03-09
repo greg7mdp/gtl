@@ -8,6 +8,10 @@
 //      https://www.apache.org/licenses/LICENSE-2.0
 // ---------------------------------------------------------------------------
 #include <cassert>
+
+#if !defined(__GNUC__) || __GNUC__ > 9
+     // concepts requiire g++ >= 10
+
 #include <gtl/vec_utils.hpp>
 
 int main()
@@ -49,3 +53,4 @@ int main()
 
     return 0;
 }
+#endif
