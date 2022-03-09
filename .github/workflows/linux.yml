@@ -11,7 +11,7 @@ jobs:
     strategy:
       matrix:
         os: [ubuntu-latest]
-        compiler: [g++-9, clang++-10]
+        compiler: [g++, clang++-10]
         flags: [-std=c++20]
         optimize: [-O2]
     steps:
