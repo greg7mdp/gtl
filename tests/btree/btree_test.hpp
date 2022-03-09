@@ -135,12 +135,12 @@ namespace test_internal {
             return value_ >= x.value_;
         }
 
-        std::weak_ordering compare(const BaseCountedInstance& x) const {
+        gtl::weak_ordering compare(const BaseCountedInstance& x) const {
             ++num_comparisons_;
             return value_ < x.value_
-                            ? std::weak_ordering::less
-                            : value_ == x.value_ ? std::weak_ordering::equivalent
-                            : std::weak_ordering::greater;
+                            ? gtl::weak_ordering::less
+                            : value_ == x.value_ ? gtl::weak_ordering::equivalent
+                            : gtl::weak_ordering::greater;
         }
 
         size_t value() const {

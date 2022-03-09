@@ -138,6 +138,15 @@
     #define PHMAP_INTERNAL_HAVE_MIN_CLANG_VERSION(x, y) 0
 #endif
 
+
+// -----------------------------------------------------------------------------
+// -----------------------------------------------------------------------------
+#if defined(__cpp_lib_three_way_comparison)
+    #define GTL_HAS_COMPARE 1
+#else
+    #define GTL_HAS_COMPARE 0
+#endif    
+
 // ------------------------------------------------------------
 // Checks whether the __int128 compiler extension for a 128-bit 
 // integral type is supported.

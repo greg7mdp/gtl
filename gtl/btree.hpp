@@ -58,13 +58,20 @@
 #include <cstdint>
 #include <cstdlib>
 #include <cstring>
-#include <compare>
 #include <optional>
 #include <limits>
 #include <new>
 
 #include "phmap_fwd_decl.hpp"
 #include "gtl_base.hpp"
+
+#if GTL_HAS_COMPARE
+    #include <compare>
+    namespace gtl {
+        using weak_ordering   = std::weak_ordering;
+        using strong_ordering = std::strong_ordering;
+    };
+#endif
 
 #include <string_view>
 
@@ -335,6 +342,402 @@ namespace gtl {
 
 #endif  // __cpp_inline_variables
 
+#if !GTL_HAS_COMPARE
+        // These template base classes allow for defining the values of the constants
+        // in the header file (for performance) without using inline variables (which
+        // aren't available in C++11).
+        template <typename T>
+        struct weak_equality_base {
+            GTL_COMPARE_INLINE_BASECLASS_DECL(equivalent)
+            GTL_COMPARE_INLINE_BASECLASS_DECL(nonequivalent)
+        };
+
+        template <typename T>
+        struct strong_equality_base {
+            GTL_COMPARE_INLINE_BASECLASS_DECL(equal)
+            GTL_COMPARE_INLINE_BASECLASS_DECL(nonequal)
+            GTL_COMPARE_INLINE_BASECLASS_DECL(equivalent)
+            GTL_COMPARE_INLINE_BASECLASS_DECL(nonequivalent)
+        };
+
+        template <typename T>
+        struct partial_ordering_base {
+            GTL_COMPARE_INLINE_BASECLASS_DECL(less)
+            GTL_COMPARE_INLINE_BASECLASS_DECL(equivalent)
+            GTL_COMPARE_INLINE_BASECLASS_DECL(greater)
+            GTL_COMPARE_INLINE_BASECLASS_DECL(unordered)
+        };
+
+        template <typename T>
+        struct weak_ordering_base {
+            GTL_COMPARE_INLINE_BASECLASS_DECL(less)
+            GTL_COMPARE_INLINE_BASECLASS_DECL(equivalent)
+            GTL_COMPARE_INLINE_BASECLASS_DECL(greater)
+        };
+
+        template <typename T>
+        struct strong_ordering_base {
+            GTL_COMPARE_INLINE_BASECLASS_DECL(less)
+            GTL_COMPARE_INLINE_BASECLASS_DECL(equal)
+            GTL_COMPARE_INLINE_BASECLASS_DECL(equivalent)
+            GTL_COMPARE_INLINE_BASECLASS_DECL(greater)
+        };
+
+    }  // namespace compare_internal
+
+    class weak_equality
+        : public compare_internal::weak_equality_base<weak_equality> {
+        explicit constexpr weak_equality(compare_internal::eq v) noexcept
+            : value_(static_cast<compare_internal::value_type>(v)) {}
+        friend struct compare_internal::weak_equality_base<weak_equality>;
+
+    public:
+        GTL_COMPARE_INLINE_SUBCLASS_DECL(weak_equality, equivalent)
+        GTL_COMPARE_INLINE_SUBCLASS_DECL(weak_equality, nonequivalent)
+
+        // Comparisons
+        friend constexpr bool operator==(
+            weak_equality v, compare_internal::OnlyLiteralZero<>) noexcept {
+            return v.value_ == 0;
+        }
+        friend constexpr bool operator!=(
+            weak_equality v, compare_internal::OnlyLiteralZero<>) noexcept {
+            return v.value_ != 0;
+        }
+        friend constexpr bool operator==(compare_internal::OnlyLiteralZero<>,
+                                         weak_equality v) noexcept {
+            return 0 == v.value_;
+        }
+        friend constexpr bool operator!=(compare_internal::OnlyLiteralZero<>,
+                                         weak_equality v) noexcept {
+            return 0 != v.value_;
+        }
+
+    private:
+        compare_internal::value_type value_;
+    };
+    GTL_COMPARE_INLINE_INIT(weak_equality, equivalent,
+                              compare_internal::eq::equivalent);
+    GTL_COMPARE_INLINE_INIT(weak_equality, nonequivalent,
+                              compare_internal::eq::nonequivalent);
+
+    class strong_equality
+        : public compare_internal::strong_equality_base<strong_equality> {
+        explicit constexpr strong_equality(compare_internal::eq v) noexcept
+            : value_(static_cast<compare_internal::value_type>(v)) {}
+        friend struct compare_internal::strong_equality_base<strong_equality>;
+
+    public:
+        GTL_COMPARE_INLINE_SUBCLASS_DECL(strong_equality, equal)
+        GTL_COMPARE_INLINE_SUBCLASS_DECL(strong_equality, nonequal)
+        GTL_COMPARE_INLINE_SUBCLASS_DECL(strong_equality, equivalent)
+        GTL_COMPARE_INLINE_SUBCLASS_DECL(strong_equality, nonequivalent)
+
+        // Conversion
+        constexpr operator weak_equality() const noexcept {  // NOLINT
+            return value_ == 0 ? weak_equality::equivalent
+                : weak_equality::nonequivalent;
+        }
+        // Comparisons
+        friend constexpr bool operator==(
+            strong_equality v, compare_internal::OnlyLiteralZero<>) noexcept {
+            return v.value_ == 0;
+        }
+        friend constexpr bool operator!=(
+            strong_equality v, compare_internal::OnlyLiteralZero<>) noexcept {
+            return v.value_ != 0;
+        }
+        friend constexpr bool operator==(compare_internal::OnlyLiteralZero<>,
+                                         strong_equality v) noexcept {
+            return 0 == v.value_;
+        }
+        friend constexpr bool operator!=(compare_internal::OnlyLiteralZero<>,
+                                         strong_equality v) noexcept {
+            return 0 != v.value_;
+        }
+
+    private:
+        compare_internal::value_type value_;
+    };
+
+    GTL_COMPARE_INLINE_INIT(strong_equality, equal, compare_internal::eq::equal);
+    GTL_COMPARE_INLINE_INIT(strong_equality, nonequal,
+                              compare_internal::eq::nonequal);
+    GTL_COMPARE_INLINE_INIT(strong_equality, equivalent,
+                              compare_internal::eq::equivalent);
+    GTL_COMPARE_INLINE_INIT(strong_equality, nonequivalent,
+                              compare_internal::eq::nonequivalent);
+
+    class partial_ordering
+        : public compare_internal::partial_ordering_base<partial_ordering> {
+        explicit constexpr partial_ordering(compare_internal::eq v) noexcept
+            : value_(static_cast<compare_internal::value_type>(v)) {}
+        explicit constexpr partial_ordering(compare_internal::ord v) noexcept
+            : value_(static_cast<compare_internal::value_type>(v)) {}
+        explicit constexpr partial_ordering(compare_internal::ncmp v) noexcept
+            : value_(static_cast<compare_internal::value_type>(v)) {}
+        friend struct compare_internal::partial_ordering_base<partial_ordering>;
+
+        constexpr bool is_ordered() const noexcept {
+            return value_ !=
+                compare_internal::value_type(compare_internal::ncmp::unordered);
+        }
+
+    public:
+        GTL_COMPARE_INLINE_SUBCLASS_DECL(partial_ordering, less)
+        GTL_COMPARE_INLINE_SUBCLASS_DECL(partial_ordering, equivalent)
+        GTL_COMPARE_INLINE_SUBCLASS_DECL(partial_ordering, greater)
+        GTL_COMPARE_INLINE_SUBCLASS_DECL(partial_ordering, unordered)
+
+        // Conversion
+        constexpr operator weak_equality() const noexcept {  // NOLINT
+            return value_ == 0 ? weak_equality::equivalent
+                : weak_equality::nonequivalent;
+        }
+        // Comparisons
+        friend constexpr bool operator==(
+            partial_ordering v, compare_internal::OnlyLiteralZero<>) noexcept {
+            return v.is_ordered() && v.value_ == 0;
+        }
+        friend constexpr bool operator!=(
+            partial_ordering v, compare_internal::OnlyLiteralZero<>) noexcept {
+            return !v.is_ordered() || v.value_ != 0;
+        }
+        friend constexpr bool operator<(
+            partial_ordering v, compare_internal::OnlyLiteralZero<>) noexcept {
+            return v.is_ordered() && v.value_ < 0;
+        }
+        friend constexpr bool operator<=(
+            partial_ordering v, compare_internal::OnlyLiteralZero<>) noexcept {
+            return v.is_ordered() && v.value_ <= 0;
+        }
+        friend constexpr bool operator>(
+            partial_ordering v, compare_internal::OnlyLiteralZero<>) noexcept {
+            return v.is_ordered() && v.value_ > 0;
+        }
+        friend constexpr bool operator>=(
+            partial_ordering v, compare_internal::OnlyLiteralZero<>) noexcept {
+            return v.is_ordered() && v.value_ >= 0;
+        }
+        friend constexpr bool operator==(compare_internal::OnlyLiteralZero<>,
+                                         partial_ordering v) noexcept {
+            return v.is_ordered() && 0 == v.value_;
+        }
+        friend constexpr bool operator!=(compare_internal::OnlyLiteralZero<>,
+                                         partial_ordering v) noexcept {
+            return !v.is_ordered() || 0 != v.value_;
+        }
+        friend constexpr bool operator<(compare_internal::OnlyLiteralZero<>,
+                                        partial_ordering v) noexcept {
+            return v.is_ordered() && 0 < v.value_;
+        }
+        friend constexpr bool operator<=(compare_internal::OnlyLiteralZero<>,
+                                         partial_ordering v) noexcept {
+            return v.is_ordered() && 0 <= v.value_;
+        }
+        friend constexpr bool operator>(compare_internal::OnlyLiteralZero<>,
+                                        partial_ordering v) noexcept {
+            return v.is_ordered() && 0 > v.value_;
+        }
+        friend constexpr bool operator>=(compare_internal::OnlyLiteralZero<>,
+                                         partial_ordering v) noexcept {
+            return v.is_ordered() && 0 >= v.value_;
+        }
+
+    private:
+        compare_internal::value_type value_;
+    };
+
+    GTL_COMPARE_INLINE_INIT(partial_ordering, less, compare_internal::ord::less);
+    GTL_COMPARE_INLINE_INIT(partial_ordering, equivalent,
+                              compare_internal::eq::equivalent);
+    GTL_COMPARE_INLINE_INIT(partial_ordering, greater,
+                              compare_internal::ord::greater);
+    GTL_COMPARE_INLINE_INIT(partial_ordering, unordered,
+                              compare_internal::ncmp::unordered);
+
+    class weak_ordering
+        : public compare_internal::weak_ordering_base<weak_ordering> {
+        explicit constexpr weak_ordering(compare_internal::eq v) noexcept
+            : value_(static_cast<compare_internal::value_type>(v)) {}
+        explicit constexpr weak_ordering(compare_internal::ord v) noexcept
+            : value_(static_cast<compare_internal::value_type>(v)) {}
+        friend struct compare_internal::weak_ordering_base<weak_ordering>;
+
+    public:
+        GTL_COMPARE_INLINE_SUBCLASS_DECL(weak_ordering, less)
+        GTL_COMPARE_INLINE_SUBCLASS_DECL(weak_ordering, equivalent)
+        GTL_COMPARE_INLINE_SUBCLASS_DECL(weak_ordering, greater)
+
+        // Conversions
+        constexpr operator weak_equality() const noexcept {  // NOLINT
+            return value_ == 0 ? weak_equality::equivalent
+                : weak_equality::nonequivalent;
+        }
+        constexpr operator partial_ordering() const noexcept {  // NOLINT
+            return value_ == 0 ? partial_ordering::equivalent
+                : (value_ < 0 ? partial_ordering::less
+                   : partial_ordering::greater);
+        }
+        // Comparisons
+        friend constexpr bool operator==(
+            weak_ordering v, compare_internal::OnlyLiteralZero<>) noexcept {
+            return v.value_ == 0;
+        }
+        friend constexpr bool operator!=(
+            weak_ordering v, compare_internal::OnlyLiteralZero<>) noexcept {
+            return v.value_ != 0;
+        }
+        friend constexpr bool operator<(
+            weak_ordering v, compare_internal::OnlyLiteralZero<>) noexcept {
+            return v.value_ < 0;
+        }
+        friend constexpr bool operator<=(
+            weak_ordering v, compare_internal::OnlyLiteralZero<>) noexcept {
+            return v.value_ <= 0;
+        }
+        friend constexpr bool operator>(
+            weak_ordering v, compare_internal::OnlyLiteralZero<>) noexcept {
+            return v.value_ > 0;
+        }
+        friend constexpr bool operator>=(
+            weak_ordering v, compare_internal::OnlyLiteralZero<>) noexcept {
+            return v.value_ >= 0;
+        }
+        friend constexpr bool operator==(compare_internal::OnlyLiteralZero<>,
+                                         weak_ordering v) noexcept {
+            return 0 == v.value_;
+        }
+        friend constexpr bool operator!=(compare_internal::OnlyLiteralZero<>,
+                                         weak_ordering v) noexcept {
+            return 0 != v.value_;
+        }
+        friend constexpr bool operator<(compare_internal::OnlyLiteralZero<>,
+                                        weak_ordering v) noexcept {
+            return 0 < v.value_;
+        }
+        friend constexpr bool operator<=(compare_internal::OnlyLiteralZero<>,
+                                         weak_ordering v) noexcept {
+            return 0 <= v.value_;
+        }
+        friend constexpr bool operator>(compare_internal::OnlyLiteralZero<>,
+                                        weak_ordering v) noexcept {
+            return 0 > v.value_;
+        }
+        friend constexpr bool operator>=(compare_internal::OnlyLiteralZero<>,
+                                         weak_ordering v) noexcept {
+            return 0 >= v.value_;
+        }
+
+    private:
+        compare_internal::value_type value_;
+    };
+
+    GTL_COMPARE_INLINE_INIT(weak_ordering, less, compare_internal::ord::less);
+    GTL_COMPARE_INLINE_INIT(weak_ordering, equivalent,
+                              compare_internal::eq::equivalent);
+    GTL_COMPARE_INLINE_INIT(weak_ordering, greater,
+                              compare_internal::ord::greater);
+
+    class strong_ordering
+        : public compare_internal::strong_ordering_base<strong_ordering> {
+        explicit constexpr strong_ordering(compare_internal::eq v) noexcept
+            : value_(static_cast<compare_internal::value_type>(v)) {}
+        explicit constexpr strong_ordering(compare_internal::ord v) noexcept
+            : value_(static_cast<compare_internal::value_type>(v)) {}
+        friend struct compare_internal::strong_ordering_base<strong_ordering>;
+
+    public:
+        GTL_COMPARE_INLINE_SUBCLASS_DECL(strong_ordering, less)
+        GTL_COMPARE_INLINE_SUBCLASS_DECL(strong_ordering, equal)
+        GTL_COMPARE_INLINE_SUBCLASS_DECL(strong_ordering, equivalent)
+        GTL_COMPARE_INLINE_SUBCLASS_DECL(strong_ordering, greater)
+
+        // Conversions
+        constexpr operator weak_equality() const noexcept {  // NOLINT
+            return value_ == 0 ? weak_equality::equivalent
+                : weak_equality::nonequivalent;
+        }
+        constexpr operator strong_equality() const noexcept {  // NOLINT
+            return value_ == 0 ? strong_equality::equal : strong_equality::nonequal;
+        }
+        constexpr operator partial_ordering() const noexcept {  // NOLINT
+            return value_ == 0 ? partial_ordering::equivalent
+                : (value_ < 0 ? partial_ordering::less
+                   : partial_ordering::greater);
+        }
+        constexpr operator weak_ordering() const noexcept {  // NOLINT
+            return value_ == 0
+                ? weak_ordering::equivalent
+                : (value_ < 0 ? weak_ordering::less : weak_ordering::greater);
+        }
+        // Comparisons
+        friend constexpr bool operator==(
+            strong_ordering v, compare_internal::OnlyLiteralZero<>) noexcept {
+            return v.value_ == 0;
+        }
+        friend constexpr bool operator!=(
+            strong_ordering v, compare_internal::OnlyLiteralZero<>) noexcept {
+            return v.value_ != 0;
+        }
+        friend constexpr bool operator<(
+            strong_ordering v, compare_internal::OnlyLiteralZero<>) noexcept {
+            return v.value_ < 0;
+        }
+        friend constexpr bool operator<=(
+            strong_ordering v, compare_internal::OnlyLiteralZero<>) noexcept {
+            return v.value_ <= 0;
+        }
+        friend constexpr bool operator>(
+            strong_ordering v, compare_internal::OnlyLiteralZero<>) noexcept {
+            return v.value_ > 0;
+        }
+        friend constexpr bool operator>=(
+            strong_ordering v, compare_internal::OnlyLiteralZero<>) noexcept {
+            return v.value_ >= 0;
+        }
+        friend constexpr bool operator==(compare_internal::OnlyLiteralZero<>,
+                                         strong_ordering v) noexcept {
+            return 0 == v.value_;
+        }
+        friend constexpr bool operator!=(compare_internal::OnlyLiteralZero<>,
+                                         strong_ordering v) noexcept {
+            return 0 != v.value_;
+        }
+        friend constexpr bool operator<(compare_internal::OnlyLiteralZero<>,
+                                        strong_ordering v) noexcept {
+            return 0 < v.value_;
+        }
+        friend constexpr bool operator<=(compare_internal::OnlyLiteralZero<>,
+                                         strong_ordering v) noexcept {
+            return 0 <= v.value_;
+        }
+        friend constexpr bool operator>(compare_internal::OnlyLiteralZero<>,
+                                        strong_ordering v) noexcept {
+            return 0 > v.value_;
+        }
+        friend constexpr bool operator>=(compare_internal::OnlyLiteralZero<>,
+                                         strong_ordering v) noexcept {
+            return 0 >= v.value_;
+        }
+
+    private:
+        compare_internal::value_type value_;
+    };
+    GTL_COMPARE_INLINE_INIT(strong_ordering, less, compare_internal::ord::less);
+    GTL_COMPARE_INLINE_INIT(strong_ordering, equal, compare_internal::eq::equal);
+    GTL_COMPARE_INLINE_INIT(strong_ordering, equivalent,
+                              compare_internal::eq::equivalent);
+    GTL_COMPARE_INLINE_INIT(strong_ordering, greater,
+                              compare_internal::ord::greater);
+
+#undef GTL_COMPARE_INLINE_BASECLASS_DECL
+#undef GTL_COMPARE_INLINE_SUBCLASS_DECL
+#undef GTL_COMPARE_INLINE_INIT
+
+    namespace compare_internal {
+#endif // !GTL_HAS_COMPARE
+
         // We also provide these comparator adapter functions for internal gtl use.
 
         // Helper functions to do a boolean comparison of two keys given a boolean
@@ -344,7 +747,7 @@ namespace gtl {
         template <typename BoolType, std::enable_if_t<std::is_same_v<bool, BoolType>, int> = 0>
         constexpr bool compare_result_as_less_than(const BoolType r) { return r; }
 
-        constexpr bool compare_result_as_less_than(const std::weak_ordering r) {
+        constexpr bool compare_result_as_less_than(const gtl::weak_ordering r) {
             return r < 0;
         }
 
@@ -358,28 +761,28 @@ namespace gtl {
         // SFINAE prevents implicit conversions to int (such as from bool).
         // ---------------------------------------------------------------------------
         template <typename Int, std::enable_if_t<std::is_same_v<int, Int>, int> = 0>
-        constexpr std::weak_ordering compare_result_as_ordering(const Int c) {
-            return c < 0 ? std::weak_ordering::less
-                       : c == 0 ? std::weak_ordering::equivalent
-                       : std::weak_ordering::greater;
+        constexpr gtl::weak_ordering compare_result_as_ordering(const Int c) {
+            return c < 0 ? gtl::weak_ordering::less
+                       : c == 0 ? gtl::weak_ordering::equivalent
+                       : gtl::weak_ordering::greater;
         }
 
-        constexpr std::weak_ordering compare_result_as_ordering(const std::weak_ordering c) {
+        constexpr gtl::weak_ordering compare_result_as_ordering(const gtl::weak_ordering c) {
             return c;
         }
 
         template <typename Compare, typename K, typename LK,
-                  std::enable_if_t<!std::is_same_v<bool, std::invoke_result_t<Compare, const K &, const LK &>>, int> = 0>
-            constexpr std::weak_ordering do_three_way_comparison(const Compare &compare, const K &x, const LK &y) {
+                  std::enable_if_t<!std::is_same_v<bool, gtl::invoke_result_t<Compare, const K &, const LK &>>, int> = 0>
+            constexpr gtl::weak_ordering do_three_way_comparison(const Compare &compare, const K &x, const LK &y) {
             return compare_result_as_ordering(compare(x, y));
         }
 
         template <typename Compare, typename K, typename LK,
-                  std::enable_if_t<std::is_same_v<bool, std::invoke_result_t<Compare, const K &, const LK &>>, int> = 0>
-            constexpr std::weak_ordering do_three_way_comparison(const Compare &cmp, const K &x, const LK &y) {
-            return cmp(x, y) ? std::weak_ordering::less
-                : cmp(y, x) ? std::weak_ordering::greater
-                : std::weak_ordering::equivalent;
+                  std::enable_if_t<std::is_same_v<bool, gtl::invoke_result_t<Compare, const K &, const LK &>>, int> = 0>
+            constexpr gtl::weak_ordering do_three_way_comparison(const Compare &cmp, const K &x, const LK &y) {
+            return cmp(x, y) ? gtl::weak_ordering::less
+                : cmp(y, x) ? gtl::weak_ordering::greater
+                : gtl::weak_ordering::equivalent;
         }
         
     }  // namespace compare_internal
@@ -392,8 +795,8 @@ namespace priv {
     // --------------------------------------------------------------------------
     template <typename Compare, typename T>
     using btree_is_key_compare_to =
-        std::is_convertible<std::invoke_result_t<Compare, const T &, const T &>,
-                            std::weak_ordering>;
+        std::is_convertible<gtl::invoke_result_t<Compare, const T &, const T &>,
+                            gtl::weak_ordering>;
 
     struct StringBtreeDefaultLess {
         using is_transparent = void;
@@ -405,7 +808,7 @@ namespace priv {
         StringBtreeDefaultLess(std::less<std::string_view>) {}  // NOLINT
         StringBtreeDefaultLess(gtl::Less<std::string_view>) {}  // NOLINT
 
-        std::weak_ordering operator()(std::string_view lhs, std::string_view rhs) const {
+        gtl::weak_ordering operator()(std::string_view lhs, std::string_view rhs) const {
             return compare_internal::compare_result_as_ordering(lhs.compare(rhs));
         }
     };
@@ -418,7 +821,7 @@ namespace priv {
         StringBtreeDefaultGreater(std::greater<std::string>) {}       // NOLINT
         StringBtreeDefaultGreater(std::greater<std::string_view>) {}  // NOLINT
 
-        std::weak_ordering operator()(std::string_view lhs, std::string_view rhs) const {
+        gtl::weak_ordering operator()(std::string_view lhs, std::string_view rhs) const {
             return compare_internal::compare_result_as_ordering(rhs.compare(lhs));
         }
     };
@@ -952,7 +1355,7 @@ namespace priv {
             const K &k, int s, const int e, const Compare &comp,
             std::true_type /* IsCompareTo */) const {
             while (s < e) {
-                const std::weak_ordering c = comp(key(s), k);
+                const gtl::weak_ordering c = comp(key(s), k);
                 if (c == 0) {
                     return {s, MatchKind::kEq};
                 } else if (c > 0) {
@@ -992,7 +1395,7 @@ namespace priv {
                 MatchKind exact_match = MatchKind::kNe;
                 while (s != e) {
                     const int mid = (s + e) >> 1;
-                    const std::weak_ordering c = comp(key(mid), k);
+                    const gtl::weak_ordering c = comp(key(mid), k);
                     if (c < 0) {
                         s = mid + 1;
                     } else {
@@ -1010,7 +1413,7 @@ namespace priv {
             } else {  // Not a multi-container.
                 while (s != e) {
                     const int mid = (s + e) >> 1;
-                    const std::weak_ordering c = comp(key(mid), k);
+                    const gtl::weak_ordering c = comp(key(mid), k);
                     if (c < 0) {
                         s = mid + 1;
                     } else if (c > 0) {
@@ -2295,10 +2698,10 @@ namespace priv {
         // Verify that key_compare returns an std::{weak,strong}_ordering or bool.
         // -----------------------------------------------------------------------
         using compare_result_type =
-            std::invoke_result_t<key_compare, key_type, key_type>;
+            gtl::invoke_result_t<key_compare, key_type, key_type>;
         static_assert(
             std::is_same_v<compare_result_type, bool> ||
-            std::is_convertible_v<compare_result_type, std::weak_ordering>,
+            std::is_convertible_v<compare_result_type, gtl::weak_ordering>,
             "key comparison function must return std::{weak,strong}_ordering or bool.");
 
         // Test the assumption made in setting kNodeSlotSpace.

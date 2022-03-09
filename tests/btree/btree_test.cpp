@@ -1265,7 +1265,7 @@ namespace {
         using Adapted = typename key_compare_to_adapter<Compare>::type;
         static_assert(!std::is_same_v<Adapted, Compare>,
                       "key_compare_to_adapter should have adapted this comparator.");
-        static_assert(std::is_same_v<std::weak_ordering,
+        static_assert(std::is_same_v<gtl::weak_ordering,
                       std::invoke_result_t<Adapted, const K &, const K &>>,
                       "Adapted comparator should be a key-compare-to comparator.");
     }
@@ -1429,8 +1429,8 @@ namespace {
     }
 
     struct MovableOnlyInstanceThreeWayCompare {
-        std::weak_ordering operator()(const MovableOnlyInstance &a,
-                                        const MovableOnlyInstance &b) const {
+        gtl::weak_ordering operator()(const MovableOnlyInstance &a,
+                                      const MovableOnlyInstance &b) const {
             return a.compare(b);
         }
     };
@@ -1639,8 +1639,8 @@ namespace {
     }
 #endif
 
-    // We can't use EXPECT_EQ/etc. to compare std::weak_ordering because they
-    // convert literal 0 to int and std::weak_ordering can only be compared with
+    // We can't use EXPECT_EQ/etc. to compare gtl::weak_ordering because they
+    // convert literal 0 to int and gtl::weak_ordering can only be compared with
     // literal 0. Defining this function allows for avoiding ClangTidy warnings.
     bool Identity(const bool b) { return b; }
 
@@ -2038,10 +2038,10 @@ namespace {
     }
 
     struct IntCompareToCmp {
-        std::weak_ordering operator()(const int &a, const int &b) const {
-            if (a < b) return std::weak_ordering::less;
-            if (a > b) return std::weak_ordering::greater;
-            return std::weak_ordering::equivalent;
+        gtl::weak_ordering operator()(const int &a, const int &b) const {
+            if (a < b) return gtl::weak_ordering::less;
+            if (a > b) return gtl::weak_ordering::greater;
+            return gtl::weak_ordering::equivalent;
         }
     };
 
@@ -2114,19 +2114,19 @@ namespace {
 
     struct KeyCompareToWeakOrdering {
         template <typename T>
-        std::weak_ordering operator()(const T &a, const T &b) const {
-            return a < b ? std::weak_ordering::less
-                       : a == b ? std::weak_ordering::equivalent
-                       : std::weak_ordering::greater;
+        gtl::weak_ordering operator()(const T &a, const T &b) const {
+            return a < b ? gtl::weak_ordering::less
+                       : a == b ? gtl::weak_ordering::equivalent
+                       : gtl::weak_ordering::greater;
         }
     };
 
     struct KeyCompareToStrongOrdering {
         template <typename T>
-        std::strong_ordering operator()(const T &a, const T &b) const {
-            return a < b ? std::strong_ordering::less
-                       : a == b ? std::strong_ordering::equal
-                       : std::strong_ordering::greater;
+        gtl::strong_ordering operator()(const T &a, const T &b) const {
+            return a < b ? gtl::strong_ordering::less
+                       : a == b ? gtl::strong_ordering::equal
+                       : gtl::strong_ordering::greater;
         }
     };
 
