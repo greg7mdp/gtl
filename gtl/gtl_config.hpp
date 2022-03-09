@@ -64,9 +64,9 @@
     #error "gtl requires Visual Studio 2015 Update 2 or higher."
 #endif
 
-// We support gcc 10 and later.
+// We support gcc 9 and later.
 #if defined(__GNUC__) && !defined(__clang__)
-    #if __GNUC__ < 10
+    #if __GNUC__ < 9
         #error "gtl requires gcc 10 or higher."
     #endif
 #endif
