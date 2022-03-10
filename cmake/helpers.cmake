@@ -2,6 +2,15 @@
 set(GTL_IDE_FOLDER phmap)
 
 # -------------------------------------------------------------
+function(gtl_set_target_options my_target)
+  target_compile_options(${my_target} PRIVATE
+    $<$<OR:$<CXX_COMPILER_ID:Clang>,$<CXX_COMPILER_ID:AppleClang>>:-pedantic -Wall -Wextra -Wcast-align -Wcast-qual -Wdisabled-optimization -Winit-self -Wmissing-include-dirs -Woverloaded-virtual -Wredundant-decls -Wshadow -Wswitch-default -Wno-unused -Wno-gnu-zero-variadic-macro-arguments>
+    $<$<CXX_COMPILER_ID:GNU>:-pedantic -Wall -Wextra -Wcast-align -Wcast-qual -Wdisabled-optimization -Winit-self -Wmissing-include-dirs -Woverloaded-virtual -Wredundant-decls -Wshadow -Wswitch-default -Wno-unused>
+    $<$<CXX_COMPILER_ID:MSVC>:/W4 /Zc:__cplusplus /bigobj>
+  )
+endfunction()
+
+# -------------------------------------------------------------
 # gtl_cc_test(NAME awesome_test
 #             SRCS "awesome_test.cpp"
 #             DEPS phmap::awesome gmock gtest_main)
@@ -24,9 +33,10 @@ function(gtl_cc_test)
   target_compile_definitions(${_NAME}
     PUBLIC ${GTL_CC_TEST_DEFINES}
   )
+  gtl_set_target_options(${_NAME})
 if(MSVC)
   target_compile_options(${_NAME}
-    PRIVATE ${GTL_CC_TEST_CWOPTS} /W4 /Zc:__cplusplus
+    PRIVATE ${GTL_CC_TEST_CWOPTS}
   )
 else()
   target_compile_options(${_NAME}
@@ -53,5 +63,3 @@ function(gtl_check_target my_target)
                    see CMake/README.md for more details")
   endif(NOT TARGET ${my_target})
 endfunction()
-
-
