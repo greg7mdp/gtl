@@ -19,7 +19,7 @@ function(gtl_cc_app my_target)
     ${ARGN}
   )
   add_executable(${my_target} ${GTL_CC_APP_SRCS})
-  target_link_libraries(${my_target} PRIVATE gtl ${GTL_CC_APP_LIBS})
+  target_link_libraries(${my_target} PRIVATE ${PROJECT_NAME} ${GTL_CC_APP_LIBS})
 endfunction()
 
 # -------------------------------------------------------------
@@ -37,7 +37,7 @@ function(gtl_cc_test)
 
   set(_NAME "test_${GTL_CC_TEST_NAME}")
   add_executable(${_NAME} ${GTL_CC_TEST_SRCS})
-  target_link_libraries(${_NAME} PRIVATE gtl ${GTL_CC_TEST_DEPS})
+  target_link_libraries(${_NAME} PRIVATE ${PROJECT_NAME} ${GTL_CC_TEST_DEPS})
   gtl_set_target_options(${_NAME})
 
   if(NOT MSVC AND GTL_CC_TEST_CLOPTS)
