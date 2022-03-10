@@ -47,7 +47,7 @@ endif()
 endfunction()
 
 # -------------------------------------------------------------
-function(check_target my_target)
+function(gtl_check_target my_target)
   if(NOT TARGET ${my_target})
     message(FATAL_ERROR " GTL: compiling phmap tests requires a ${my_target} CMake target in your project,
                    see CMake/README.md for more details")

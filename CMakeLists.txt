@@ -60,9 +60,9 @@ if (GTL_BUILD_TESTS)
     include(cmake/DownloadGTest.cmake)
     include_directories(${PROJECT_SOURCE_DIR})
 
-    check_target(gtest)
-    check_target(gtest_main)
-    check_target(gmock)
+    gtl_check_target(gtest)
+    gtl_check_target(gtest_main)
+    gtl_check_target(gmock)
 
     enable_testing()
 
