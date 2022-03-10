@@ -22,7 +22,7 @@ endif()
 
 project(gtl VERSION ${DETECTED_GTL_VERSION} LANGUAGES CXX)
 
-## ------------------------- building tests and examples -------------
+## ----------------------------- options -----------------------------
 option(GTL_INSTALL "Enable installation" ${GTL_MASTER_PROJECT})
 
 
