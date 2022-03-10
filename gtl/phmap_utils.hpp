@@ -29,6 +29,7 @@
 #endif
 
 #include <cstdint>
+#include <cstring>
 #include <functional>
 #include <tuple>
 #include "bits.hpp"
@@ -266,9 +267,10 @@ struct Hash<float> : public gtl_unary_function<float, size_t>
     inline size_t operator()(float val) const noexcept
     {
         // -0.0 and 0.0 should return same hash
-        uint32_t *as_int = reinterpret_cast<uint32_t *>(&val);
-        return (val == 0) ? static_cast<size_t>(0) : 
-                            static_cast<size_t>(*as_int);
+        uint32_t as_int;
+        std::memcpy(&as_int, &val, sizeof(as_int));
+        return (val == 0) ? static_cast<size_t>(0) :
+                            static_cast<size_t>(as_int);
     }
 };
 
@@ -278,9 +280,10 @@ struct Hash<double> : public gtl_unary_function<double, size_t>
     inline size_t operator()(double val) const noexcept
     {
         // -0.0 and 0.0 should return same hash
-        uint64_t *as_int = reinterpret_cast<uint64_t *>(&val);
-        return (val == 0) ? static_cast<size_t>(0) : 
-                            fold_if_needed<sizeof(size_t)>()(*as_int);
+        uint64_t as_int;
+        std::memcpy(&as_int, &val, sizeof(as_int));
+        return (val == 0) ? static_cast<size_t>(0) :
+                            fold_if_needed<sizeof(size_t)>()(as_int);
     }
 };
 
