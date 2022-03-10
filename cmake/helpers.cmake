@@ -26,7 +26,7 @@ function(gtl_cc_test)
   )
 if(MSVC)
   target_compile_options(${_NAME}
-    PRIVATE ${GTL_CC_TEST_CWOPTS} /W4 /Zc:__cplusplus /std:c++latest
+    PRIVATE ${GTL_CC_TEST_CWOPTS} /W4 /Zc:__cplusplus
   )
 else()
   target_compile_options(${_NAME}
@@ -42,9 +42,6 @@ endif()
   )
   # Add all Abseil targets to a a folder in the IDE for organization.
   set_property(TARGET ${_NAME} PROPERTY FOLDER ${GTL_IDE_FOLDER}/test)
-
-  set_property(TARGET ${_NAME} PROPERTY CXX_STANDARD 20)
-  set_property(TARGET ${_NAME} PROPERTY CXX_STANDARD_REQUIRED ON)
 
   add_test(NAME ${_NAME} COMMAND ${_NAME})
 endfunction()

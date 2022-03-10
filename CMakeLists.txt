@@ -5,8 +5,13 @@ list (APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake")
 include(DetectVersion)
 
 cmake_policy(SET CMP0048 NEW)                    ## set VERSION as documented by the project() command.
-set(CMAKE_CXX_STANDARD 20)                       ## compile with C++20 support
-set(CMAKE_CXX_STANDARD_REQUIRED ON)
+
+if(NOT CMAKE_CXX_STANDARD)
+    set(CMAKE_CXX_STANDARD 20)                   ## compile with C++20 support
+endif()
+if(NOT CMAKE_CXX_STANDARD_REQUIRED)
+    set(CMAKE_CXX_STANDARD_REQUIRED ON)
+endif()
 
 project(gtl VERSION ${DETECTED_GTL_VERSION} LANGUAGES CXX)
 
