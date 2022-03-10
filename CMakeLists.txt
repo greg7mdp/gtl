@@ -13,6 +13,13 @@ if(NOT CMAKE_CXX_STANDARD_REQUIRED)
     set(CMAKE_CXX_STANDARD_REQUIRED ON)
 endif()
 
+if(NOT DEFINED GTL_MASTER_PROJECT)
+    set(GTL_MASTER_PROJECT OFF)
+    if(CMAKE_CURRENT_SOURCE_DIR STREQUAL CMAKE_SOURCE_DIR)
+        set(GTL_MASTER_PROJECT ON)
+    endif()
+endif()
+
 project(gtl VERSION ${DETECTED_GTL_VERSION} LANGUAGES CXX)
 
 set(GTL_DIR gtl)
@@ -47,9 +54,9 @@ export(EXPORT ${PROJECT_NAME}-targets
        FILE "${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}Targets.cmake")
 
 ## ------------------------- building tests and examples -------------
-option(GTL_BUILD_TESTS      "Whether or not to build the tests"    OFF)
-option(GTL_BUILD_EXAMPLES   "Whether or not to build the examples" OFF)
-option(GTL_BUILD_BENCHMARKS "Whether or not to build the benchmarks" OFF)
+option(GTL_BUILD_TESTS      "Whether or not to build the tests"      ${GTL_MASTER_PROJECT})
+option(GTL_BUILD_EXAMPLES   "Whether or not to build the examples"   ${GTL_MASTER_PROJECT})
+option(GTL_BUILD_BENCHMARKS "Whether or not to build the benchmarks" ${GTL_MASTER_PROJECT})
 
 if (GTL_BUILD_TESTS)
 
