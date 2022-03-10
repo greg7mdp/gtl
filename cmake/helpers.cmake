@@ -19,12 +19,7 @@ function(gtl_cc_app my_target)
     ${ARGN}
   )
   add_executable(${my_target} ${GTL_CC_APP_SRCS})
-  target_link_libraries(${my_target} PRIVATE gtl)
-  if(GTL_CC_APP_LIBS)
-    target_link_libraries(${my_target}
-      PRIVATE ${GTL_CC_APP_LIBS}
-    )
-  endif()
+  target_link_libraries(${my_target} PRIVATE gtl ${GTL_CC_APP_LIBS})
 endfunction()
 
 # -------------------------------------------------------------
@@ -36,39 +31,21 @@ function(gtl_cc_test)
   cmake_parse_arguments(GTL_CC_TEST
     ""
     "NAME"
-    "SRCS;COPTS;CWOPTS;CLOPTS;DEFINES;LINKOPTS;DEPS"
+    "SRCS;CLOPTS;DEPS"
     ${ARGN}
   )
 
   set(_NAME "test_${GTL_CC_TEST_NAME}")
-  add_executable(${_NAME} "")
-  target_sources(${_NAME} PRIVATE ${GTL_CC_TEST_SRCS})
-  target_link_libraries(${_NAME} PRIVATE gtl)
-
-  target_include_directories(${_NAME}
-    PUBLIC ${GTL_COMMON_INCLUDE_DIRS}
-    PRIVATE ${GMOCK_INCLUDE_DIRS} ${GTEST_INCLUDE_DIRS}
-  )
-  target_compile_definitions(${_NAME}
-    PUBLIC ${GTL_CC_TEST_DEFINES}
-  )
+  add_executable(${_NAME} ${GTL_CC_TEST_SRCS})
+  target_link_libraries(${_NAME} PRIVATE gtl ${GTL_CC_TEST_DEPS})
   gtl_set_target_options(${_NAME})
-if(MSVC)
-  target_compile_options(${_NAME}
-    PRIVATE ${GTL_CC_TEST_CWOPTS}
-  )
-else()
-  target_compile_options(${_NAME}
-    PRIVATE ${GTL_CC_TEST_CLOPTS}
-  )
-endif()
-  target_compile_options(${_NAME}
-    PRIVATE ${GTL_CC_TEST_COPTS}
-  )
-  target_link_libraries(${_NAME}
-    PUBLIC ${GTL_CC_TEST_DEPS}
-    PRIVATE ${GTL_CC_TEST_LINKOPTS}
-  )
+
+  if(NOT MSVC AND GTL_CC_TEST_CLOPTS)
+    target_compile_options(${_NAME}
+      PRIVATE ${GTL_CC_TEST_CLOPTS}
+    )
+  endif()
+
   # Add all Abseil targets to a a folder in the IDE for organization.
   set_property(TARGET ${_NAME} PROPERTY FOLDER ${GTL_IDE_FOLDER}/test)
 
