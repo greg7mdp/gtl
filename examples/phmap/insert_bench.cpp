@@ -59,7 +59,7 @@ public:
     }
 
     // this is a bit biased, but for our use case that's not important.
-    uint64_t operator()(uint64_t boundExcluded) noexcept {
+    uint64_t operator()([[maybe_unused]] uint64_t boundExcluded) noexcept {
 #ifdef GTL_HAS_UMUL128
         uint64_t h;
         (void)umul128(operator()(), boundExcluded, &h);
