@@ -128,7 +128,7 @@ endif()
     gtl_cc_app(ex_emplace SRCS examples/hmap/emplace.cpp gtl/debug_vis/gtl.natvis)
 
     gtl_cc_app(ex_serialize SRCS examples/hmap/serialize.cpp gtl/debug_vis/gtl.natvis)
-    target_include_directories(ex_serialize PUBLIC $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/../cereal/include>)
+    #target_include_directories(ex_serialize PUBLIC $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/../cereal/include>)
 
     gtl_cc_app(ex_hash_std SRCS examples/hmap/hash_std.cpp gtl/debug_vis/gtl.natvis)
     gtl_cc_app(ex_hash_value SRCS examples/hmap/hash_value.cpp gtl/debug_vis/gtl.natvis)
