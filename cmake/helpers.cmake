@@ -11,6 +11,23 @@ function(gtl_set_target_options my_target)
 endfunction()
 
 # -------------------------------------------------------------
+function(gtl_cc_app my_target)
+  cmake_parse_arguments(GTL_CC_APP
+    ""
+    ""
+    "SRCS;LIBS"
+    ${ARGN}
+  )
+  add_executable(${my_target} ${GTL_CC_APP_SRCS})
+  target_link_libraries(${my_target} PRIVATE gtl)
+  if(GTL_CC_APP_LIBS)
+    target_link_libraries(${my_target}
+      PRIVATE ${GTL_CC_APP_LIBS}
+    )
+  endif()
+endfunction()
+
+# -------------------------------------------------------------
 # gtl_cc_test(NAME awesome_test
 #             SRCS "awesome_test.cpp"
 #             DEPS phmap::awesome gmock gtest_main)
@@ -26,6 +43,8 @@ function(gtl_cc_test)
   set(_NAME "test_${GTL_CC_TEST_NAME}")
   add_executable(${_NAME} "")
   target_sources(${_NAME} PRIVATE ${GTL_CC_TEST_SRCS})
+  target_link_libraries(${_NAME} PRIVATE gtl)
+
   target_include_directories(${_NAME}
     PUBLIC ${GTL_COMMON_INCLUDE_DIRS}
     PRIVATE ${GMOCK_INCLUDE_DIRS} ${GTEST_INCLUDE_DIRS}
