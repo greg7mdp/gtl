@@ -28,7 +28,7 @@ class GtlConan(ConanFile):
 
 
     def package(self):
-        include_folder = os.path.join(self.source_subfolder, "gtl")
+        include_folder = os.path.join(self.source_subfolder, "include", "gtl")
         self.copy(pattern="LICENSE")
         self.copy(pattern="*", dst="include/gtl", src=include_folder)
 
