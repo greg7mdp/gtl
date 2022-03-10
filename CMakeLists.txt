@@ -68,43 +68,46 @@ option(GTL_BUILD_BENCHMARKS "Whether or not to build the benchmarks" ${GTL_MASTE
 
 if (GTL_BUILD_TESTS)
 
-    include(cmake/DownloadGTest.cmake)
-    include_directories(${PROJECT_SOURCE_DIR})
+    if (NOT GTL_GTEST_LIBS)
+        include(cmake/DownloadGTest.cmake)
+        include_directories(${PROJECT_SOURCE_DIR})
 
-    gtl_check_target(gtest)
-    gtl_check_target(gtest_main)
-    gtl_check_target(gmock)
+        gtl_check_target(gtest)
+        gtl_check_target(gtest_main)
+        gtl_check_target(gmock)
+        set(GTL_GTEST_LIBS gmock_main)
+    endif()
 
     enable_testing()
 
     ## ---------------- base hash components ----------------------------
-    gtl_cc_test(NAME compressed_tuple SRCS "tests/phmap/compressed_tuple_test.cpp" DEPS gmock_main)
-    gtl_cc_test(NAME container_memory SRCS "tests/phmap/container_memory_test.cpp" DEPS gmock_main)
-    gtl_cc_test(NAME hash_policy_testing SRCS "tests/phmap/hash_policy_testing_test.cpp" DEPS gmock_main)
-    gtl_cc_test(NAME node_hash_policy SRCS "tests/phmap/node_hash_policy_test.cpp" DEPS gmock_main)
-    gtl_cc_test(NAME raw_hash_set SRCS "tests/phmap/raw_hash_set_test.cpp" DEPS gmock_main)
-    gtl_cc_test(NAME raw_hash_set_allocator SRCS "tests/phmap/raw_hash_set_allocator_test.cpp" DEPS gmock_main)
+    gtl_cc_test(NAME compressed_tuple SRCS "tests/phmap/compressed_tuple_test.cpp" DEPS ${GTL_GTEST_LIBS})
+    gtl_cc_test(NAME container_memory SRCS "tests/phmap/container_memory_test.cpp" DEPS ${GTL_GTEST_LIBS})
+    gtl_cc_test(NAME hash_policy_testing SRCS "tests/phmap/hash_policy_testing_test.cpp" DEPS ${GTL_GTEST_LIBS})
+    gtl_cc_test(NAME node_hash_policy SRCS "tests/phmap/node_hash_policy_test.cpp" DEPS ${GTL_GTEST_LIBS})
+    gtl_cc_test(NAME raw_hash_set SRCS "tests/phmap/raw_hash_set_test.cpp" DEPS ${GTL_GTEST_LIBS})
+    gtl_cc_test(NAME raw_hash_set_allocator SRCS "tests/phmap/raw_hash_set_allocator_test.cpp" DEPS ${GTL_GTEST_LIBS})
 
     ## ---------------- regular hash maps ----------------------------
-    gtl_cc_test(NAME flat_hash_set SRCS "tests/phmap/flat_hash_set_test.cpp"  DEPS gmock_main)
-    gtl_cc_test(NAME flat_hash_map SRCS "tests/phmap/flat_hash_map_test.cpp" DEPS gmock_main)
-    gtl_cc_test(NAME node_hash_map SRCS "tests/phmap/node_hash_map_test.cpp" DEPS gmock_main)
-    gtl_cc_test(NAME node_hash_set SRCS "tests/phmap/node_hash_set_test.cpp" DEPS  gmock_main)
+    gtl_cc_test(NAME flat_hash_set SRCS "tests/phmap/flat_hash_set_test.cpp"  DEPS ${GTL_GTEST_LIBS})
+    gtl_cc_test(NAME flat_hash_map SRCS "tests/phmap/flat_hash_map_test.cpp" DEPS ${GTL_GTEST_LIBS})
+    gtl_cc_test(NAME node_hash_map SRCS "tests/phmap/node_hash_map_test.cpp" DEPS ${GTL_GTEST_LIBS})
+    gtl_cc_test(NAME node_hash_set SRCS "tests/phmap/node_hash_set_test.cpp" DEPS ${GTL_GTEST_LIBS})
 
     ## --------------- parallel hash maps -----------------------------------------------
-    gtl_cc_test(NAME parallel_flat_hash_map SRCS "tests/phmap/parallel_flat_hash_map_test.cpp" DEPS gmock_main)
-    gtl_cc_test(NAME parallel_flat_hash_set SRCS "tests/phmap/parallel_flat_hash_set_test.cpp" DEPS gmock_main)
-    gtl_cc_test(NAME parallel_node_hash_map SRCS "tests/phmap/parallel_node_hash_map_test.cpp" DEPS gmock_main)
-    gtl_cc_test(NAME parallel_node_hash_set SRCS "tests/phmap/parallel_node_hash_set_test.cpp" DEPS  gmock_main)
-    gtl_cc_test(NAME parallel_flat_hash_map_mutex SRCS "tests/phmap/parallel_flat_hash_map_mutex_test.cpp" DEPS gmock_main)
-    gtl_cc_test(NAME dump_load SRCS "tests/phmap/dump_load_test.cpp" DEPS gmock_main)
+    gtl_cc_test(NAME parallel_flat_hash_map SRCS "tests/phmap/parallel_flat_hash_map_test.cpp" DEPS ${GTL_GTEST_LIBS})
+    gtl_cc_test(NAME parallel_flat_hash_set SRCS "tests/phmap/parallel_flat_hash_set_test.cpp" DEPS ${GTL_GTEST_LIBS})
+    gtl_cc_test(NAME parallel_node_hash_map SRCS "tests/phmap/parallel_node_hash_map_test.cpp" DEPS ${GTL_GTEST_LIBS})
+    gtl_cc_test(NAME parallel_node_hash_set SRCS "tests/phmap/parallel_node_hash_set_test.cpp" DEPS ${GTL_GTEST_LIBS})
+    gtl_cc_test(NAME parallel_flat_hash_map_mutex SRCS "tests/phmap/parallel_flat_hash_map_mutex_test.cpp" DEPS ${GTL_GTEST_LIBS})
+    gtl_cc_test(NAME dump_load SRCS "tests/phmap/dump_load_test.cpp" DEPS ${GTL_GTEST_LIBS})
 
     ## --------------- btree -----------------------------------------------
-    gtl_cc_test(NAME btree SRCS "tests/btree/btree_test.cpp" CLOPTS "-w" DEPS gmock_main)
+    gtl_cc_test(NAME btree SRCS "tests/btree/btree_test.cpp" CLOPTS "-w" DEPS ${GTL_GTEST_LIBS})
 
     ## --------------- misc -----------------------------------------------
-    gtl_cc_test(NAME lru_cache SRCS "tests/misc/lru_cache.cpp" DEPS gmock_main)
-    gtl_cc_test(NAME bit_vector SRCS "tests/misc/bitvector_test.cpp" CLOPTS "-w" DEPS gmock_main)
+    gtl_cc_test(NAME lru_cache SRCS "tests/misc/lru_cache.cpp" DEPS ${GTL_GTEST_LIBS})
+    gtl_cc_test(NAME bit_vector SRCS "tests/misc/bitvector_test.cpp" CLOPTS "-w" DEPS ${GTL_GTEST_LIBS})
 endif()
 
 if (GTL_BUILD_EXAMPLES)
