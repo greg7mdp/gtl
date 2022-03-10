@@ -27,11 +27,12 @@ option(GTL_INSTALL "Enable installation" ${GTL_MASTER_PROJECT})
 
 
 set(GTL_DIR gtl)
-set(GTL_HEADERS ${GTL_DIR}/phmap.hpp 
-                ${GTL_DIR}/gtl_base.hpp 
-                ${GTL_DIR}/bits.hpp 
-                ${GTL_DIR}/phmap_utils.hpp 
-                ${GTL_DIR}/gtl_config.hpp)
+# See CMP0076
+set(GTL_HEADERS ${CMAKE_CURRENT_SOURCE_DIR}/${GTL_DIR}/phmap.hpp 
+                ${CMAKE_CURRENT_SOURCE_DIR}/${GTL_DIR}/gtl_base.hpp 
+                ${CMAKE_CURRENT_SOURCE_DIR}/${GTL_DIR}/bits.hpp 
+                ${CMAKE_CURRENT_SOURCE_DIR}/${GTL_DIR}/phmap_utils.hpp 
+                ${CMAKE_CURRENT_SOURCE_DIR}/${GTL_DIR}/gtl_config.hpp)
 
 include(helpers)
 include_directories("${CMAKE_CURRENT_SOURCE_DIR}")
