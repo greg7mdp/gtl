@@ -17,8 +17,6 @@ set(GTL_HEADERS ${GTL_DIR}/phmap.hpp
                 ${GTL_DIR}/phmap_utils.hpp 
                 ${GTL_DIR}/gtl_config.hpp)
 
-set(CMAKE_SUPPRESS_REGENERATION true)            ## suppress ZERO_CHECK project
-
 include(GNUInstallDirs)
 include(CMakePackageConfigHelpers)
 include(helpers)
