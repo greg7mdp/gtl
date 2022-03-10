@@ -22,6 +22,10 @@ endif()
 
 project(gtl VERSION ${DETECTED_GTL_VERSION} LANGUAGES CXX)
 
+## ------------------------- building tests and examples -------------
+option(GTL_INSTALL "Enable installation" ${GTL_MASTER_PROJECT})
+
+
 set(GTL_DIR gtl)
 set(GTL_HEADERS ${GTL_DIR}/phmap.hpp 
                 ${GTL_DIR}/gtl_base.hpp 
@@ -29,8 +33,6 @@ set(GTL_HEADERS ${GTL_DIR}/phmap.hpp
                 ${GTL_DIR}/phmap_utils.hpp 
                 ${GTL_DIR}/gtl_config.hpp)
 
-include(GNUInstallDirs)
-include(CMakePackageConfigHelpers)
 include(helpers)
 include_directories("${CMAKE_CURRENT_SOURCE_DIR}")
 
@@ -43,15 +45,21 @@ target_include_directories(
      $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}>
      $<INSTALL_INTERFACE:include>)
 
-install(
-    DIRECTORY ${PROJECT_SOURCE_DIR}/${GTL_DIR}/
-    DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/${GTL_DIR})
+if(GTL_INSTALL)
+    include(GNUInstallDirs)
+    include(CMakePackageConfigHelpers)
 
-install(TARGETS ${PROJECT_NAME}
-        EXPORT ${PROJECT_NAME}-targets)
+    install(
+        DIRECTORY ${PROJECT_SOURCE_DIR}/${GTL_DIR}/
+        DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/${GTL_DIR})
 
-export(EXPORT ${PROJECT_NAME}-targets
-       FILE "${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}Targets.cmake")
+    install(TARGETS ${PROJECT_NAME}
+            EXPORT ${PROJECT_NAME}-targets)
+
+    export(EXPORT ${PROJECT_NAME}-targets
+           FILE "${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}Targets.cmake")
+endif()
+
 
 ## ------------------------- building tests and examples -------------
 option(GTL_BUILD_TESTS      "Whether or not to build the tests"      ${GTL_MASTER_PROJECT})
