@@ -103,11 +103,11 @@ if (GTL_BUILD_TESTS)
     gtl_cc_test(NAME dump_load SRCS "tests/phmap/dump_load_test.cpp" DEPS ${GTL_GTEST_LIBS})
 
     ## --------------- btree -----------------------------------------------
-    gtl_cc_test(NAME btree SRCS "tests/btree/btree_test.cpp" CLOPTS "-w" DEPS ${GTL_GTEST_LIBS})
+    gtl_cc_test(NAME btree SRCS "tests/btree/btree_test.cpp" DEPS ${GTL_GTEST_LIBS})
 
     ## --------------- misc -----------------------------------------------
     gtl_cc_test(NAME lru_cache SRCS "tests/misc/lru_cache.cpp" DEPS ${GTL_GTEST_LIBS})
-    gtl_cc_test(NAME bit_vector SRCS "tests/misc/bitvector_test.cpp" CLOPTS "-w" DEPS ${GTL_GTEST_LIBS})
+    gtl_cc_test(NAME bit_vector SRCS "tests/misc/bitvector_test.cpp" DEPS ${GTL_GTEST_LIBS})
 endif()
 
 if (GTL_BUILD_EXAMPLES)
