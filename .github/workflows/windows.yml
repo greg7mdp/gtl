@@ -3,23 +3,41 @@ name: Windows
 on:
   push:
   pull_request:
-    branches: [ master ]
+    branches: [ main ]
 
 jobs:
   build:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        os: [windows-latest]
-        flags: ["/std:c++latest"]
-        optimize: [/O2]
+        os: [windows-2019, windows-2022]
+        platform: [Win32, x64]
+        build_type: [Debug, Release]
+        standard: [20]
     steps:
     - name: Checkout
       uses: actions/checkout@v2.0.0
-    - name: Build and test
-      env:
-        CXX: ${{ matrix.compiler }}
-        CXXFLAGS: ${{ matrix.flags }} ${{ matrix.optimize }}
-        CTEST_OUTPUT_ON_FAILURE: 1
+
+    - name: Create Environment
       run: |
-        cmake -Bbuild -DGTL_BUILD_TESTS=ON -DGTL_BUILD_EXAMPLES=ON -DCMAKE_VERBOSE_MAKEFILE:BOOL=ON -DCMAKE_BUILD_TYPE=Release && cmake --build build --target ALL_BUILD && cmake --build build --target RUN_TESTS
+        cmake -E make_directory ${{runner.workspace}}/build
+
+    - name: Configure
+      # bash shell for $GITHUB_WORKSPACE
+      shell: bash
+      working-directory: ${{runner.workspace}}/build
+      run: |
+        cmake -A ${{matrix.platform}} -DCMAKE_VERBOSE_MAKEFILE:BOOL=ON -DCMAKE_CXX_STANDARD=${{matrix.standard}} -DCMAKE_BUILD_TYPE=${{matrix.build_type}} $GITHUB_WORKSPACE
+
+    - name: Build
+      working-directory: ${{runner.workspace}}/build
+      run: |
+        $cpus = (Get-CimInstance Win32_ComputerSystem).NumberOfLogicalProcessors
+        cmake --build . --config ${{matrix.build_type}} --parallel $cpus
+
+    - name: Test
+      working-directory: ${{runner.workspace}}/build
+      env:
+        CTEST_OUTPUT_ON_FAILURE: True
+      run: |
+        ctest -C ${{matrix.build_type}}

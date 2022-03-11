@@ -1,25 +1,40 @@
-name: MacOS
+name: macOS
 
 on:
   push:
   pull_request:
-    branches: [ master ]
+    branches: [ main ]
 
 jobs:
   build:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        os: [macos-latest]
-        compiler: [g++, clang++]
-        flags: [-std=c++20]
-        optimize: [-O2]
+        os: [macos-10.15, macos-latest]
+        build_type: [Debug, Release]
+        standard: [20]
     steps:
     - name: Checkout
       uses: actions/checkout@v2.0.0
-    - name: Build and test
-      env:
-        CXX: ${{ matrix.compiler }}
-        CXXFLAGS: ${{ matrix.flags }} ${{ matrix.optimize }}
+
+    - name: Create Environment
       run: |
-        mkdir build && cd build && cmake -DGTL_BUILD_TESTS=ON -DGTL_BUILD_EXAMPLES=ON -DCMAKE_VERBOSE_MAKEFILE:BOOL=ON -DCMAKE_BUILD_TYPE=Release .. && cmake --build . && make test
+        cmake -E make_directory ${{runner.workspace}}/build
+
+    - name: Configure
+      working-directory: ${{runner.workspace}}/build
+      run: |
+        cmake -DCMAKE_VERBOSE_MAKEFILE:BOOL=ON -DCMAKE_CXX_STANDARD=${{matrix.standard}} -DCMAKE_BUILD_TYPE=${{matrix.build_type}} $GITHUB_WORKSPACE
+
+    - name: Build
+      working-directory: ${{runner.workspace}}/build
+      run: |
+        cpus=`sysctl -n hw.logicalcpu`
+        cmake --build . --config ${{matrix.build_type}} --parallel $cpus
+
+    - name: Test
+      working-directory: ${{runner.workspace}}/build
+      env:
+        CTEST_OUTPUT_ON_FAILURE: True
+      run: |
+        ctest -C ${{matrix.build_type}}
