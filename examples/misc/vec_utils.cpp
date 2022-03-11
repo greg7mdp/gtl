@@ -8,9 +8,11 @@
 //      https://www.apache.org/licenses/LICENSE-2.0
 // ---------------------------------------------------------------------------
 #include <cassert>
+#if __has_include(<version>)
+#include <version>
+#endif
 
-#if !defined(__GNUC__) || __GNUC__ > 9
-     // concepts requiire g++ >= 10
+#if defined(__cpp_concepts) && defined(__cpp_lib_concepts)
 
 #include <gtl/vec_utils.hpp>
 

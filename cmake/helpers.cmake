@@ -2,6 +2,27 @@
 set(GTL_IDE_FOLDER phmap)
 
 # -------------------------------------------------------------
+function(gtl_set_target_options my_target)
+  target_compile_options(${my_target} PRIVATE
+    $<$<OR:$<CXX_COMPILER_ID:Clang>,$<CXX_COMPILER_ID:AppleClang>>:-pedantic -Wall -Wextra -Wcast-align -Wcast-qual -Wdisabled-optimization -Winit-self -Wmissing-include-dirs -Woverloaded-virtual -Wredundant-decls -Wshadow -Wswitch-default -Wno-unused -Wno-gnu-zero-variadic-macro-arguments>
+    $<$<CXX_COMPILER_ID:GNU>:-pedantic -Wall -Wextra -Wcast-align -Wcast-qual -Wdisabled-optimization -Winit-self -Wmissing-include-dirs -Woverloaded-virtual -Wredundant-decls -Wshadow -Wswitch-default -Wno-unused>
+    $<$<CXX_COMPILER_ID:MSVC>:/W4 /Zc:__cplusplus /bigobj>
+  )
+endfunction()
+
+# -------------------------------------------------------------
+function(gtl_cc_app my_target)
+  cmake_parse_arguments(GTL_CC_APP
+    ""
+    ""
+    "SRCS;LIBS"
+    ${ARGN}
+  )
+  add_executable(${my_target} ${GTL_CC_APP_SRCS})
+  target_link_libraries(${my_target} PRIVATE ${PROJECT_NAME} ${GTL_CC_APP_LIBS})
+endfunction()
+
+# -------------------------------------------------------------
 # gtl_cc_test(NAME awesome_test
 #             SRCS "awesome_test.cpp"
 #             DEPS phmap::awesome gmock gtest_main)
@@ -10,51 +31,31 @@ function(gtl_cc_test)
   cmake_parse_arguments(GTL_CC_TEST
     ""
     "NAME"
-    "SRCS;COPTS;CWOPTS;CLOPTS;DEFINES;LINKOPTS;DEPS"
+    "SRCS;CLOPTS;DEPS"
     ${ARGN}
   )
 
   set(_NAME "test_${GTL_CC_TEST_NAME}")
-  add_executable(${_NAME} "")
-  target_sources(${_NAME} PRIVATE ${GTL_CC_TEST_SRCS})
-  target_include_directories(${_NAME}
-    PUBLIC ${GTL_COMMON_INCLUDE_DIRS}
-    PRIVATE ${GMOCK_INCLUDE_DIRS} ${GTEST_INCLUDE_DIRS}
-  )
-  target_compile_definitions(${_NAME}
-    PUBLIC ${GTL_CC_TEST_DEFINES}
-  )
-if(MSVC)
-  target_compile_options(${_NAME}
-    PRIVATE ${GTL_CC_TEST_CWOPTS} /W4 /Zc:__cplusplus /std:c++latest
-  )
-else()
-  target_compile_options(${_NAME}
-    PRIVATE ${GTL_CC_TEST_CLOPTS}
-  )
-endif()
-  target_compile_options(${_NAME}
-    PRIVATE ${GTL_CC_TEST_COPTS}
-  )
-  target_link_libraries(${_NAME}
-    PUBLIC ${GTL_CC_TEST_DEPS}
-    PRIVATE ${GTL_CC_TEST_LINKOPTS}
-  )
+  add_executable(${_NAME} ${GTL_CC_TEST_SRCS})
+  target_link_libraries(${_NAME} PRIVATE ${PROJECT_NAME} ${GTL_CC_TEST_DEPS})
+  gtl_set_target_options(${_NAME})
+
+  if(NOT MSVC AND GTL_CC_TEST_CLOPTS)
+    target_compile_options(${_NAME}
+      PRIVATE ${GTL_CC_TEST_CLOPTS}
+    )
+  endif()
+
   # Add all Abseil targets to a a folder in the IDE for organization.
   set_property(TARGET ${_NAME} PROPERTY FOLDER ${GTL_IDE_FOLDER}/test)
-
-  set_property(TARGET ${_NAME} PROPERTY CXX_STANDARD 20)
-  set_property(TARGET ${_NAME} PROPERTY CXX_STANDARD_REQUIRED ON)
 
   add_test(NAME ${_NAME} COMMAND ${_NAME})
 endfunction()
 
 # -------------------------------------------------------------
-function(check_target my_target)
+function(gtl_check_target my_target)
   if(NOT TARGET ${my_target})
     message(FATAL_ERROR " GTL: compiling phmap tests requires a ${my_target} CMake target in your project,
                    see CMake/README.md for more details")
   endif(NOT TARGET ${my_target})
 endfunction()
-
-

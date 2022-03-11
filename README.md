@@ -17,13 +17,13 @@ We are happy to integrate new classes into [gtl](https://github.com/greg7mdp/gtl
 
 [gtl](https://github.com/greg7mdp/gtl) requires a C++20 compiler. We currently support:  `Visual Studio 2019 +`, `gcc 8 +`, and `clang 10 +` (or Xcode 12 + on MacOS).
 
-Because [gtl](https://github.com/greg7mdp/gtl) is a header only library, installation is trivial, just copy the `gtl` directory to your project somewhere in your include path and you are good to go. We also support common package managers such as [Conan](https://conan.io/) and [vcpkg](https://vcpkg.io/en/index.html).
+Because [gtl](https://github.com/greg7mdp/gtl) is a header only library, installation is trivial, just copy the `include/gtl` directory to your project somewhere in your include path and you are good to go. We also support common package managers such as [Conan](https://conan.io/) and [vcpkg](https://vcpkg.io/en/index.html).
 
 ## Installation
 
 Copy the gtl directory to your project. Update your include path. That's all.
 
-If you are using Visual Studio, you probably want to add `gtl/debug_vis/gtl.natvis` to your projects. This will allow for a user friendly display of gtl containers in the debugger. Similar debug visualizers are also provided for gdb and lldb in the \gtl/debug_vis` directory.
+If you are using Visual Studio, you probably want to add `include/gtl/debug_vis/gtl.natvis` to your projects. This will allow for a user friendly display of gtl containers in the debugger. Similar debug visualizers are also provided for gdb and lldb in the `include/gtl/debug_vis` directory.
 
 > A cmake configuration files (CMakeLists.txt) is provided for building the tests and examples. Command for building and running the tests is: <br>
 > `mkdir build && cd build && cmake -DGTL_BUILD_TESTS=ON -DGTL_BUILD_EXAMPLES=ON .. && cmake --build . && make test`
