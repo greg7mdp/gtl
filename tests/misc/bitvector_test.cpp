@@ -52,7 +52,7 @@ const std::vector<gtl::bit_vector>& get_test_vector() {
             gtl::bit_vector v(17);
             for (uint64_t i=0; i<4; ++i) {
                 v = { i<<3 };
-                v.set(i+11);
+                v.set(static_cast<size_t>(i+11));
                 res.push_back(v);
             }
         }
@@ -64,7 +64,7 @@ const std::vector<gtl::bit_vector>& get_test_vector() {
             for (uint64_t i=3; i<9; ++i) {
                 uint64_t root = (i<<(2*i)) * 127;
                 v = { root  + root*7,  (i<<(27-i)) + (i<<(27+i)), 0x0f1f1f1f00aaaa*7, 0x0af000000000000*29, 41*i*i  };
-                v.set(i+11);
+                v.set(static_cast<size_t>(i+11));
                 res.push_back(v);
             }
         }
@@ -72,7 +72,7 @@ const std::vector<gtl::bit_vector>& get_test_vector() {
         {
             // generate some vectors of size 256
             // ---------------------------------
-            for (uint64_t i=27; i<36; ++i) {
+            for (size_t i=27; i<36; ++i) {
                 gtl::bit_vector v(256, false);
                 v.view(117+i, 237-i).set();
                 v.view(i, i+2).set();

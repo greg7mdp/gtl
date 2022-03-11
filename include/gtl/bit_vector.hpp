@@ -433,16 +433,16 @@ public:
             reset();
         else if (cnt) {
             if (cnt == stride) {
-                size_t carry = 0;
+                uint64_t carry = 0;
                 _bv.storage().template visit<vt::none | vt::backward>(_first, _last, [&](uint64_t v, int ) { 
-                        size_t res = carry; 
+                        uint64_t res = carry; 
                         carry = v;
                         return res;
                     });
             } else if (cnt <= stride) {
-                size_t carry = 0;
+                uint64_t carry = 0;
                 _bv.storage().template visit<vt::none | vt::backward>(_first, _last, [&](uint64_t v, int ) { 
-                        size_t res = (v >> cnt) | carry; // yes we have to shift the opposite way!
+                        uint64_t res = (v >> cnt) | carry; // yes we have to shift the opposite way!
                         carry = (v << (stride - cnt));
                         return res;
                     });
@@ -462,16 +462,16 @@ public:
             reset();
         else if (cnt) {
             if (cnt == stride) {
-                size_t carry = 0;
+                uint64_t carry = 0;
                 _bv.storage().template visit<vt::none>(_first, _last, [&](uint64_t v, int ) { 
-                        size_t res = carry; 
+                        uint64_t res = carry; 
                         carry = v;
                         return res;
                     });
             } else if (cnt <= stride) {
-                size_t carry = 0;
+                uint64_t carry = 0;
                 _bv.storage().template visit<vt::none>(_first, _last, [&](uint64_t v, int ) { 
-                        size_t res = (v << cnt) | carry; // yes we have to shift the opposite way!
+                        uint64_t res = (v << cnt) | carry; // yes we have to shift the opposite way!
                         carry = (v >> (stride - cnt));
                         return res;
                     });
@@ -901,11 +901,11 @@ namespace std
     {
         size_t operator()(gtl::bit_vector const &bv) const
         { 
-            size_t h = bv.size();
+            uint64_t h = bv.size();
             size_t num_blocks = bv.num_blocks();
             for (size_t i=0; i<num_blocks; ++i)
                 h = h ^ (bv.block(i) + size_t(0xc6a4a7935bd1e995) + (h << 6) + (h >> 2));
-            return h;
+            return static_cast<size_t>(h);
         }
     };
 }
