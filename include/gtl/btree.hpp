@@ -2241,8 +2241,8 @@ namespace priv {
 
         // Verifies the tree structure of node.
         // ------------------------------------
-        int internal_verify(const node_type *node,
-                            const key_type *lo, const key_type *hi) const;
+        size_type internal_verify(const node_type *node,
+                                  const key_type *lo, const key_type *hi) const;
 
         node_stats internal_stats(const node_type *node) const {
             // The root can be a static empty node.
@@ -3466,7 +3466,7 @@ namespace priv {
     }
 
     template <typename P>
-    int btree<P>::internal_verify(
+    typename btree<P>::size_type btree<P>::internal_verify(
         const node_type *node, const key_type *lo, const key_type *hi) const {
         assert(node->count() > 0);
         assert(node->count() <= node->max_count());
@@ -3479,7 +3479,7 @@ namespace priv {
         for (int i = 1; i < node->count(); ++i) {
             assert(!compare_keys(node->key(i), node->key(i - 1)));
         }
-        int count = node->count();
+        size_type count = node->count();
         if (!node->leaf()) {
             for (int i = 0; i <= node->count(); ++i) {
                 assert(node->child(i) != nullptr);

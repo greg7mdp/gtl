@@ -31,7 +31,7 @@ function(gtl_cc_test)
   cmake_parse_arguments(GTL_CC_TEST
     ""
     "NAME"
-    "SRCS;CLOPTS;DEPS"
+    "SRCS;DEPS"
     ${ARGN}
   )
 
@@ -39,12 +39,6 @@ function(gtl_cc_test)
   add_executable(${_NAME} ${GTL_CC_TEST_SRCS})
   target_link_libraries(${_NAME} PRIVATE ${PROJECT_NAME} ${GTL_CC_TEST_DEPS})
   gtl_set_target_options(${_NAME})
-
-  if(NOT MSVC AND GTL_CC_TEST_CLOPTS)
-    target_compile_options(${_NAME}
-      PRIVATE ${GTL_CC_TEST_CLOPTS}
-    )
-  endif()
 
   # Add all Abseil targets to a a folder in the IDE for organization.
   set_property(TARGET ${_NAME} PROPERTY FOLDER ${GTL_IDE_FOLDER}/test)
