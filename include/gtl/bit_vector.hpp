@@ -904,8 +904,11 @@ namespace std
             uint64_t h = bv.size();
             size_t num_blocks = bv.num_blocks();
             for (size_t i=0; i<num_blocks; ++i)
-                h = h ^ (bv.block(i) + size_t(0xc6a4a7935bd1e995) + (h << 6) + (h >> 2));
-            return static_cast<size_t>(h) + static_cast<size_t>(h >> 32);
+                h = h ^ (bv.block(i) + 0xc6a4a7935bd1e995ull + (h << 6) + (h >> 2));
+            if constexpr (sizeof(size_t) < sizeof(uint64_t))
+                return static_cast<size_t>(h) + static_cast<size_t>(h >> 32); // on 32 bit platforms, make sure we use all the bits of h
+            else
+                return static_cast<size_t>(h);
         }
     };
 }
