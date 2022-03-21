@@ -70,7 +70,7 @@
     namespace gtl {
         using weak_ordering   = std::weak_ordering;
         using strong_ordering = std::strong_ordering;
-    };
+    }
 #endif
 
 #include <string_view>
@@ -82,14 +82,6 @@
 #endif
 
 namespace gtl {
-
-    // Defined and documented later on in this file.
-    template <typename T>
-    struct is_trivially_destructible;
-
-    // Defined and documented later on in this file.
-    template <typename T>
-    struct is_trivially_move_assignable;
 
     namespace type_traits_internal {
 
