@@ -83,14 +83,6 @@
 
 namespace gtl {
 
-    // Defined and documented later on in this file.
-    template <typename T>
-    struct is_trivially_destructible;
-
-    // Defined and documented later on in this file.
-    template <typename T>
-    struct is_trivially_move_assignable;
-
     namespace type_traits_internal {
 
         // Silence MSVC warnings about the destructor being defined as deleted.
