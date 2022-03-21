@@ -70,7 +70,7 @@
     namespace gtl {
         using weak_ordering   = std::weak_ordering;
         using strong_ordering = std::strong_ordering;
-    };
+    }
 #endif
 
 #include <string_view>
