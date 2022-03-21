@@ -109,7 +109,7 @@ TEST(BitVectorTest, resize) {
 
 TEST(BitVectorTest, bit_view_change) {
     static constexpr size_t sz = 500;
-    gtl::bit_vector v1(sz), v2(sz);
+    gtl::bit_vector tv1(sz), tv2(sz);
 
     auto bv_change_test = [](gtl::bit_vector &v1, gtl::bit_vector &v2, size_t lg) {
         gtl::bit_vector  v3(v1.size());
@@ -138,11 +138,11 @@ TEST(BitVectorTest, bit_view_change) {
         }    
     };
 
-    bv_change_test(v1, v2, 11);
-    bv_change_test(v1, v2, 69);
-    bv_change_test(v1, v2, 155);
-    bv_change_test(v1, v2, 277);
-    bv_change_test(v1, v2, sz - 130);
+    bv_change_test(tv1, tv2, 11);
+    bv_change_test(tv1, tv2, 69);
+    bv_change_test(tv1, tv2, 155);
+    bv_change_test(tv1, tv2, 277);
+    bv_change_test(tv1, tv2, sz - 130);
 }
 
 TEST(BitVectorTest, bitwise_op_on_bv) {
@@ -349,11 +349,13 @@ TEST(BitVectorTest, binary_predicates_on_full_bit_vector) {
                 continue;
             EXPECT_TRUE(v1.contains(v2) || ((v1 | v2) != v1));
 
-            if (v1.contains(v2) && v2.contains(v1))
+            if (v1.contains(v2) && v2.contains(v1)) {
                 EXPECT_TRUE(v1 == v2);
-            
-            if (v1.disjoint(v2))
+            }
+
+            if (v1.disjoint(v2)) {
                 EXPECT_TRUE((v1 & v2).none());
+            }
         }
     }
 }
