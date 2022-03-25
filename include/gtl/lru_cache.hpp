@@ -1,72 +1,39 @@
-/*
- *  Copyright (c) 2014, lamerman
- *  All rights reserved.
- *  
- *  Redistribution and use in source and binary forms, with or without
- *  modification, are permitted provided that the following conditions are met:
- *  
- *  * Redistributions of source code must retain the above copyright notice, this
- *    list of conditions and the following disclaimer.
- *  
- *  * Redistributions in binary form must reproduce the above copyright notice,
- *    this list of conditions and the following disclaimer in the documentation
- *    and/or other materials provided with the distribution.
- *  
- *  * Neither the name of lamerman nor the names of its
- *    contributors may be used to endorse or promote products derived from
- *    this software without specific prior written permission.
- *  
- *  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
- *  AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
- *  IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
- *  DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE
- *  FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
- *  DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
- *  SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
- *  CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
- *  OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
- *  OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- *
- */
-
-/*
- * Author: Alexander Ponomarev
- *
- * Modified by Gregory Popovitch
- *
- */
-
 #ifndef gtl_lru_cache_h_
 #define gtl_lru_cache_h_
 
 #include <cstddef>
 #include <cassert>
 #include <list>
+#include <tuple>
 #include <gtl/phmap.hpp>
 
 namespace gtl {
 
-template<class K, class V, class Hash = std::hash<K>, class Eq = std::equal_to<K> >
+// ------------------------------------------------------------------------------
+// Original author: Alexander Ponomarev (see licenses/license_lamerman)
+// Modified by Gregory Popovitch
+// ------------------------------------------------------------------------------
+template<class K, class V, class Hash = gtl::Hash<K>, class Eq = std::equal_to<K>>
 class lru_cache 
 {
 public:
     using value_type = typename std::pair<const K, V>;
     using list_iter  = typename std::list<value_type>::iterator;
 
-    explicit lru_cache(size_t max_size = 100) 
+    explicit lru_cache(size_t max_size = 128) 
     {
         assert(max_size >= 1);
-        setCacheSize(max_size);
+        set_cache_size(max_size);
     }
 
-    void setCacheSize(size_t max_size) 
+    void set_cache_size(size_t max_size) 
     {
         _max_size = max_size; 
         while (_cache_items_map.size() > _max_size) 
-            removeOldest();
+            remove_oldest();
     }
 
-    void removeOldest()
+    void remove_oldest()
     {
         if (!_cache_items_map.empty())
         {
@@ -93,7 +60,7 @@ public:
         _cache_items_map[key] = _cache_items_list.begin();
 		
         if (_cache_items_map.size() > _max_size) 
-            removeOldest();
+            remove_oldest();
 
         return &(_cache_items_list.begin()->second);
     }
@@ -126,6 +93,96 @@ private:
     gtl::flat_hash_map<K, list_iter, Hash, Eq> _cache_items_map;
     size_t _max_size;
 };
+
+// ------------------------------------------------------------------------------
+template<typename... Ts> struct pack { };
+
+template <class> struct pack_helper;
+
+template <class R, class... Args> struct pack_helper<R(Args...)> {
+    using args = pack<Args...>;
+};
+
+
+// ------------------------------------------------------------------------------
+// Author:  Gregory Popovitch (greg7mdp@gmail.com)
+// 
+// Given a callable object (often a function), this class provides a new 
+// callable which either invokes the original one, caching the returned value,
+// or returns the cached returned value if the arguments match a previous call.
+// Of course this should be used only for pure functions without side effects.
+//
+// This version only keeps a limited number of results in the hash map,
+// configurable with set_max_size(). default max_size = 128
+// ------------------------------------------------------------------------------
+template <class F, typename = typename pack_helper<F>::args> 
+struct memoize_lru;
+
+template <class F, class... Args>
+class memoize_lru<F, pack<Args...>>
+{
+public:
+    using key_type = std::tuple<Args...>;
+    using result_type = std::invoke_result_t<F, Args...>;
+
+    memoize_lru(F &f) : _f(f) {}
+    
+    result_type operator()(Args... args) { 
+        key_type key(args...);
+        auto prev = _cache.get(key);
+        if (prev)
+            return *prev;
+        auto res =  _f(args...); 
+        _cache.insert(key, res);
+        return res;
+    }
+
+    void set_max_size(size_t sz) const { _cache.set_cache_size(sz); }
+    size_t size() const { return _cache.size(); }
+
+private:
+    F &_f;
+    lru_cache<key_type, result_type>  _cache;
+};
+
+// ------------------------------------------------------------------------------
+// Author:  Gregory Popovitch (greg7mdp@gmail.com)
+// 
+// Given a callable object (often a function), this class provides a new 
+// callable which either invokes the original one, caching the returned value,
+// or returns the cached returned value if the arguments match a previous call.
+// Of course this should be used only for pure functions without side effects.
+//
+// This version keeps all unique  results in the hash map.
+// ------------------------------------------------------------------------------
+template <class F, typename = typename pack_helper<F>::args> 
+struct memoize;
+
+template <class F, class... Args>
+class memoize<F, pack<Args...>>
+{
+public:
+    using key_type = std::tuple<Args...>;
+    using result_type = std::invoke_result_t<F, Args...>;
+
+    memoize(F &f) : _f(f) {}
+    
+    result_type operator()(Args... args) { 
+        key_type key(args...);
+        auto it = _cache.find(key);
+        if (it != _cache.end())
+            return it->second;
+        auto res =  _f(args...); 
+        _cache.emplace(key, res);
+        return res;
+    }
+
+private:
+    F &_f;
+    gtl::flat_hash_map<key_type, result_type>  _cache;
+};
+
+
 
 }  // namespace gtl
 
