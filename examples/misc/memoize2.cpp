@@ -38,7 +38,6 @@ auto cached_nth_prime   = gtl::memoize<decltype(nth_prime)>(nth_prime);
 auto cached_num_factors = gtl::memoize<decltype(num_factors)>(num_factors);
 auto cached_twin_primes = gtl::memoize<decltype(twin_primes)>(twin_primes);
 
-// return the nth element in the infinite list of prime numbers
 // ------------------------------------------------------------
 template <class F>
 void logify_recursion(F &f, uint64_t start, uint64_t end) {
