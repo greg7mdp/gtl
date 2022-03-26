@@ -3,11 +3,11 @@
 #include <cstdio>
 
 // -------------------------------------------------------------------------
-// create memoized (and very fast functions) that allows for lazy-like
+// create memoized (and very fast) functions which  allow for lazy-like
 // Haskell behavior. On my machine, the code below computes the first 
 // 10,000 twin prime numbers pairs in 0.5 seconds.
 //
-// This is somewhat equivalent (and faster) than the haskell version, 
+// This is somewhat equivalent to (and faster than) the haskell version, 
 // which you can try in https://replit.com/languages/haskell
 // 
 //   primes = 2 : (filter ( (==1) . length .  primeFactors) [3, 5 ..])
