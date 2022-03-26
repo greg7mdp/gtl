@@ -126,12 +126,17 @@ public:
     using result_type = std::invoke_result_t<F, Args...>;
 
     memoize_lru(F &f) : _f(f) {}
+
+    result_type* cache_hit(Args... args) { 
+        key_type key(args...);
+        return _cache.get(key);
+    }
     
     result_type operator()(Args... args) { 
         key_type key(args...);
-        auto prev = _cache.get(key);
-        if (prev)
-            return *prev;
+        auto hit = _cache.get(key);
+        if (hit)
+            return *hit;
         auto res =  _f(args...); 
         _cache.insert(key, res);
         return res;
@@ -139,6 +144,7 @@ public:
 
     void set_max_size(size_t sz) const { _cache.set_cache_size(sz); }
     size_t size() const { return _cache.size(); }
+    void clear() { _cache.clear(); }
 
 private:
     F &_f;
@@ -167,6 +173,14 @@ public:
 
     memoize(F &f) : _f(f) {}
     
+    result_type* cache_hit(Args... args) { 
+        key_type key(args...);
+        auto it = _cache.find(key);
+        if (it != _cache.end())
+            return &it->second;
+        return nullptr;
+    }
+
     result_type operator()(Args... args) { 
         key_type key(args...);
         auto it = _cache.find(key);
@@ -176,6 +190,8 @@ public:
         _cache.emplace(key, res);
         return res;
     }
+
+    void clear() { _cache.clear(); }
 
 private:
     F &_f;
