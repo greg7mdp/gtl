@@ -141,6 +141,7 @@ endif()
     gtl_cc_app(ex_vec_utils SRCS examples/misc/vec_utils.cpp include/gtl/debug_vis/gtl.natvis)
     gtl_cc_app(ex_bit_vector SRCS examples/misc/bit_vector.cpp include/gtl/debug_vis/gtl.natvis)
     gtl_cc_app(ex_memoize SRCS examples/misc/memoize.cpp include/gtl/debug_vis/gtl.natvis)
+    gtl_cc_app(ex_memoize2 SRCS examples/misc/memoize2.cpp include/gtl/debug_vis/gtl.natvis)
 endif()
 
 if (GTL_BUILD_BENCHMARKS)

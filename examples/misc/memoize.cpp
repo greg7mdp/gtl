@@ -25,10 +25,7 @@ uint64_t fib(uint64_t n)
     return fib(n-1) + fib(n-2);
 }
 
-
-
 #endif
-
 
 int main()
 {
