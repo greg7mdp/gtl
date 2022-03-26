@@ -2,15 +2,42 @@
 #include <gtl/lru_cache.hpp>
 #include <cstdio>
 
+// -------------------------------------------------------------------------
+// create memoized (and very fast functions) that allows for lazy-like
+// Haskell behavior. On my machine, the code below computes the first 
+// 10,000 twin prime numbers pairs in 0.5 seconds.
+//
+// This is somewhat equivalent (and faster) than the haskell version, 
+// which you can try in https://replit.com/languages/haskell
+// 
+//   primes = 2 : (filter ( (==1) . length .  primeFactors) [3, 5 ..])
+//   
+//   primeFactors n = _pf n primes
+//      where _pf n (x:xs) | x*x > n = [n]
+//                         | n `mod` x == 0 = x : (_pf (n `div` x) (x:xs))
+//                         | otherwise = _pf n xs
+//   
+//   twinPrimes = _tp primes
+//      where _tp (a:b:rest) | b == a + 2 = (a, b) : _tp (b:rest)
+//                           | otherwise = _tp (b:rest) 
+//
+//   main = putStrLn $ show $ twinPrimes !! 10000
+// -------------------------------------------------------------------------
+
 using stopwatch = gtl::stopwatch<std::milli>;
 
+// declare function prototypes
+// ---------------------------
 uint64_t nth_prime(uint64_t index);
 uint64_t num_factors(uint64_t n);
 uint64_t twin_primes(uint64_t idx);
 
+// create memoized functions from prototypes
+// -----------------------------------------
 auto cached_nth_prime   = gtl::memoize<decltype(nth_prime)>(nth_prime);
 auto cached_num_factors = gtl::memoize<decltype(num_factors)>(num_factors);
 auto cached_twin_primes = gtl::memoize<decltype(twin_primes)>(twin_primes);
+
 constexpr size_t stack_skip = 200; // avoid too deep recursion
 
 // return the nth element in the infinite list of prime numbers
@@ -65,7 +92,6 @@ uint64_t twin_primes(uint64_t idx) {
             return i;
         i += 1;
     }
-    
     assert(0);
 }
         
@@ -75,7 +101,6 @@ int main()
     constexpr  uint64_t idx = 10000;
  
     auto x = cached_nth_prime(idx);
-    sw.snap();
     printf("cached_nth_prime(%zu):   => %zu in %10.3f seconds\n", idx,  x, sw.since_start() / 1000);
 
     auto first = cached_twin_primes(idx);
