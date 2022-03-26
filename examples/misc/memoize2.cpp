@@ -3,9 +3,9 @@
 #include <cstdio>
 
 // -------------------------------------------------------------------------
-// create memoized (and very fast) functions which  allow for lazy-like
+// create memoized (and very fast) functions which allow for lazy-like
 // Haskell behavior. On my machine, the code below computes the first 
-// 10,000 twin prime numbers pairs in 0.5 seconds.
+// 10,000 twin prime numbers pairs in 0.3 seconds.
 //
 // This is somewhat equivalent to (and faster than) the haskell version, 
 // which you can try in https://replit.com/languages/haskell
@@ -38,7 +38,16 @@ auto cached_nth_prime   = gtl::memoize<decltype(nth_prime)>(nth_prime);
 auto cached_num_factors = gtl::memoize<decltype(num_factors)>(num_factors);
 auto cached_twin_primes = gtl::memoize<decltype(twin_primes)>(twin_primes);
 
-constexpr size_t stack_skip = 200; // avoid too deep recursion
+// return the nth element in the infinite list of prime numbers
+// ------------------------------------------------------------
+template <class F>
+void logify_recursion(F &f, uint64_t start, uint64_t end) {
+    auto width = end - start;
+    if (width > 64)
+        (void)f(start + width / 2);
+    if (width > 128)
+        (void)f(start + (width * 3) / 4);
+}
 
 // return the nth element in the infinite list of prime numbers
 // ------------------------------------------------------------
@@ -47,8 +56,7 @@ uint64_t nth_prime(uint64_t idx) {
         return idx + 2;
     
     // compute some intermediate primes to avoid too deep recursion
-    for (uint64_t i=stack_skip; i < idx; i += stack_skip) 
-        (void)cached_nth_prime(i);
+    logify_recursion(cached_nth_prime, 0, idx);
 
     uint64_t cur = cached_nth_prime(idx - 1);
     while (true) {
@@ -80,8 +88,7 @@ uint64_t twin_primes(uint64_t idx) {
         return 1; // (3, 5) are the first twin primes
 
     // compute some intermediate twin primes to avoid too deep recursion
-    for (uint64_t i=stack_skip; i < idx; i += stack_skip) 
-        (void)cached_twin_primes(i);
+    logify_recursion(cached_twin_primes, 0, idx);
 
     uint64_t i = cached_twin_primes(idx - 1) + 1;
 
