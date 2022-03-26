@@ -11,6 +11,7 @@ uint64_t twin_primes(uint64_t idx);
 auto cached_nth_prime   = gtl::memoize<decltype(nth_prime)>(nth_prime);
 auto cached_num_factors = gtl::memoize<decltype(num_factors)>(num_factors);
 auto cached_twin_primes = gtl::memoize<decltype(twin_primes)>(twin_primes);
+constexpr size_t stack_skip = 200; // avoid too deep recursion
 
 // return the nth element in the infinite list of prime numbers
 // ------------------------------------------------------------
@@ -18,7 +19,8 @@ uint64_t nth_prime(uint64_t idx) {
     if (idx <= 1)
         return idx + 2;
     
-    for (uint64_t i=2; i < idx; ++i) 
+    // compute some intermediate primes to avoid too deep recursion
+    for (uint64_t i=stack_skip; i < idx; i += stack_skip) 
         (void)cached_nth_prime(i);
 
     uint64_t cur = cached_nth_prime(idx - 1);
@@ -50,7 +52,8 @@ uint64_t twin_primes(uint64_t idx) {
     if (idx == 0)
         return 1; // (3, 5) are the first twin primes
 
-    for (uint64_t i=1; i < idx; ++i) 
+    // compute some intermediate twin primes to avoid too deep recursion
+    for (uint64_t i=stack_skip; i < idx; i += stack_skip) 
         (void)cached_twin_primes(i);
 
     uint64_t i = cached_twin_primes(idx - 1) + 1;
