@@ -130,7 +130,7 @@ struct pack_helper<R(LambdaClass::*)(Args...) const> {
 // This version only keeps a limited number of results in the hash map,
 // configurable with set_max_size(). default max_size = 128
 // ------------------------------------------------------------------------------
-template <class F, class = typename pack_helper<F>::args> 
+template <class F, class = typename pack_helper<F>::args>
 class memoize_lru;
 
 template <class F, class... Args>
@@ -138,10 +138,12 @@ class memoize_lru<F, pack<Args...>>
 {
 public:
     using key_type = std::tuple<Args...>;
-    using result_type = std::invoke_result_t<F, Args...>;
+    using result_type = decltype(std::declval<F>()(std::declval<Args>()...));
 
     memoize_lru(F &&f) : _f(std::forward<F>(f)) {}
 
+    memoize_lru(F const& f) : _f(f) {}
+    
     result_type* cache_hit(Args... args) { 
         key_type key(args...);
         return _cache.get(key);
@@ -176,20 +178,19 @@ private:
 //
 // This version keeps all unique  results in the hash map.
 // ------------------------------------------------------------------------------
-template <class F, class = typename pack_helper<F>::args> 
+template <class F, class = typename pack_helper<F>::args>
 class memoize;
-
-// template <class F, class = typename pack_helper<decltype(&F::operator())>::args> 
-// class memoize;
 
 template <class F, class... Args>
 class memoize<F, pack<Args...>>
 {
 public:
     using key_type = std::tuple<Args...>;
-    using result_type =  std::invoke_result_t<F, Args...>; // or decltype(std::declval<F>()(std::declval<Args>()...));
+    using result_type = decltype(std::declval<F>()(std::declval<Args>()...));
 
     memoize(F &&f) : _f(std::forward<F>(f)) {}
+
+    memoize(F const& f) : _f(f) {}
     
     result_type* cache_hit(Args... args) { 
         key_type key(args...);

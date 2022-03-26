@@ -106,8 +106,8 @@ uint64_t twin_primes(uint64_t idx) {
 int main()
 {
     auto x1 = [](int i) -> int { return i + 1; };
-    //auto y = gtl::memoize<decltype(&decltype(x1)::operator())>(x1);
-    auto y = gtl::memoize<decltype(x1)>(std::move(x1));
+    
+    auto y = gtl::memoize<decltype(x1)>(x1);
     printf("---- %d\n", y(6));
 
     stopwatch sw;
