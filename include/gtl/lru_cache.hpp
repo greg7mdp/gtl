@@ -99,10 +99,25 @@ template<typename... Ts> struct pack { };
 
 template <class> struct pack_helper;
 
-template <class R, class... Args> struct pack_helper<R(Args...)> {
+template <class R, class... Args> 
+struct pack_helper<R(Args...)> {
     using args = pack<Args...>;
 };
 
+template <class R, class... Args> 
+struct pack_helper<R(*)(Args...)> {
+    using args = pack<Args...>;
+};
+
+// ---- for lambdas
+template <class T> 
+struct pack_helper : public pack_helper<decltype(&T::operator())>
+{};
+
+template <class LambdaClass, class R, class... Args> 
+struct pack_helper<R(LambdaClass::*)(Args...) const> {
+    using args = pack<Args...>;
+};
 
 // ------------------------------------------------------------------------------
 // Author:  Gregory Popovitch (greg7mdp@gmail.com)
@@ -115,8 +130,8 @@ template <class R, class... Args> struct pack_helper<R(Args...)> {
 // This version only keeps a limited number of results in the hash map,
 // configurable with set_max_size(). default max_size = 128
 // ------------------------------------------------------------------------------
-template <class F, typename = typename pack_helper<F>::args> 
-struct memoize_lru;
+template <class F, class = typename pack_helper<F>::args> 
+class memoize_lru;
 
 template <class F, class... Args>
 class memoize_lru<F, pack<Args...>>
@@ -125,7 +140,7 @@ public:
     using key_type = std::tuple<Args...>;
     using result_type = std::invoke_result_t<F, Args...>;
 
-    memoize_lru(F &f) : _f(f) {}
+    memoize_lru(F &&f) : _f(std::forward<F>(f)) {}
 
     result_type* cache_hit(Args... args) { 
         key_type key(args...);
@@ -147,7 +162,7 @@ public:
     void clear() { _cache.clear(); }
 
 private:
-    F &_f;
+    F _f;
     lru_cache<key_type, result_type>  _cache;
 };
 
@@ -161,17 +176,20 @@ private:
 //
 // This version keeps all unique  results in the hash map.
 // ------------------------------------------------------------------------------
-template <class F, typename = typename pack_helper<F>::args> 
-struct memoize;
+template <class F, class = typename pack_helper<F>::args> 
+class memoize;
+
+// template <class F, class = typename pack_helper<decltype(&F::operator())>::args> 
+// class memoize;
 
 template <class F, class... Args>
 class memoize<F, pack<Args...>>
 {
 public:
     using key_type = std::tuple<Args...>;
-    using result_type = std::invoke_result_t<F, Args...>;
+    using result_type =  std::invoke_result_t<F, Args...>; // or decltype(std::declval<F>()(std::declval<Args>()...));
 
-    memoize(F &f) : _f(f) {}
+    memoize(F &&f) : _f(std::forward<F>(f)) {}
     
     result_type* cache_hit(Args... args) { 
         key_type key(args...);
@@ -194,11 +212,61 @@ public:
     void clear() { _cache.clear(); }
 
 private:
-    F &_f;
+    F _f;
     gtl::flat_hash_map<key_type, result_type>  _cache;
 };
 
+#if 0
+// ------------------------------------------------------------------------------
+// Author:  Gregory Popovitch (greg7mdp@gmail.com)
+// ------------------------------------------------------------------------------
+template <class T, class F> 
+class lazy_list 
+{
+    lazy_list(T first, F next) : 
+        _first(std::move(first)), 
+        _next(std::move(next)),
+    {}
 
+    const T& operator[](size_t idx) {
+        if (idx == 0)
+            return _first;
+
+        const T&
+        
+    }
+        
+private:
+    using mem_next = T (*)(size_t idx, const T& first, F&& next);
+
+    static T _item(size_t idx, const T& first, F&& next) {
+        if (idx == 0)
+            return first;
+
+    }
+
+    template <class F>
+    static T logify_recursion(F &f, size_t start, size_t end) {
+        if (start == 0) {
+            auto hit = f.cache_hit(end);
+            if (hit)
+                return *hit;
+        }
+
+        size_t width = end - start;
+        if (width > 64) {
+            (void)f(start + width / 2);
+            return logify_recursion(f, start + width / 2, end);
+        }
+
+        return f(end);
+    }
+
+    T   _first;
+    F   _next; 
+    T   _memoized_item;
+};
+#endif
 
 }  // namespace gtl
 

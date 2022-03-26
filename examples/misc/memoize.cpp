@@ -10,7 +10,7 @@ using stopwatch = gtl::stopwatch<std::milli>;
 
 uint64_t fib(uint64_t n)    // cached fibonacci
 {
-    static auto cached_fib = gtl::memoize<decltype(fib)>(fib);
+    static auto cached_fib = gtl::memoize<decltype(&fib)>(&fib);
     if (n <= 1)
         return n;
     return cached_fib(n-1) + cached_fib(n-2);

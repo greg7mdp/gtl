@@ -34,8 +34,8 @@ uint64_t twin_primes(uint64_t idx);
 
 // create memoized functions from prototypes
 // -----------------------------------------
-auto cached_nth_prime   = gtl::memoize<decltype(nth_prime)>(nth_prime);
-auto cached_twin_primes = gtl::memoize<decltype(twin_primes)>(twin_primes);
+auto cached_nth_prime   = gtl::memoize<decltype(&nth_prime)>(&nth_prime);
+auto cached_twin_primes = gtl::memoize<decltype(&twin_primes)>(&twin_primes);
 
 // returns f(end), but divide and conquer rather than recursing one by one
 // -----------------------------------------------------------------------
@@ -105,6 +105,11 @@ uint64_t twin_primes(uint64_t idx) {
         
 int main()
 {
+    auto x1 = [](int i) -> int { return i + 1; };
+    //auto y = gtl::memoize<decltype(&decltype(x1)::operator())>(x1);
+    auto y = gtl::memoize<decltype(x1)>(std::move(x1));
+    printf("---- %d\n", y(6));
+
     stopwatch sw;
     constexpr  uint64_t idx = 10000;
  
