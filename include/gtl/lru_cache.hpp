@@ -140,7 +140,7 @@ public:
     using key_type = std::tuple<Args...>;
     using result_type = decltype(std::declval<F>()(std::declval<Args>()...));
 
-    memoize_lru(F &&f) : _f(std::forward<F>(f)) {}
+    memoize_lru(F &&f) : _f(std::move(f)) {}
 
     memoize_lru(F const& f) : _f(f) {}
     
@@ -188,7 +188,7 @@ public:
     using key_type = std::tuple<Args...>;
     using result_type = decltype(std::declval<F>()(std::declval<Args>()...));
 
-    memoize(F &&f) : _f(std::forward<F>(f)) {}
+    memoize(F &&f) : _f(std::move(f)) {}
 
     memoize(F const& f) : _f(f) {}
     
