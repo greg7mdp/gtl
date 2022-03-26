@@ -95,6 +95,9 @@ private:
 };
 
 // ------------------------------------------------------------------------------
+// deduct the variadic parameter pack of a lambda.
+// see https://stackoverflow.com/questions/71630906 for alternate method
+// ------------------------------------------------------------------------------
 template<typename... Ts> struct pack { };
 
 template <class> struct pack_helper;
