@@ -38,14 +38,23 @@ auto cached_nth_prime   = gtl::memoize<decltype(nth_prime)>(nth_prime);
 auto cached_num_factors = gtl::memoize<decltype(num_factors)>(num_factors);
 auto cached_twin_primes = gtl::memoize<decltype(twin_primes)>(twin_primes);
 
-// ------------------------------------------------------------
+// returns f(end), but divide and conquer rather than recursing one by one
+// -----------------------------------------------------------------------
 template <class F>
-void logify_recursion(F &f, uint64_t start, uint64_t end) {
+uint64_t logify_recursion(F &f, uint64_t start, uint64_t end) {
+    if (start == 0) {
+        auto hit = f.cache_hit(end);
+        if (hit)
+            return *hit;
+    }
+
     auto width = end - start;
-    if (width > 64)
+    if (width > 64) {
         (void)f(start + width / 2);
-    if (width > 128)
-        (void)f(start + (width * 3) / 4);
+        return logify_recursion(f, start + width / 2, end);
+    }
+
+    return f(end);
 }
 
 // return the nth element in the infinite list of prime numbers
@@ -54,10 +63,7 @@ uint64_t nth_prime(uint64_t idx) {
     if (idx <= 1)
         return idx + 2;
     
-    // compute some intermediate primes to avoid too deep recursion
-    logify_recursion(cached_nth_prime, 0, idx);
-
-    uint64_t cur = cached_nth_prime(idx - 1);
+    uint64_t cur = logify_recursion(cached_nth_prime, 0, idx - 1);
     while (true) {
         cur += 2;
         if (cached_num_factors(cur) == 1)
@@ -86,10 +92,7 @@ uint64_t twin_primes(uint64_t idx) {
     if (idx == 0)
         return 1; // (3, 5) are the first twin primes
 
-    // compute some intermediate twin primes to avoid too deep recursion
-    logify_recursion(cached_twin_primes, 0, idx);
-
-    uint64_t i = cached_twin_primes(idx - 1) + 1;
+    uint64_t i = logify_recursion(cached_twin_primes, 0, idx - 1) + 1;
 
     while (true) {
         uint64_t a = cached_nth_prime(i);
