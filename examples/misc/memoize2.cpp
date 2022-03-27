@@ -106,9 +106,20 @@ uint64_t twin_primes(uint64_t idx) {
 int main()
 {
     auto x1 = [](int i) -> int { return i + 1; };
-    
     auto y = gtl::memoize<decltype(x1)>(x1);
     printf("---- %d\n", y(6));
+
+    auto primes = gtl::lazy_list(uint64_t(2), [](const auto &primes, size_t idx) -> uint64_t { 
+            uint64_t cur = primes[idx - 1]; 
+            while (true) {
+                cur += idx > 1 ? 2 : 1;
+                if (num_factors(cur) == 1)
+                    return cur;
+            }
+            assert(0); return 0;
+        });
+
+    assert(primes[10000] == 104743);
 
     stopwatch sw;
     constexpr  uint64_t idx = 10000;

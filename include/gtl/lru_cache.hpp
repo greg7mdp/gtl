@@ -98,14 +98,41 @@ private:
 // deduct the variadic parameter pack of a lambda.
 // see https://stackoverflow.com/questions/71630906 for alternate method
 // ------------------------------------------------------------------------------
+#if 0
+
+template<typename... Ts> struct pack { };
+
+// helper functions to retrieve arguments for member function pointers
+
+template<class Result, class Type, class ...Args>
+pack<Args...> lambda_pack_helper(Result(Type::*) (Args...));
+
+template<class Result, class Type, class ...Args>
+pack<Args...> lambda_pack_helper(Result(Type::*) (Args...) const);
+
+// helper functions: if called with an instance of the first parameter type of memorize, the return type is the one used as the second one
+
+// overload for function
+template<class Result, class ...Args>
+pack<Args...> pack_helper(Result(Args...));
+
+// overload for function pointer
+template<class Result, class ...Args>
+pack<Args...> pack_helper(Result (*)(Args...));
+
+// sfinae will prevent this overload from being considered for anything not providing an operator()
+// for those types we use the return type of helper function lambda_pack_helper
+template<class T>
+decltype(lambda_pack_helper(&T::operator())) pack_helper(T);
+
+template <class F>
+using this_pack_helper = decltype(pack_helper(std::declval<F>()));
+
+#else
+
 template<typename... Ts> struct pack { };
 
 template <class> struct pack_helper;
-
-template <class R, class... Args> 
-struct pack_helper<R(Args...)> {
-    using args = pack<Args...>;
-};
 
 template <class R, class... Args> 
 struct pack_helper<R(*)(Args...)> {
@@ -122,6 +149,11 @@ struct pack_helper<R(LambdaClass::*)(Args...) const> {
     using args = pack<Args...>;
 };
 
+template <class F>
+using this_pack_helper = typename pack_helper<F>::args;
+
+#endif
+
 // ------------------------------------------------------------------------------
 // Author:  Gregory Popovitch (greg7mdp@gmail.com)
 // 
@@ -133,7 +165,7 @@ struct pack_helper<R(LambdaClass::*)(Args...) const> {
 // This version only keeps a limited number of results in the hash map,
 // configurable with set_max_size(). default max_size = 128
 // ------------------------------------------------------------------------------
-template <class F, class = typename pack_helper<F>::args>
+template <class F, class = this_pack_helper<F>>
 class memoize_lru;
 
 template <class F, class... Args>
@@ -181,7 +213,7 @@ private:
 //
 // This version keeps all unique  results in the hash map.
 // ------------------------------------------------------------------------------
-template <class F, class = typename pack_helper<F>::args>
+template <class F, class = this_pack_helper<F>>
 class memoize;
 
 template <class F, class... Args>
@@ -220,34 +252,37 @@ private:
     gtl::flat_hash_map<key_type, result_type>  _cache;
 };
 
-#if 0
 // ------------------------------------------------------------------------------
 // Author:  Gregory Popovitch (greg7mdp@gmail.com)
 // ------------------------------------------------------------------------------
 template <class T, class F> 
 class lazy_list 
 {
+public:
     lazy_list(T first, F next) : 
         _first(std::move(first)), 
-        _next(std::move(next)),
+        _next(std::move(next))
     {}
 
-    const T& operator[](size_t idx) {
+    const T& operator[](size_t idx) const {
+        //static auto _memoized_next = gtl::memoize<F>(_next);
+
         if (idx == 0)
             return _first;
-
-        const T&
-        
+        //return _memoized_next(*this, idx);
     }
         
 private:
     using mem_next = T (*)(size_t idx, const T& first, F&& next);
+    // using memo_t = decltype(std::declval< gtl::memoize<F>(std::declval<F>()) >());
 
+#if 0
     static T _item(size_t idx, const T& first, F&& next) {
         if (idx == 0)
             return first;
 
     }
+#endif
 
     template <class F>
     static T logify_recursion(F &f, size_t start, size_t end) {
@@ -266,11 +301,9 @@ private:
         return f(end);
     }
 
-    T   _first;
-    F   _next; 
-    T   _memoized_item;
+    T      _first;
+    F      _next; 
 };
-#endif
 
 }  // namespace gtl
 
