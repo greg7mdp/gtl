@@ -264,28 +264,31 @@ public:
         _next(std::move(next))
     {}
 
+#if 1
+    // wrong implementation, because it calls _next instead of the memoized version
     const T& operator[](size_t idx) const {
-        //static auto _memoized_next = gtl::memoize<F>(_next);
-
         if (idx == 0)
             return _first;
-        //return _memoized_next(*this, idx);
+        return _next(this, idx);
     }
+#else
+    // can't get this to build unfortunately
+    const T& operator[](size_t idx) const {
+        auto _memoized_next { gtl::memoize<decltype(_next)>(_next) };
+        if (idx == 0)
+            return _first;
+        return _memoized_next(this, idx);
+    }
+#endif
+    
         
 private:
     using mem_next = T (*)(size_t idx, const T& first, F&& next);
     // using memo_t = decltype(std::declval< gtl::memoize<F>(std::declval<F>()) >());
 
-#if 0
-    static T _item(size_t idx, const T& first, F&& next) {
-        if (idx == 0)
-            return first;
-
-    }
-#endif
-
     template <class F>
     static T logify_recursion(F &f, size_t start, size_t end) {
+        // untested!
         if (start == 0) {
             auto hit = f.cache_hit(end);
             if (hit)
@@ -301,8 +304,8 @@ private:
         return f(end);
     }
 
-    T      _first;
-    F      _next; 
+    T  _first;
+    F  _next; 
 };
 
 }  // namespace gtl

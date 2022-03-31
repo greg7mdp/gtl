@@ -109,18 +109,6 @@ int main()
     auto y = gtl::memoize<decltype(x1)>(x1);
     printf("---- %d\n", y(6));
 
-    auto primes = gtl::lazy_list(uint64_t(2), [](const auto &primes, size_t idx) -> uint64_t { 
-            uint64_t cur = primes[idx - 1]; 
-            while (true) {
-                cur += idx > 1 ? 2 : 1;
-                if (num_factors(cur) == 1)
-                    return cur;
-            }
-            assert(0); return 0;
-        });
-
-    assert(primes[10000] == 104743);
-
     stopwatch sw;
     constexpr  uint64_t idx = 10000;
  
@@ -130,6 +118,23 @@ int main()
     auto first = cached_twin_primes(idx);
     printf("cached_twin_primes(%zu): => (%zu, %zu) in %10.3f seconds\n", 
            idx, cached_nth_prime(first), cached_nth_prime(first+1), sw.since_start() / 1000);
+
+#if 0
+    // lazy list - not working
+    auto primes = gtl::lazy_list(uint64_t(2), [](auto p, size_t idx) -> uint64_t { 
+            uint64_t cur = (*p)[idx - 1]; 
+            while (true) {
+                cur += idx > 1 ? 2 : 1;
+                if (num_factors(cur) == 1) 
+                    return cur;
+            }
+            assert(0); return 0;
+        });
+
+    assert(primes[100] == 547);
+    assert(primes[10000] == 104743);
+#endif
+    
     return 0;
 }
  
