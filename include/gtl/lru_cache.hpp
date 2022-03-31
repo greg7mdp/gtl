@@ -286,6 +286,7 @@ private:
     using mem_next = T (*)(size_t idx, const T& first, F&& next);
     // using memo_t = decltype(std::declval< gtl::memoize<F>(std::declval<F>()) >());
 
+#if 0
     template <class F>
     static T logify_recursion(F &f, size_t start, size_t end) {
         // untested!
@@ -303,6 +304,7 @@ private:
 
         return f(end);
     }
+#endif
 
     T  _first;
     F  _next; 
