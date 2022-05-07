@@ -101,6 +101,7 @@ if (GTL_BUILD_TESTS)
     gtl_cc_test(NAME parallel_node_hash_set SRCS "tests/phmap/parallel_node_hash_set_test.cpp" DEPS ${GTL_GTEST_LIBS})
     gtl_cc_test(NAME parallel_flat_hash_map_mutex SRCS "tests/phmap/parallel_flat_hash_map_mutex_test.cpp" DEPS ${GTL_GTEST_LIBS})
     gtl_cc_test(NAME dump_load SRCS "tests/phmap/dump_load_test.cpp" DEPS ${GTL_GTEST_LIBS})
+    gtl_cc_test(NAME erase_if SRCS "tests/phmap/erase_if_test.cpp" DEPS ${GTL_GTEST_LIBS})
 
     ## --------------- btree -----------------------------------------------
     gtl_cc_test(NAME btree SRCS "tests/btree/btree_test.cpp" DEPS ${GTL_GTEST_LIBS})
