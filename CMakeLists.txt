@@ -5,6 +5,7 @@ list (APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake")
 include(DetectVersion)
 
 cmake_policy(SET CMP0048 NEW)                    ## set VERSION as documented by the project() command.
+cmake_policy(SET CMP0076 NEW)                    ## accept new policy
 
 if(NOT CMAKE_CXX_STANDARD)
     set(CMAKE_CXX_STANDARD 20)                   ## compile with C++20 support
