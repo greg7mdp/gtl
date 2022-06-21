@@ -1,5 +1,6 @@
 #include <gtl/stopwatch.hpp>
 #include <gtl/lru_cache.hpp>
+#include <cinttypes>
 #include <cstdio>
 
 using stopwatch = gtl::stopwatch<std::milli>;
@@ -34,7 +35,7 @@ int main()
  
     uint64_t x = fib(val);
     sw.snap();
-    printf("fib(%zu):         => %zu in %10.3f seconds\n", val, x, sw.since_start() / 1000);
+    printf("fib(%" PRIu64 "):         => %" PRIu64 " in %10.3f seconds\n", val, x, sw.since_start() / 1000);
     return 0;
 }
  
