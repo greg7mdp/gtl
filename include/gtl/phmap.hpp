@@ -634,7 +634,7 @@ const typename T::key_type& GetKey(const typename T::key_type& key, char) {
 // container.
 // --------------------------------------------------------------------------
 template <class Container, typename Enabler = void>
-struct HashtableDebugAccess 
+struct HashtableDebugAccess
 {
     // Returns the number of probes required to find `key` in `c`.  The "number of
     // probes" is a concept that can vary by container.  Implementations should
@@ -4938,8 +4938,16 @@ namespace hashtable_debug_internal {
 
 // --------------------------------------------------------------------------
 // --------------------------------------------------------------------------
+
+template<typename, typename = void >
+struct has_member_type_raw_hash_set : std::false_type
+{};
+template<typename T>
+struct has_member_type_raw_hash_set<T, std::void_t<typename T::raw_hash_set>> : std::true_type
+{};
+
 template <typename Set>
-struct HashtableDebugAccess<Set, std::void_t<typename Set::raw_hash_set>> 
+struct HashtableDebugAccess<Set, std::enable_if_t<has_member_type_raw_hash_set<Set>::value>>
 {
     using Traits = typename Set::PolicyTraits;
     using Slot = typename Traits::slot_type;
@@ -4997,9 +5005,16 @@ struct HashtableDebugAccess<Set, std::void_t<typename Set::raw_hash_set>>
     }
 };
 
-#if !defined(__clang__) // compilation error with clang++-12 -stdc++=20 (should fix )
+template<typename, typename = void >
+struct has_member_type_EmbeddedSet : std::false_type
+{};
+template<typename T>
+struct has_member_type_EmbeddedSet<T, std::void_t<typename T::EmbeddedSet>> : std::true_type
+{};
+
 template <typename Set>
-struct HashtableDebugAccess<Set, std::void_t<typename Set::EmbeddedSet>> {
+struct HashtableDebugAccess<Set, std::enable_if_t<has_member_type_EmbeddedSet<Set>::value>>
+{
     using Traits = typename Set::PolicyTraits;
     using Slot = typename Traits::slot_type;
     using EmbeddedSet = typename Set::EmbeddedSet;
@@ -5011,7 +5026,6 @@ struct HashtableDebugAccess<Set, std::void_t<typename Set::EmbeddedSet>> {
         return HashtableDebugAccess<EmbeddedSet>::GetNumProbes(inner_set, key);
     }
 };
-#endif
 
 }  // namespace hashtable_debug_internal
 }  // namespace priv
