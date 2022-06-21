@@ -113,10 +113,10 @@ int main()
     constexpr  uint64_t idx = 10000;
  
     auto x = cached_nth_prime(idx);
-    printf("cached_nth_prime(%zu):   => %zu in %10.3f seconds\n", idx,  x, sw.since_start() / 1000);
+    printf("cached_nth_prime(%llu):   => %llu in %10.3f seconds\n", idx,  x, sw.since_start() / 1000);
 
     auto first = cached_twin_primes(idx);
-    printf("cached_twin_primes(%zu): => (%zu, %zu) in %10.3f seconds\n", 
+    printf("cached_twin_primes(%llu): => (%llu, %llu) in %10.3f seconds\n", 
            idx, cached_nth_prime(first), cached_nth_prime(first+1), sw.since_start() / 1000);
 
 #if 0
