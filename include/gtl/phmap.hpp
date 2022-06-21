@@ -2151,7 +2151,7 @@ private:
     {
         template <class K, class... Args>
         size_t operator()(const K& key, Args&&...) const {
-            return phmap_mix<sizeof(size_t)>()(h(key));
+            return phmap_mix<sizeof(size_t)>()(static_cast<size_t>(h(key)));
         }
         const hasher& h;
     };
@@ -4997,7 +4997,7 @@ struct HashtableDebugAccess<Set, std::void_t<typename Set::raw_hash_set>>
     }
 };
 
-#if !defined(__clang__) // compilation error to fix
+#if !defined(__clang__) // compilation error with clang++-12 -stdc++=20 (should fix )
 template <typename Set>
 struct HashtableDebugAccess<Set, std::void_t<typename Set::EmbeddedSet>> {
     using Traits = typename Set::PolicyTraits;
