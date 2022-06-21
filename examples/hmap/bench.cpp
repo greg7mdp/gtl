@@ -195,30 +195,30 @@ Timer _fill_random(vector<T> &v, HT &hash)
 }
 
 // --------------------------------------------------------------------------
-void out(const char* test, int64_t cnt, const Timer &t, bool  = false)
+void out(const char* test, uint64_t cnt, const Timer &t, bool  = false)
 {
-    printf("%s,time,%u,%s,%f\n", test, (unsigned int)cnt, program_slug, 
-           (float)((double)t.elapsed().count() / 1000));
+    printf("%s,time,%" PRIu64 ",%s,%f\n", test, cnt, program_slug, 
+           ((double)t.elapsed().count() / 1000));
 }
 
 // --------------------------------------------------------------------------
-void outmem(const char*, int64_t cnt, uint64_t mem, bool final = false)
+void outmem(const char*, uint64_t cnt, uint64_t mem, bool final = false)
 {
     static uint64_t max_mem = 0;
     static uint64_t max_keys = 0;
     if (final)
-        printf("peak memory usage for %u values: %.2f GB\n",  (unsigned int)max_keys, 
+        printf("peak memory usage for %" PRIu64 " values: %.2f GB\n", max_keys, 
                max_mem / ((double)1000 * 1000 * 1000));
     else {
         if (mem > max_mem)
             max_mem = mem;
-        if ((uint64_t)cnt > max_keys)
+        if (cnt > max_keys)
             max_keys = cnt;
     }
 }
 
 static bool all_done = false;
-static int64_t s_num_keys[16] = { 0 };
+static uint64_t s_num_keys[16] = { 0 };
 static int64_t loop_idx = 0;
 static int64_t inner_cnt = 0;
 static const char *test = "random";
@@ -280,9 +280,9 @@ void _fill_random_inner_mt(int64_t cnt, HT &hash, RSU &rsu)
 }
 
 // --------------------------------------------------------------------------
-size_t total_num_keys()
+uint64_t total_num_keys()
 {
-    size_t n = 0;
+    uint64_t n = 0;
     for (int i=0; i<16; ++i)
         n += s_num_keys[i];
     return n;
@@ -422,7 +422,7 @@ int main(int argc, char ** argv)
 #if 0
         else if(!strcmp(bench_name, "random"))
         {
-            vector<int64_t> v(num_keys);
+            vector<int64_t> v(static_cast<size_t>(num_keys));
             timer = _fill_random(v, hash);
             out("random", num_keys, timer);
         }
@@ -434,7 +434,7 @@ int main(int argc, char ** argv)
          }
         else if(!strcmp(bench_name, "lookup"))
         {
-            vector<int64_t> v(num_keys);
+            vector<int64_t> v(static_cast<size_t>(num_keys));
             size_t num_present;
 
             timer = _lookup(v, hash, num_present);
@@ -442,7 +442,7 @@ int main(int argc, char ** argv)
         }
         else if(!strcmp(bench_name, "delete"))
         {
-            vector<int64_t> v(num_keys);
+            vector<int64_t> v(static_cast<size_t>(num_keys));
             timer = _delete(v,  hash);
         }
         else if(!strcmp(bench_name, "sequentialstring"))
