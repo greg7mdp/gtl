@@ -657,20 +657,6 @@ struct HashtableDebugAccess
     }
 };
 
-template <typename Set>
-struct HashtableDebugAccess<Set, std::void_t<typename Set::parallel_hash_set>> {
-    using Traits = typename Set::PolicyTraits;
-    using Slot = typename Traits::slot_type;
-    using EmbeddedSet = typename Set::EmbeddedSet;
-
-    static size_t GetNumProbes(const Set& set, const typename Set::key_type& key) {
-        size_t hashval = set.hash(key);
-        auto& inner = set.sets_[set.subidx(hashval)];
-        auto& inner_set = inner.set_;
-        return HashtableDebugAccess<EmbeddedSet>::GetNumProbes(inner_set, key);
-    }
-};
-
 }  // namespace hashtable_debug_internal
 
 // ----------------------------------------------------------------------------
@@ -5008,6 +4994,20 @@ struct HashtableDebugAccess<Set, std::void_t<typename Set::raw_hash_set>>
             m += per_slot * size;
         }
         return m;
+    }
+};
+
+template <typename Set>
+struct HashtableDebugAccess<Set, std::void_t<typename Set::EmbeddedSet>> {
+    using Traits = typename Set::PolicyTraits;
+    using Slot = typename Traits::slot_type;
+    using EmbeddedSet = typename Set::EmbeddedSet;
+
+    static size_t GetNumProbes(const Set& set, const typename Set::key_type& key) {
+        size_t hashval = set.hash(key);
+        auto& inner = set.sets_[set.subidx(hashval)];
+        auto& inner_set = inner.set_;
+        return HashtableDebugAccess<EmbeddedSet>::GetNumProbes(inner_set, key);
     }
 };
 
