@@ -4997,6 +4997,7 @@ struct HashtableDebugAccess<Set, std::void_t<typename Set::raw_hash_set>>
     }
 };
 
+#if !defined(__clang__) // compilation error to fix
 template <typename Set>
 struct HashtableDebugAccess<Set, std::void_t<typename Set::EmbeddedSet>> {
     using Traits = typename Set::PolicyTraits;
@@ -5010,6 +5011,7 @@ struct HashtableDebugAccess<Set, std::void_t<typename Set::EmbeddedSet>> {
         return HashtableDebugAccess<EmbeddedSet>::GetNumProbes(inner_set, key);
     }
 };
+#endif
 
 }  // namespace hashtable_debug_internal
 }  // namespace priv
