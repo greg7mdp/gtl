@@ -30,7 +30,7 @@
 
 #include <cstdint>
 #include <cstring>
-#include <functional>
+#include <typeindex> // <typeindex> is guaranteed to provide std::hash and is much cheaper to include than <functional>.
 #include <tuple>
 #include "bits.hpp"
 
