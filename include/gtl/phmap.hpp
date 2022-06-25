@@ -5528,9 +5528,6 @@ namespace gtl {
             return old_size - c.size();
         }
     } // priv
-} // phmap
-
-namespace std {
 
     // ======== erase_if for gtl set containers ==================================
     template <class T, class Hash, class Eq, class Alloc, class Pred> 
@@ -5574,7 +5571,7 @@ namespace std {
         return gtl::priv::erase_if(c, std::move(pred));
     }
 
-} // std
+} // gtl
 
 
 #ifdef _MSC_VER
