@@ -142,8 +142,11 @@ endif()
     gtl_cc_app(ex_soa SRCS examples/misc/soa.cpp include/gtl/debug_vis/gtl.natvis)
     gtl_cc_app(ex_vec_utils SRCS examples/misc/vec_utils.cpp include/gtl/debug_vis/gtl.natvis)
     gtl_cc_app(ex_bit_vector SRCS examples/misc/bit_vector.cpp include/gtl/debug_vis/gtl.natvis)
-    gtl_cc_app(ex_memoize SRCS examples/misc/memoize.cpp include/gtl/debug_vis/gtl.natvis)
-    gtl_cc_app(ex_memoize2 SRCS examples/misc/memoize2.cpp include/gtl/debug_vis/gtl.natvis)
+    
+    ## cache/memoize
+    gtl_cc_app(ex_memoize_fib SRCS examples/cache/memoize_fib.cpp include/gtl/debug_vis/gtl.natvis)
+    gtl_cc_app(ex_memoize_primes SRCS examples/cache/memoize_primes.cpp include/gtl/debug_vis/gtl.natvis)
+    gtl_cc_app(ex_memoize_mt SRCS examples/cache/memoize_mt.cpp include/gtl/debug_vis/gtl.natvis LIBS Threads::Threads)
 endif()
 
 if (GTL_BUILD_BENCHMARKS)

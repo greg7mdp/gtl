@@ -246,10 +246,72 @@ public:
     }
 
     void clear() { _cache.clear(); }
+    void reserve(size_t n) { _cache.reserve(n); }
+    size_t size() const { return _cache.size(); }
 
 private:
     F _f;
     gtl::flat_hash_map<key_type, result_type>  _cache;
+};
+
+// ------------------------------------------------------------------------------
+// Author:  Gregory Popovitch (greg7mdp@gmail.com)
+// 
+// Given a callable object (often a function), this class provides a new 
+// callable which either invokes the original one, caching the returned value,
+// or returns the cached returned value if the arguments match a previous call.
+// Of course this should be used only for pure functions without side effects.
+//
+// This version keeps all unique  results in the hash map.
+// ------------------------------------------------------------------------------
+template <size_t N, class Mutex, class F, class = this_pack_helper<F>>
+class mt_memoize;
+
+template <size_t N, class Mutex, class F, class... Args>
+class mt_memoize<N, Mutex, F, pack<Args...>>
+{
+public:
+    using key_type = std::tuple<Args...>;
+    using result_type = decltype(std::declval<F>()(std::declval<Args>()...));
+    using map_type = gtl::parallel_flat_hash_map<key_type, result_type,
+                                                 gtl::priv::hash_default_hash<key_type>,
+                                                 gtl::priv::hash_default_eq<key_type>,
+                                                 gtl::priv::Allocator<gtl::priv::Pair<key_type, result_type>>,
+                                                 N, Mutex>;
+        
+
+    mt_memoize(F &&f) : _f(std::move(f)) {}
+
+    mt_memoize(F const& f) : _f(f) {}
+    
+    result_type* cache_hit(Args... args) { 
+        key_type key(args...);
+        auto it = _cache.find(key);
+        if (it != _cache.end())
+            return &it->second;
+        return nullptr;
+    }
+
+    result_type operator()(Args... args) { 
+        key_type key(args...);
+        result_type res;
+        _cache.lazy_emplace_l(key, 
+                              [&](typename map_type::value_type& v) {
+                                  // called only when key was already present
+                                  res = v.second; },   
+                              [&](const typename map_type::constructor& ctor) {
+                                  // construct value_type in place when key not present
+                                  res =_f(args...); ctor(key, res); });
+        return res;
+    }
+
+    void clear() { _cache.clear(); }
+    void reserve(size_t n) { _cache.reserve(n); }
+    size_t size() const { return _cache.size(); }
+
+private:
+    F _f;
+    map_type _cache;
 };
 
 // ------------------------------------------------------------------------------

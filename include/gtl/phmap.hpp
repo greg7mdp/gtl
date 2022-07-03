@@ -4078,6 +4078,7 @@ public:
     }
 
     void rehash(size_t n) {
+        assert(n >= num_tables);
         size_t nn = n / num_tables;
         for (auto& inner : sets_)
         {
