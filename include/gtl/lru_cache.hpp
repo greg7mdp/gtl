@@ -262,7 +262,12 @@ private:
 // or returns the cached returned value if the arguments match a previous call.
 // Of course this should be used only for pure functions without side effects.
 //
-// This version keeps all unique  results in the hash map.
+// if a mutex (such as std::mutex) is provided, this callable object can be
+// used safely from multiple threads without any additional locking.
+//
+// This version keeps all unique results in the hash map.
+//
+// see example: cache/memoize_mt.cpp
 // ------------------------------------------------------------------------------
 template <size_t N, class Mutex, class F, class = this_pack_helper<F>>
 class mt_memoize;

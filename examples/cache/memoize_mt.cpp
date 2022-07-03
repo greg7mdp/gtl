@@ -48,16 +48,14 @@ int main()
     gtl::stopwatch<std::milli> sw;
     
     for(int i = 0; i < 100; i++) {
-        // Kick off a new simulation thread
-        threads.emplace_back(std::async(simulate));
+        threads.emplace_back(std::async(simulate)); // new thread
     }
     
-    // Wait for all simulation threads to finish
     for(auto& t: threads) {
-        sum = t.get();
+        sum += t.get(); // sum results from all threads
     }
 
-    printf("Computed sum = %.3f (expected 249999813.742) in  %10.3f seconds\n", sum, sw.since_start() / 1000);
+    printf("Computed sum = %.3f (expected 24999981374.176) in  %10.3f seconds\n", sum, sw.since_start() / 1000);
     
     return 0;
 }
