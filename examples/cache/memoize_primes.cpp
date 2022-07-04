@@ -39,7 +39,6 @@ auto cached_nth_prime   = gtl::memoize<decltype(&nth_prime)>(&nth_prime);
 auto cached_twin_primes = gtl::memoize<decltype(&twin_primes)>(&twin_primes);
 
 // returns f(end), but avoid recursing one by one
-// note: incr has to be much lower when using lazy_emplace_l.
 // ---------------------------------------------------------
 template <class F>
 void avoid_deep_recursion(F &f, uint64_t end) {

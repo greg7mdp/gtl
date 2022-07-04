@@ -7,7 +7,7 @@ using stopwatch = gtl::stopwatch<std::milli>;
 
 #if 1
 
-// use gtl::memoize_lru => very fast
+// use gtl::memoize => very fast
 
 uint64_t fib(uint64_t n)    // cached fibonacci
 {
