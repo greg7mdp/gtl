@@ -269,11 +269,11 @@ private:
 //
 // see example: cache/memoize_mt.cpp
 // ------------------------------------------------------------------------------
-template <size_t N, class Mutex, class F, class = this_pack_helper<F>>
+template <class F, size_t N = 6, class Mutex = std::mutex, class = this_pack_helper<F>>
 class mt_memoize;
 
-template <size_t N, class Mutex, class F, class... Args>
-class mt_memoize<N, Mutex, F, pack<Args...>>
+template <class F, size_t N, class Mutex, class... Args>
+class mt_memoize<F, N, Mutex, pack<Args...>>
 {
 public:
     using key_type = std::tuple<Args...>;
