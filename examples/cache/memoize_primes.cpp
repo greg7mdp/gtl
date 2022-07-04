@@ -38,23 +38,17 @@ uint64_t twin_primes(uint64_t idx);
 auto cached_nth_prime   = gtl::memoize<decltype(&nth_prime)>(&nth_prime);
 auto cached_twin_primes = gtl::memoize<decltype(&twin_primes)>(&twin_primes);
 
-// returns f(end), but divide and conquer rather than recursing one by one
-// -----------------------------------------------------------------------
+// returns f(end), but avoid recursing one by one
+// note: incr has to be much lower when using lazy_emplace_l.
+// ---------------------------------------------------------
 template <class F>
-uint64_t logify_recursion(F &f, uint64_t start, uint64_t end) {
-    if (start == 0) {
-        auto hit = f.cache_hit(end);
-        if (hit)
-            return *hit;
-    }
+void avoid_deep_recursion(F &f, uint64_t end) {
+    constexpr uint64_t incr = 512;
+    if (end > incr && f.cache_hit(end - incr))
+        return;
 
-    auto width = end - start;
-    if (width > 64) {
-        (void)f(start + width / 2);
-        return logify_recursion(f, start + width / 2, end);
-    }
-
-    return f(end);
+    for (uint64_t i=incr; i<end; i+= incr)
+        (void)f(i);
 }
 
 // return the nth element in the infinite list of prime numbers
@@ -62,8 +56,9 @@ uint64_t logify_recursion(F &f, uint64_t start, uint64_t end) {
 uint64_t nth_prime(uint64_t idx) {
     if (idx == 0)
         return 2;
-    
-    uint64_t cur = logify_recursion(cached_nth_prime, 0, idx - 1);
+
+    avoid_deep_recursion(cached_nth_prime, idx - 1);
+    uint64_t cur = cached_nth_prime(idx - 1);
     while (true) {
         cur += idx > 1 ? 2 : 1;
         if (num_factors(cur) == 1)
@@ -75,10 +70,11 @@ uint64_t nth_prime(uint64_t idx) {
 // returns the number of prime factors of n
 // ----------------------------------------
 uint64_t num_factors(uint64_t n) {
-    for (uint64_t i=0; ; ++i) {
+    for (uint64_t i=0; ; ++i) { 
         uint64_t factor = cached_nth_prime(i);
         if (factor * factor > n)
             return 1;
+        //printf("%d %d\n", i,  factor);
         if (n % factor == 0)
             return 1 + num_factors(n / factor);
     }
@@ -92,7 +88,8 @@ uint64_t twin_primes(uint64_t idx) {
     if (idx == 0)
         return 1; // (3, 5) are the first twin primes
 
-    uint64_t i = logify_recursion(cached_twin_primes, 0, idx - 1) + 1;
+    avoid_deep_recursion(cached_twin_primes, idx - 1);
+    uint64_t i = cached_twin_primes(idx - 1) + 1;
 
     while (true) {
         uint64_t a = cached_nth_prime(i);

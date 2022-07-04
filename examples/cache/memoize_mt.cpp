@@ -29,7 +29,7 @@ double simulate()
     
 #if USE_CACHING
     static auto cached_complexMathFunction =
-        gtl::mt_memoize<decltype(&complexMathFunction)>(&complexMathFunction);
+        gtl::mt_memoize<decltype(&complexMathFunction), false>(&complexMathFunction);
     
     for(int i = 0; i < 50000; i++) 
         res += cached_complexMathFunction(i % 1000, 3.14);

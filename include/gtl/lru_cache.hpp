@@ -5,6 +5,7 @@
 #include <cassert>
 #include <list>
 #include <tuple>
+#include <optional>
 #include <gtl/phmap.hpp>
 
 namespace gtl {
@@ -203,56 +204,6 @@ private:
     lru_cache<key_type, result_type>  _cache;
 };
 
-// ------------------------------------------------------------------------------
-// Author:  Gregory Popovitch (greg7mdp@gmail.com)
-// 
-// Given a callable object (often a function), this class provides a new 
-// callable which either invokes the original one, caching the returned value,
-// or returns the cached returned value if the arguments match a previous call.
-// Of course this should be used only for pure functions without side effects.
-//
-// This version keeps all unique  results in the hash map.
-// ------------------------------------------------------------------------------
-template <class F, class = this_pack_helper<F>>
-class memoize;
-
-template <class F, class... Args>
-class memoize<F, pack<Args...>>
-{
-public:
-    using key_type = std::tuple<Args...>;
-    using result_type = decltype(std::declval<F>()(std::declval<Args>()...));
-
-    memoize(F &&f) : _f(std::move(f)) {}
-
-    memoize(F const& f) : _f(f) {}
-    
-    result_type* cache_hit(Args... args) { 
-        key_type key(args...);
-        auto it = _cache.find(key);
-        if (it != _cache.end())
-            return &it->second;
-        return nullptr;
-    }
-
-    result_type operator()(Args... args) { 
-        key_type key(args...);
-        auto it = _cache.find(key);
-        if (it != _cache.end())
-            return it->second;
-        auto res =  _f(args...); 
-        _cache.emplace(key, res);
-        return res;
-    }
-
-    void clear() { _cache.clear(); }
-    void reserve(size_t n) { _cache.reserve(n); }
-    size_t size() const { return _cache.size(); }
-
-private:
-    F _f;
-    gtl::flat_hash_map<key_type, result_type>  _cache;
-};
 
 // ------------------------------------------------------------------------------
 // Author:  Gregory Popovitch (greg7mdp@gmail.com)
@@ -267,13 +218,22 @@ private:
 //
 // This version keeps all unique results in the hash map.
 //
+// recursive specifies if the function to be memoized is recursive.
+// Using the default value of true is always safe, but setting it
+// to false should be a little faster for non-recursive functions.
+//
+// the size_t N parameter configures the number of submaps as a power of 2, so
+// N=6 create 64 submaps. Each submap has its own mutex to reduce contention
+// in a heavily multithreaded context.
+//
 // see example: cache/memoize_mt.cpp
 // ------------------------------------------------------------------------------
-template <class F, size_t N = 6, class Mutex = std::mutex, class = this_pack_helper<F>>
+template <class F, bool recursive = true, size_t N = 6, 
+          class Mutex = std::mutex, class = this_pack_helper<F>>
 class mt_memoize;
 
-template <class F, size_t N, class Mutex, class... Args>
-class mt_memoize<F, N, Mutex, pack<Args...>>
+template <class F, bool recursive, size_t N, class Mutex, class... Args>
+class mt_memoize<F, recursive, N, Mutex, pack<Args...>>
 {
 public:
     using key_type = std::tuple<Args...>;
@@ -289,25 +249,40 @@ public:
 
     mt_memoize(F const& f) : _f(f) {}
     
-    result_type* cache_hit(Args... args) { 
+    std::optional<result_type> cache_hit(Args... args) {
         key_type key(args...);
-        auto it = _cache.find(key);
-        if (it != _cache.end())
-            return &it->second;
-        return nullptr;
+        if (result_type res; _cache.if_contains(key, [&](const auto &v) { res = v.second; }))
+            return { res };
+        return {};
     }
 
     result_type operator()(Args... args) { 
         key_type key(args...);
-        result_type res;
-        _cache.lazy_emplace_l(key, 
-                              [&](typename map_type::value_type& v) {
-                                  // called only when key was already present
-                                  res = v.second; },   
-                              [&](const typename map_type::constructor& ctor) {
-                                  // construct value_type in place when key not present
-                                  res =_f(args...); ctor(key, res); });
-        return res;
+        if constexpr (!std::is_same_v<Mutex, gtl::NullMutex> && !recursive) {
+            // because we are using a mutex, we must be in a multithreaded context,
+            // so use lazy_emplace_l to take the lock only once.
+            // --------------------------------------------------------------------
+            result_type res;
+            _cache.lazy_emplace_l(key, 
+                                  [&](typename map_type::value_type& v) {
+                                      // called only when key was already present
+                                      res = v.second; },   
+                                  [&](const typename map_type::constructor& ctor) {
+                                      // construct value_type in place when key not present
+                                      res =_f(args...); ctor(key, res); });
+            return res;
+        } else {
+            // nullmutex or recursive function -> use two API for allowing more 
+            // recursion and preventing deadlocks, as _f is called outside the
+            // hashmap APIs.
+            // --------------------------------------------------------------
+            result_type res;
+            if (_cache.if_contains(key, [&](const auto &v) { res = v.second; }))
+                return res;
+            res =  _f(args...); 
+            _cache.emplace(key, res);
+            return res;
+        }
     }
 
     void clear() { _cache.clear(); }
@@ -318,6 +293,17 @@ private:
     F _f;
     map_type _cache;
 };
+
+// ------------------------------------------------------------------------------
+// Given a callable object (often a function), this class provides a new 
+// callable which either invokes the original one, caching the returned value,
+// or returns the cached returned value if the arguments match a previous call.
+// Of course this should be used only for pure functions without side effects.
+//
+// This version keeps all unique results in the hash map.
+// ------------------------------------------------------------------------------
+template <class F, size_t N = 4>
+using memoize = mt_memoize<F, true, N, gtl::NullMutex>;
 
 // ------------------------------------------------------------------------------
 // Author:  Gregory Popovitch (greg7mdp@gmail.com)
