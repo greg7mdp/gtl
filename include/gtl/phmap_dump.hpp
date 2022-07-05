@@ -88,10 +88,10 @@ bool raw_hash_set<Policy, Hash, Eq, Alloc>::phmap_load(InputArchive& ar) {
 // ------------------------------------------------------------------------
 template <size_t N,
           template <class, class, class, class> class RefSet,
-          class Mtx_,
+          class Mtx_, class AuxCont, 
           class Policy, class Hash, class Eq, class Alloc>
 template<typename OutputArchive>
-bool parallel_hash_set<N, RefSet, Mtx_, Policy, Hash, Eq, Alloc>::phmap_dump(OutputArchive& ar) const {
+bool parallel_hash_set<N, RefSet, Mtx_, AuxCont, Policy, Hash, Eq, Alloc>::phmap_dump(OutputArchive& ar) const {
     static_assert(type_traits_internal::IsTriviallyCopyable<value_type>::value,
                   "value_type should be trivially copyable");
 
@@ -110,10 +110,10 @@ bool parallel_hash_set<N, RefSet, Mtx_, Policy, Hash, Eq, Alloc>::phmap_dump(Out
 
 template <size_t N,
           template <class, class, class, class> class RefSet,
-          class Mtx_,
+          class Mtx_, class AuxCont,
           class Policy, class Hash, class Eq, class Alloc>
 template<typename InputArchive>
-bool parallel_hash_set<N, RefSet, Mtx_, Policy, Hash, Eq, Alloc>::phmap_load(InputArchive& ar) {
+bool parallel_hash_set<N, RefSet, Mtx_, AuxCont, Policy, Hash, Eq, Alloc>::phmap_load(InputArchive& ar) {
     static_assert(type_traits_internal::IsTriviallyCopyable<value_type>::value,
                   "value_type should be trivially copyable");
 

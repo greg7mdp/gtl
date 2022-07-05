@@ -307,6 +307,108 @@ using memoize = mt_memoize<F, true, N, gtl::NullMutex>;
 
 // ------------------------------------------------------------------------------
 // Author:  Gregory Popovitch (greg7mdp@gmail.com)
+// 
+// Given a callable object (often a function), this class provides a new 
+// callable which either invokes the original one, caching the returned value,
+// or returns the cached returned value if the arguments match a previous call.
+// Of course this should be used only for pure functions without side effects.
+//
+// if a mutex (such as std::mutex) is provided, this callable object can be
+// used safely from multiple threads without any additional locking.
+//
+// This version keeps all unique results in the hash map.
+//
+// recursive specifies if the function to be memoized is recursive.
+// Using the default value of true is always safe, but setting it
+// to false should be a little faster for non-recursive functions.
+//
+// the size_t N parameter configures the number of submaps as a power of 2, so
+// N=6 create 64 submaps. Each submap has its own mutex to reduce contention
+// in a heavily multithreaded context.
+//
+// see example: cache/memoize_mt.cpp
+// ------------------------------------------------------------------------------
+template <class F, bool recursive = true, size_t N = 6, 
+          class Mutex = std::mutex, class = this_pack_helper<F>>
+class mt_memoize_lru;
+
+template <class F, bool recursive, size_t N, class Mutex, class... Args>
+class mt_memoize_lru<F, recursive, N, Mutex, pack<Args...>>
+{
+public:
+    using key_type = std::tuple<Args...>;
+    using result_type = decltype(std::declval<F>()(std::declval<Args>()...));
+    using value_type = typename std::pair<const key_type, result_type>;
+
+    using list_type = std::list<value_type>;
+    using list_iter = typename list_type::iterator;
+    using map_type = gtl::parallel_flat_hash_map<key_type, list_iter,
+                                                 gtl::priv::hash_default_hash<key_type>,
+                                                 gtl::priv::hash_default_eq<key_type>,
+                                                 gtl::priv::Allocator<gtl::priv::Pair<key_type, result_type>>,
+                                                 N, Mutex, list_type>;
+    static constexpr size_t num_submaps = map_type::subcnt();
+
+    mt_memoize_lru(F &&f, size_t max_size = 65536) :
+        _f(std::move(f)), _max_size(max_size / num_submaps)
+    {
+        assert(max_size > 2);
+    }
+
+    mt_memoize_lru(F const& f, size_t max_size = 65536) :
+        _f(f), _max_size(max_size / num_submaps)
+    {
+        assert(max_size > 2);
+    }
+
+#if 0
+    std::optional<result_type> cache_hit(Args... args) {
+        key_type key(args...);
+        if (result_type res; _cache.if_contains(key, [&](const auto &v) { res = v.second; }))
+            return { res };
+        return {};
+    }
+#endif
+    
+    result_type operator()(Args... args) { 
+        key_type key(args...);
+        result_type res;
+        _cache.lazy_emplace_l(key, 
+                              [&](typename map_type::value_type& v, list_type &l) {
+                                  // called only when key was already present
+                                  res = v.second->second;
+                                  l.splice(l.begin(), l, v.second);
+                              },   
+                              [&](const typename map_type::constructor& ctor, list_type &l) {
+                                  // construct value_type in place when key not present
+                                  res =_f(args...);
+                                  l.push_front(value_type(key, res));
+                                  ctor(key, l.begin());
+                                  if (l.size() >= _max_size) {
+                                      // remove oldest
+                                      auto last = l.end();
+                                      last--;
+                                      auto to_delete = last->first;
+                                      l.pop_back();
+                                      return std::optional<key_type>{to_delete};
+                                  }
+                                  return std::optional<key_type>{};
+                              });
+        return res;
+    }
+
+    void clear() { _cache.clear(); }
+    void reserve(size_t n) { _cache.reserve(n); }
+    size_t size() const { return _cache.size(); }
+
+private:
+    F _f;
+    size_t _max_size;
+    map_type _cache;
+};
+
+// ------------------------------------------------------------------------------
+// Author:  Gregory Popovitch (greg7mdp@gmail.com)
 // ------------------------------------------------------------------------------
 template <class T, class F> 
 class lazy_list 

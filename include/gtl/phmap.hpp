@@ -1820,6 +1820,12 @@ public:
         return iterator_at(res.first);
     }
 
+    template <class K = key_type, class F, class C>
+    decltype(auto) lazy_emplace_at(size_t& idx, F&& f, C &c) {
+        slot_type* slot = slots_ + idx;
+        return std::forward<F>(f)(constructor(&alloc_ref(), &slot), c);
+    }
+
     template <class K = key_type, class F>
     void lazy_emplace_at(size_t& idx, F&& f) {
         slot_type* slot = slots_ + idx;
@@ -2557,12 +2563,12 @@ private:
 
     template <size_t N,
               template <class, class, class, class> class RefSet,
-              class M, class P, class H, class E, class A>
+              class M, class AuxCont, class P, class H, class E, class A>
     friend class parallel_hash_set;
 
     template <size_t N,
               template <class, class, class, class> class RefSet,
-              class M, class P, class H, class E, class A>
+              class M, class AuxCont, class P, class H, class E, class A>
     friend class parallel_hash_map;
 
     // The representation of the object has two modes:
@@ -3164,7 +3170,7 @@ public:
 // ----------------------------------------------------------------------------
 template <size_t N,
           template <class, class, class, class> class RefSet,
-          class Mtx_,
+          class Mtx_, class AuxCont,
           class Policy, class Hash, class Eq, class Alloc>
 class parallel_hash_set 
 {
@@ -3196,6 +3202,7 @@ public:
         allocator_type>::template rebind_traits<value_type>::pointer;
     using const_pointer   = typename std::allocator_traits<
         allocator_type>::template rebind_traits<value_type>::const_pointer;
+    using aux_type        = AuxCont;
 
     // Alias used for heterogeneous lookup functions.
     // `key_arg<K>` evaluates to `K` when the functors are transparent and to
@@ -3231,6 +3238,7 @@ protected:
         }
 
         EmbeddedSet set_;
+        [[no_unique_address]] aux_type aux_;
     };
 
 private:
@@ -3941,11 +3949,23 @@ public:
         typename Lockable::UniqueLock m;
         auto res = this->find_or_prepare_insert(key, m);
         Inner* inner = std::get<0>(res);
-        if (std::get<2>(res))
-            inner->set_.lazy_emplace_at(std::get<1>(res), std::forward<FEmplace>(fEmplace));
-        else {
+        if (std::get<2>(res)) {
+            if constexpr (std::is_same_v<gtl::priv::empty, aux_type>)
+                inner->set_.lazy_emplace_at(std::get<1>(res), std::forward<FEmplace>(fEmplace));
+            else {
+                auto del = inner->set_.lazy_emplace_at(std::get<1>(res), std::forward<FEmplace>(fEmplace),
+                                                       inner->aux_);
+                if (del)
+                    inner->set_.erase(*del);
+            }
+        } else {
             auto it = this->iterator_at(inner, inner->set_.iterator_at(std::get<1>(res)));
-            std::forward<FExists>(fExists)(const_cast<value_type &>(*it)); // in case of the set, non "key" part of value_type can be changed
+            // in case of the set, non "key" part of value_type can be changed
+            
+            if constexpr (std::is_same_v<gtl::priv::empty, aux_type>)
+                std::forward<FExists>(fExists)(const_cast<value_type &>(*it));
+            else 
+                std::forward<FExists>(fExists)(const_cast<value_type &>(*it), inner->aux_);
         }
         return std::get<2>(res);
     }
@@ -4036,7 +4056,7 @@ public:
     // If the element already exists in `this`, it is left unmodified in `src`.
     // --------------------------------------------------------------------
     template <typename E = Eq>
-    void merge(parallel_hash_set<N, RefSet, Mtx_, Policy, Hash, E, Alloc>& src) {  // NOLINT
+    void merge(parallel_hash_set<N, RefSet, Mtx_, AuxCont, Policy, Hash, E, Alloc>& src) {  // NOLINT
         assert(this != &src);
         if (this != &src)
         {
@@ -4049,7 +4069,7 @@ public:
     }
 
     template <typename E = Eq>
-    void merge(parallel_hash_set<N, RefSet, Mtx_, Policy, Hash, E, Alloc>&& src) {
+    void merge(parallel_hash_set<N, RefSet, Mtx_, AuxCont, Policy, Hash, E, Alloc>&& src) {
         merge(src);
     }
 
@@ -4351,7 +4371,7 @@ protected:
         return ((hashval >> 8) ^ (hashval >> 16) ^ (hashval >> 24)) & mask;
     }
 
-    static size_t subcnt() {
+    static constexpr size_t subcnt() {
         return num_tables;
     }
 
@@ -4382,9 +4402,9 @@ protected:       // protected in case users want to derive fromm this
 // --------------------------------------------------------------------------
 template <size_t N,
           template <class, class, class, class> class RefSet,
-          class Mtx_,
+          class Mtx_, class AuxCont,
           class Policy, class Hash, class Eq, class Alloc>
-class parallel_hash_map : public parallel_hash_set<N, RefSet, Mtx_, Policy, Hash, Eq, Alloc> 
+class parallel_hash_map : public parallel_hash_set<N, RefSet, Mtx_, AuxCont, Policy, Hash, Eq, Alloc> 
 {
     // P is Policy. It's passed as a template argument to support maps that have
     // incomplete types as values, as in unordered_map<K, IncompleteType>.
@@ -5290,9 +5310,10 @@ public:
 // -----------------------------------------------------------------------------
 // gtl::parallel_flat_hash_set
 // -----------------------------------------------------------------------------
-template <class T, class Hash, class Eq, class Alloc, size_t N, class Mtx_> // default values in phmap_fwd_decl.hpp
+template <class T, class Hash, class Eq, class Alloc, size_t N, class Mtx_, class AuxCont>
+                       // default values in phmap_fwd_decl.hpp
 class parallel_flat_hash_set
-    : public gtl::priv::parallel_hash_set<N, gtl::priv::raw_hash_set, Mtx_,
+    : public gtl::priv::parallel_hash_set<N, gtl::priv::raw_hash_set, Mtx_, AuxCont,
                                           gtl::priv::FlatHashSetPolicy<T>, Hash, Eq, Alloc> 
 {
     using Base = typename parallel_flat_hash_set::parallel_hash_set;
@@ -5342,9 +5363,9 @@ public:
 // -----------------------------------------------------------------------------
 // gtl::parallel_flat_hash_map - default values in phmap_fwd_decl.hpp
 // -----------------------------------------------------------------------------
-template <class K, class V, class Hash, class Eq, class Alloc, size_t N, class Mtx_>
+template <class K, class V, class Hash, class Eq, class Alloc, size_t N, class Mtx_, class AuxCont>
 class parallel_flat_hash_map : 
-    public gtl::priv::parallel_hash_map<N, gtl::priv::raw_hash_set, Mtx_,
+    public gtl::priv::parallel_hash_map<N, gtl::priv::raw_hash_set, Mtx_, AuxCont,
                                         gtl::priv::FlatHashMapPolicy<K, V>, Hash, Eq, Alloc> 
 {
     using Base = typename parallel_flat_hash_map::parallel_hash_map;
@@ -5399,10 +5420,10 @@ public:
 // -----------------------------------------------------------------------------
 // gtl::parallel_node_hash_set
 // -----------------------------------------------------------------------------
-template <class T, class Hash, class Eq, class Alloc, size_t N, class Mtx_>
+template <class T, class Hash, class Eq, class Alloc, size_t N, class Mtx_, class AuxCont>
 class parallel_node_hash_set
     : public gtl::priv::parallel_hash_set<
-             N, gtl::priv::raw_hash_set, Mtx_,
+             N, gtl::priv::raw_hash_set, Mtx_, AuxCont,
              gtl::priv::NodeHashSetPolicy<T>, Hash, Eq, Alloc> 
 {
     using Base = typename parallel_node_hash_set::parallel_hash_set;
@@ -5454,10 +5475,10 @@ public:
 // -----------------------------------------------------------------------------
 // gtl::parallel_node_hash_map
 // -----------------------------------------------------------------------------
-template <class Key, class Value, class Hash, class Eq, class Alloc, size_t N, class Mtx_>
+template <class Key, class Value, class Hash, class Eq, class Alloc, size_t N, class Mtx_, class AuxCont>
 class parallel_node_hash_map
     : public gtl::priv::parallel_hash_map<
-          N, gtl::priv::raw_hash_set, Mtx_,
+          N, gtl::priv::raw_hash_set, Mtx_, AuxCont,
           gtl::priv::NodeHashMapPolicy<Key, Value>, Hash, Eq, Alloc> 
 {
     using Base = typename parallel_node_hash_map::parallel_hash_map;

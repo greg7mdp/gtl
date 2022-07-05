@@ -64,6 +64,8 @@ namespace gtl {
         template<class T1, class T2> 
         using Pair = typename gtl::Pair<T1, T2>;
 
+        struct empty {};
+
     }  // namespace priv
 
     // ------------- forward declarations for hash containers ----------------------------------
@@ -98,7 +100,8 @@ namespace gtl {
               class Eq    = gtl::priv::hash_default_eq<T>,
               class Alloc = gtl::priv::Allocator<T>, // alias for std::allocator
               size_t N    = 4,                  // 2**N submaps
-              class Mutex = gtl::NullMutex>   // use std::mutex to enable internal locks
+              class Mutex = gtl::NullMutex,     // use std::mutex to enable internal locks
+              class AuxCont = gtl::priv::empty>
         class parallel_flat_hash_set;
 
     template <class K, class V,
@@ -107,7 +110,8 @@ namespace gtl {
               class Alloc = gtl::priv::Allocator<
                             gtl::priv::Pair<const K, V>>, // alias for std::allocator
               size_t N    = 4,                  // 2**N submaps
-              class Mutex = gtl::NullMutex>   // use std::mutex to enable internal locks
+              class Mutex = gtl::NullMutex,     // use std::mutex to enable internal locks
+              class AuxCont = gtl::priv::empty>
         class parallel_flat_hash_map;
 
     template <class T, 
@@ -115,7 +119,8 @@ namespace gtl {
               class Eq    = gtl::priv::hash_default_eq<T>,
               class Alloc = gtl::priv::Allocator<T>, // alias for std::allocator
               size_t N    = 4,                  // 2**N submaps
-              class Mutex = gtl::NullMutex>   // use std::mutex to enable internal locks
+              class Mutex = gtl::NullMutex,     // use std::mutex to enable internal locks
+              class AuxCont = gtl::priv::empty>
         class parallel_node_hash_set;
 
     template <class Key, class Value,
@@ -124,7 +129,8 @@ namespace gtl {
               class Alloc = gtl::priv::Allocator<
                             gtl::priv::Pair<const Key, Value>>, // alias for std::allocator
               size_t N    = 4,                  // 2**N submaps
-              class Mutex = gtl::NullMutex>   // use std::mutex to enable internal locks
+              class Mutex = gtl::NullMutex,     // use std::mutex to enable internal locks
+              class AuxCont = gtl::priv::empty>
         class parallel_node_hash_map;
 
     // ------------- forward declarations for btree containers ----------------------------------
