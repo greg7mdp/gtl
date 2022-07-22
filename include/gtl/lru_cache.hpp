@@ -180,7 +180,7 @@ public:
 
     memoize_lru(F const& f) : _f(f) {}
     
-    result_type* cache_hit(Args... args) { 
+    result_type* contains(Args... args) { 
         key_type key(args...);
         return _cache.get(key);
     }
@@ -249,7 +249,7 @@ public:
 
     mt_memoize(F const& f) : _f(f) {}
     
-    std::optional<result_type> cache_hit(Args... args) {
+    std::optional<result_type> contains(Args... args) {
         key_type key(args...);
         if (result_type res; _cache.if_contains(key, [&](const auto &v) { res = v.second; }))
             return { res };
@@ -318,22 +318,19 @@ using memoize = mt_memoize<F, true, N, gtl::NullMutex>;
 //
 // This version keeps all unique results in the hash map.
 //
-// recursive specifies if the function to be memoized is recursive.
-// Using the default value of true is always safe, but setting it
-// to false should be a little faster for non-recursive functions.
-//
 // the size_t N parameter configures the number of submaps as a power of 2, so
 // N=6 create 64 submaps. Each submap has its own mutex to reduce contention
 // in a heavily multithreaded context.
 //
 // see example: cache/memoize_mt.cpp
+//
 // ------------------------------------------------------------------------------
-template <class F, bool recursive = true, size_t N = 6, 
+template <class F, size_t N = 6, 
           class Mutex = std::mutex, class = this_pack_helper<F>>
 class mt_memoize_lru;
 
-template <class F, bool recursive, size_t N, class Mutex, class... Args>
-class mt_memoize_lru<F, recursive, N, Mutex, pack<Args...>>
+template <class F, size_t N, class Mutex, class... Args>
+class mt_memoize_lru<F, N, Mutex, pack<Args...>>
 {
 public:
     using key_type = std::tuple<Args...>;
@@ -362,7 +359,7 @@ public:
     }
 
 #if 0
-    std::optional<result_type> cache_hit(Args... args) {
+    std::optional<result_type> contains(Args... args) {
         key_type key(args...);
         if (result_type res; _cache.if_contains(key, [&](const auto &v) { res = v.second; }))
             return { res };
@@ -446,7 +443,7 @@ private:
     static T logify_recursion(F &f, size_t start, size_t end) {
         // untested!
         if (start == 0) {
-            auto hit = f.cache_hit(end);
+            auto hit = f.contains(end);
             if (hit)
                 return *hit;
         }

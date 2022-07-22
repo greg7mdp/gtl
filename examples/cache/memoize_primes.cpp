@@ -43,7 +43,7 @@ auto cached_twin_primes = gtl::memoize<decltype(&twin_primes)>(&twin_primes);
 template <class F>
 void avoid_deep_recursion(F &f, uint64_t end) {
     constexpr uint64_t incr = 512;
-    if (end > incr && f.cache_hit(end - incr))
+    if (end > incr && f.contains(end - incr))
         return;
 
     for (uint64_t i=incr; i<end; i+= incr)
