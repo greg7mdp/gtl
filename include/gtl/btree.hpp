@@ -1143,7 +1143,7 @@ namespace priv {
 
     private:
         using layout_type = gtl::priv::Layout<btree_node *, field_type,
-                                                slot_type, btree_node *>;
+                                              slot_type, btree_node *>;
         constexpr static size_type SizeWithNValues(size_type n) {
             return (size_type)layout_type(/*parent*/ 1,
                                           /*position, start, count, max_count*/ 4,
@@ -1275,6 +1275,10 @@ namespace priv {
         reference value(size_type i) { return params_type::element(slot(i)); }
         const_reference value(size_type i) const { return params_type::element(slot(i)); }
 
+#if defined(__GNUC__) || defined(__clang__)
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Warray-bounds"
+#endif
         // Getters/setter for the child at position i in the node.
         // -------------------------------------------------------
         btree_node *child(size_type i) const { return GetField<3>()[i]; }
@@ -1287,6 +1291,9 @@ namespace priv {
             mutable_child(i) = c;
             c->set_position((field_type)i);
         }
+#if defined(__GNUC__) || defined(__clang__)
+#pragma GCC diagnostic pop
+#endif
         void init_child(int i, btree_node *c) {
             set_child(i, c);
             c->set_parent(this);

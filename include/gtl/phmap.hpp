@@ -4045,6 +4045,8 @@ public:
     }
 
     // --------------------------------------------------------------------
+    // Do not use erase APIs taking iterators when accessing the map concurrently
+    // --------------------------------------------------------------------
     iterator erase(const_iterator cit) { return erase(cit.iter_); }
 
     // Erases the element pointed to by `it`.  Unlike `std::unordered_set::erase`,
@@ -4068,6 +4070,7 @@ public:
 
     // This overload is necessary because otherwise erase<K>(const K&) would be
     // a better match if non-const iterator is passed as an argument.
+    // Do not use erase APIs taking iterators when accessing the map concurrently
     // --------------------------------------------------------------------
     iterator erase(iterator it) { _erase(it++); return it; }
 
