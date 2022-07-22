@@ -132,6 +132,7 @@ endif()
     gtl_cc_app(ex_serialize SRCS examples/hmap/serialize.cpp include/gtl/debug_vis/gtl.natvis)
     #target_include_directories(ex_serialize PUBLIC $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/../cereal/include>)
 
+    gtl_cc_app(ex_hash SRCS examples/hmap/hash.cpp include/gtl/debug_vis/gtl.natvis)
     gtl_cc_app(ex_hash_std SRCS examples/hmap/hash_std.cpp include/gtl/debug_vis/gtl.natvis)
     gtl_cc_app(ex_hash_value SRCS examples/hmap/hash_value.cpp include/gtl/debug_vis/gtl.natvis)
     gtl_cc_app(ex_two_files SRCS examples/hmap/f1.cpp examples/hmap/f2.cpp include/gtl/debug_vis/gtl.natvis)
