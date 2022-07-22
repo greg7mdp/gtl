@@ -3985,6 +3985,19 @@ public:
         }
     }
 
+#if __cplusplus >= 201703L
+    template <class ExecutionPolicy, class F>
+    void for_each(ExecutionPolicy&& policy, F&& fCallback) const {
+        std::for_each(
+            std::forward<ExecutionPolicy>(policy), sets_.begin(), sets_.end(),
+            [&](auto const& inner) {
+                typename Lockable::SharedLock m(const_cast<Inner&>(inner));
+                std::for_each(inner.set_.begin(), inner.set_.end(), fCallback);
+            }
+        );
+    }
+#endif
+
     // this version allows to modify the values
     void for_each_m(std::function<void (value_type&)> && fCallback) {
         for (auto& inner : sets_) {
@@ -3992,6 +4005,19 @@ public:
             std::for_each(inner.set_.begin(), inner.set_.end(), fCallback);
         }
     }
+
+#if __cplusplus >= 201703L
+    template <class ExecutionPolicy, class F>
+    void for_each_m(ExecutionPolicy&& policy, F&& fCallback) {
+        std::for_each(
+            std::forward<ExecutionPolicy>(policy), sets_.begin(), sets_.end(),
+            [&](auto& inner) {
+                typename Lockable::UniqueLock m(const_cast<Inner&>(inner));
+                std::for_each(inner.set_.begin(), inner.set_.end(), fCallback);
+            }
+        );
+    }
+#endif
 
     // Extension API: support for heterogeneous keys.
     //
