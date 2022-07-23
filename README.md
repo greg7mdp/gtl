@@ -114,7 +114,7 @@ For more information on the implementation, usage and characteristics of the par
 ## Btree containers
 
 
-The four provided btree containers are:
+The four provided btree containers (in `gtl/btree.hpp`)are:
     - `gtl::btree_map`
     - `gtl::btree_set`
     - `gtl::btree_multimap`
@@ -147,11 +147,20 @@ Click [here](https://github.com/greg7mdp/gtl/blob/main/examples/misc/bit_vector.
 
 When printed, converted to `std::string`, or displayed in the debugger with the [gtl natvis](https://github.com/greg7mdp/gtl/blob/main/gtl/debug_vis/gtl.natvis), bits are displayed right to left, so for example a `gtl::bit_vector` of size 16, with the fist two bits set (index 0 and 1) would be displayed as `0x00000003`.
 
-## lru_cache
+## memoize
 
-This is an unordered map container into which you insert (key, value) pairs, but which will keep a maximum number of pairs. When the maximum number of pairs is reached, every insertion of a new key cause the removal of the least recently accessed pair.
+The classes from the `memoize.hpp` header provide a very efficient way to memoize the return values of pure functions, whether in a multi threaded context or a single threaded one. In particular, the `mt_memoize_lru` class internally uses the extended parallel hashmap APIs to minimize locking contention when the cache is used from concurrrent threads.
 
-This class is useful for implementing caches. 
 
-Thanks to Alexander Ponomarev for the original [implementation](https://github.com/lamerman), from which ours is derived. 
+* `gtl::lru_cache`: a basic lru (least recently used) cache, not intenally thread-safe, probiding APIs like `insert()` to look up (and insert items if not already present)
+* `gtl::memoize`
+* `gtl::memoize_lru`
+* `gtl::mt_memoize`: 
+* `gtl::mt_memoize_lru`: 
 
+## intrusive
+
+The classes from the `intrusive.hpp` header provide a smart pointer type which is missing from the standard library, the `intrusive_ptr`. It provides automatic life management of pointers to an object with an embedded reference count. If you don't need all the bells and whistles of `std::shared_ptr`, such as `weak_ptr` or custom deleter support, the `intrusive_ptr` provides a similar reference counting support with reduced memory usage and simplified construction and assignment. Classes provided are:
+
+* `gtl::intrusive_ptr`: the intrusive_ptr class
+* `gtl::intrusive_ref_counter`: use this as a based class for objects needing to implement the two count APIs

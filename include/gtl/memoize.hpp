@@ -99,38 +99,6 @@ private:
 // deduct the variadic parameter pack of a lambda.
 // see https://stackoverflow.com/questions/71630906 for alternate method
 // ------------------------------------------------------------------------------
-#if 0
-
-template<typename... Ts> struct pack { };
-
-// helper functions to retrieve arguments for member function pointers
-
-template<class Result, class Type, class ...Args>
-pack<Args...> lambda_pack_helper(Result(Type::*) (Args...));
-
-template<class Result, class Type, class ...Args>
-pack<Args...> lambda_pack_helper(Result(Type::*) (Args...) const);
-
-// helper functions: if called with an instance of the first parameter type of memorize, the return type is the one used as the second one
-
-// overload for function
-template<class Result, class ...Args>
-pack<Args...> pack_helper(Result(Args...));
-
-// overload for function pointer
-template<class Result, class ...Args>
-pack<Args...> pack_helper(Result (*)(Args...));
-
-// sfinae will prevent this overload from being considered for anything not providing an operator()
-// for those types we use the return type of helper function lambda_pack_helper
-template<class T>
-decltype(lambda_pack_helper(&T::operator())) pack_helper(T);
-
-template <class F>
-using this_pack_helper = decltype(pack_helper(std::declval<F>()));
-
-#else
-
 template<typename... Ts> struct pack { };
 
 template <class> struct pack_helper;
@@ -153,8 +121,7 @@ struct pack_helper<R(LambdaClass::*)(Args...) const> {
 template <class F>
 using this_pack_helper = typename pack_helper<F>::args;
 
-#endif
-
+#if 0
 // ------------------------------------------------------------------------------
 // Author:  Gregory Popovitch (greg7mdp@gmail.com)
 // 
@@ -203,7 +170,7 @@ private:
     F _f;
     lru_cache<key_type, result_type>  _cache;
 };
-
+#endif
 
 // ------------------------------------------------------------------------------
 // Author:  Gregory Popovitch (greg7mdp@gmail.com)
@@ -238,11 +205,12 @@ class mt_memoize<F, recursive, N, Mutex, pack<Args...>>
 public:
     using key_type = std::tuple<Args...>;
     using result_type = decltype(std::declval<F>()(std::declval<Args>()...));
-    using map_type = gtl::parallel_flat_hash_map<key_type, result_type,
-                                                 gtl::priv::hash_default_hash<key_type>,
-                                                 gtl::priv::hash_default_eq<key_type>,
-                                                 gtl::priv::Allocator<gtl::priv::Pair<key_type, result_type>>,
-                                                 N, Mutex>;
+    using map_type = gtl::parallel_flat_hash_map<
+        key_type, result_type,
+        gtl::priv::hash_default_hash<key_type>,
+        gtl::priv::hash_default_eq<key_type>,
+        gtl::priv::Allocator<gtl::priv::Pair<key_type, result_type>>,
+        N, Mutex>;
         
 
     mt_memoize(F &&f) : _f(std::move(f)) {}
@@ -339,11 +307,14 @@ public:
 
     using list_type = std::list<value_type>;
     using list_iter = typename list_type::iterator;
-    using map_type = gtl::parallel_flat_hash_map<key_type, list_iter,
-                                                 gtl::priv::hash_default_hash<key_type>,
-                                                 gtl::priv::hash_default_eq<key_type>,
-                                                 gtl::priv::Allocator<gtl::priv::Pair<key_type, result_type>>,
-                                                 N, Mutex, list_type>;
+    
+    using map_type = gtl::parallel_flat_hash_map<
+        key_type, list_iter,
+        gtl::priv::hash_default_hash<key_type>,
+        gtl::priv::hash_default_eq<key_type>,
+        gtl::priv::Allocator<gtl::priv::Pair<key_type, result_type>>,
+        N, Mutex, list_type>;
+    
     static constexpr size_t num_submaps = map_type::subcnt();
 
     mt_memoize_lru(F &&f, size_t max_size = 65536) :
@@ -359,6 +330,7 @@ public:
     }
 
 #if 0
+    // code this - need extended API like in lazy_emplace_l
     std::optional<result_type> contains(Args... args) {
         key_type key(args...);
         if (result_type res; _cache.if_contains(key, [&](const auto &v) { res = v.second; }))
@@ -403,7 +375,11 @@ private:
     size_t _max_size;
     map_type _cache;
 };
-
+    
+// ------------------------------------------------------------------------------
+template <class F, size_t N = 4>
+using memoize_lru = mt_memoize_lru<F, N, gtl::NullMutex>;
+    
 // ------------------------------------------------------------------------------
 // Author:  Gregory Popovitch (greg7mdp@gmail.com)
 // ------------------------------------------------------------------------------

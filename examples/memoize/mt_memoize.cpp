@@ -10,7 +10,7 @@
 #define USE_CACHING 1
 
 #if USE_CACHING
-    #include <gtl/lru_cache.hpp>
+    #include <gtl/memoize.hpp>
 #endif
 
 using namespace std::chrono_literals;

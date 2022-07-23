@@ -108,7 +108,7 @@ if (GTL_BUILD_TESTS)
     gtl_cc_test(NAME btree SRCS "tests/btree/btree_test.cpp" DEPS ${GTL_GTEST_LIBS})
 
     ## --------------- misc -----------------------------------------------
-    gtl_cc_test(NAME lru_cache SRCS "tests/misc/lru_cache.cpp" DEPS ${GTL_GTEST_LIBS})
+    gtl_cc_test(NAME memoize SRCS "tests/misc/memoize_test.cpp" DEPS ${GTL_GTEST_LIBS})
     gtl_cc_test(NAME bit_vector SRCS "tests/misc/bitvector_test.cpp" DEPS ${GTL_GTEST_LIBS})
 endif()
 
@@ -146,9 +146,10 @@ endif()
     gtl_cc_app(ex_intrusive SRCS examples/misc/intrusive.cpp include/gtl/debug_vis/gtl.natvis)
     
     ## cache/memoize
-    gtl_cc_app(ex_memoize_fib SRCS examples/cache/memoize_fib.cpp include/gtl/debug_vis/gtl.natvis)
-    gtl_cc_app(ex_memoize_primes SRCS examples/cache/memoize_primes.cpp include/gtl/debug_vis/gtl.natvis)
-    gtl_cc_app(ex_memoize_mt SRCS examples/cache/memoize_mt.cpp include/gtl/debug_vis/gtl.natvis LIBS Threads::Threads)
+    gtl_cc_app(ex_memoize_fib SRCS examples/memoize/memoize_fib.cpp include/gtl/debug_vis/gtl.natvis)
+    gtl_cc_app(ex_memoize_primes SRCS examples/memoize/memoize_primes.cpp include/gtl/debug_vis/gtl.natvis)
+    gtl_cc_app(ex_mt_memoize SRCS examples/memoize/mt_memoize.cpp include/gtl/debug_vis/gtl.natvis LIBS Threads::Threads)
+    gtl_cc_app(ex_mt_memoize_lru SRCS examples/memoize/mt_memoize_lru.cpp include/gtl/debug_vis/gtl.natvis LIBS Threads::Threads)
 endif()
 
 if (GTL_BUILD_BENCHMARKS)

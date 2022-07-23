@@ -36,7 +36,7 @@
  *
  */
 
-#include <gtl/lru_cache.hpp>
+#include <gtl/memoize.hpp>
 #include "gtest/gtest.h"
 
 const int NUM_OF_TEST1_RECORDS = 100;

@@ -1,5 +1,5 @@
 #include <gtl/stopwatch.hpp>
-#include <gtl/lru_cache.hpp>
+#include <gtl/memoize.hpp>
 #include <cinttypes>
 #include <cstdio>
 
