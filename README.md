@@ -160,7 +160,13 @@ The classes from the `memoize.hpp` header provide a very efficient way to memoiz
 
 ## intrusive
 
-The classes from the `intrusive.hpp` header provide a smart pointer type which is missing from the standard library, the `intrusive_ptr`. It provides automatic life management of pointers to an object with an embedded reference count. If you don't need all the bells and whistles of `std::shared_ptr`, such as `weak_ptr` or custom deleter support, the `intrusive_ptr` provides a similar reference counting support with reduced memory usage and simplified construction and assignment. Classes provided are:
+The classes from the `intrusive.hpp` header provide a smart pointer type which is missing from the standard library, the `intrusive_ptr`. It provides automatic life management of pointers to an object with an embedded reference count. If you don't need all the bells and whistles of `std::shared_ptr`, such as `weak_ptr` or custom deleter support, the `intrusive_ptr` provides a similar reference counting support with the following benefits:
+
+- The memory footprint of `intrusive_ptr` is the same as the corresponding raw pointer (typically half of std::shared_ptr); 
+- The memory footprint of `intrusive_ref_counter` is also half of the std::shared_ptr reference count;
+- `intrusive_ptr<T>` can be constructed from an arbitrary raw pointer of type `T *`.
+
+Classes provided are:
 
 * `gtl::intrusive_ptr`: the intrusive_ptr class
 * `gtl::intrusive_ref_counter`: use this as a based class for objects needing to implement the two count APIs
