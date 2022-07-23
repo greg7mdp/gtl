@@ -405,7 +405,7 @@ struct thread_unsafe_counter
 // The policy instructs the \c intrusive_ref_counter base class to implement
 // a thread-safe reference counter, if the target platform supports multithreading.
 // --------------------------------------------------------------------------------
-struct thread_safe_counter
+struct thread_safe_counter 
 {
     using type = std::atomic<unsigned int>;
 
@@ -425,16 +425,6 @@ struct thread_safe_counter
     }
 };
 
-// -----------------------------------------------------
-template<typename DerivedT, typename CounterPolicyT = thread_safe_counter>
-class intrusive_ref_counter;
-
-template<typename DerivedT, typename CounterPolicyT>
-void intrusive_ptr_add_ref(const intrusive_ref_counter<DerivedT, CounterPolicyT>* p) noexcept;
-    
-template<typename DerivedT, typename CounterPolicyT>
-void intrusive_ptr_release(const intrusive_ref_counter<DerivedT, CounterPolicyT>* p) noexcept;
-
 // --------------------------------------------------------------------------------
 // \brief A reference counter base class
 //
@@ -453,6 +443,7 @@ class intrusive_ref_counter
 {
 private:
     using counter_type =  typename CounterPolicyT::type;
+    
     mutable counter_type _refcount;
 
 public:
@@ -479,24 +470,18 @@ public:
 protected:
     ~intrusive_ref_counter() = default;
 
-    friend void intrusive_ptr_add_ref<DerivedT, CounterPolicyT>(const intrusive_ref_counter<DerivedT, CounterPolicyT>* p) noexcept;
-    friend void intrusive_ptr_release<DerivedT, CounterPolicyT>(const intrusive_ref_counter<DerivedT, CounterPolicyT>* p) noexcept;
+    friend void intrusive_ptr_add_ref(const DerivedT *p) noexcept
+    {
+        CounterPolicyT::increment(p->_refcount);
+    }
+    
+    friend void intrusive_ptr_release(const DerivedT *p) noexcept
+    {
+        if (CounterPolicyT::decrement(p->_refcount) == 0)
+            delete static_cast<const DerivedT*>(p);
+    }
 };
 
-template<typename DerivedT, typename CounterPolicyT>
-inline void intrusive_ptr_add_ref(const intrusive_ref_counter<DerivedT, CounterPolicyT>* p) noexcept
-{
-    CounterPolicyT::increment(p->_refcount);
-}
-
-template<typename DerivedT, typename CounterPolicyT>
-inline void intrusive_ptr_release(const intrusive_ref_counter<DerivedT, CounterPolicyT>* p) noexcept
-{
-    if (CounterPolicyT::decrement(p->_refcount) == 0)
-        delete static_cast<const DerivedT*>(p);
-}
-
-    
 } // namespace gtl    
 
 
