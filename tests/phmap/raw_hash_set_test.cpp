@@ -395,7 +395,6 @@ TEST(Table, EmptyFunctorOptimization) {
     size_t size;
     size_t capacity;
     size_t growth_left;
-    void* infoz;
   };
   struct StatelessHash {
     size_t operator()(std::string_view) const { return 0; }
@@ -1867,49 +1866,6 @@ TEST(TableDeathTest, EraseOfEndAsserts) {
   // Extra simple "regexp" as regexp support is highly varied across platforms.
   constexpr char kDeathMsg[] = "it != end";
   EXPECT_DEATH_IF_SUPPORTED(t.erase(t.end()), kDeathMsg);
-}
-
-// [greg] did not implement HashtablezSampler in header only phmap.hpp
-TEST(RawHashSamplerTest, DISABLED_Sample) {
-  // Enable the feature even if the prod default is off.
-  SetHashtablezEnabled(true);
-  SetHashtablezSampleParameter(100);
-
-  auto& sampler = HashtablezSampler::Global();
-  size_t start_size = 0;
-  start_size += sampler.Iterate([&](const HashtablezInfo&) { ++start_size; });
-
-  std::vector<IntTable> tables;
-  for (int i = 0; i < 1000000; ++i) {
-    tables.emplace_back();
-    tables.back().insert(1);
-  }
-  size_t end_size = 0;
-  end_size += sampler.Iterate([&](const HashtablezInfo&) { ++end_size; });
-
-  EXPECT_NEAR((end_size - start_size) / static_cast<double>(tables.size()),
-              0.01, 0.005);
-}
-
-TEST(RawHashSamplerTest, DoNotSampleCustomAllocators) {
-  // Enable the feature even if the prod default is off.
-  SetHashtablezEnabled(true);
-  SetHashtablezSampleParameter(100);
-
-   auto& sampler = HashtablezSampler::Global();
-  size_t start_size = 0;
-  start_size += sampler.Iterate([&](const HashtablezInfo&) { ++start_size; });
-
-   std::vector<CustomAllocIntTable> tables;
-  for (int i = 0; i < 1000000; ++i) {
-    tables.emplace_back();
-    tables.back().insert(1);
-  }
-  size_t end_size = 0;
-  end_size += sampler.Iterate([&](const HashtablezInfo&) { ++end_size; });
-
-   EXPECT_NEAR((end_size - start_size) / static_cast<double>(tables.size()),
-              0.00, 0.001);
 }
 
 #ifdef ADDRESS_SANITIZER
