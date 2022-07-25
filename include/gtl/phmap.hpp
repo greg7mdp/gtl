@@ -660,54 +660,6 @@ struct HashtableDebugAccess
 }  // namespace hashtable_debug_internal
 
 // ----------------------------------------------------------------------------
-//                    I N F O Z   S T U B S
-// ----------------------------------------------------------------------------
-struct HashtablezInfo 
-{
-    void PrepareForSampling() {}
-};
-
-inline void RecordRehashSlow(HashtablezInfo*, size_t ) {}
-
-static inline void RecordInsertSlow(HashtablezInfo* , size_t, size_t ) {}
-
-static inline void RecordEraseSlow(HashtablezInfo*) {}
-
-static inline HashtablezInfo* SampleSlow(int64_t*) { return nullptr; }
-static inline void UnsampleSlow(HashtablezInfo* ) {}
-
-class HashtablezInfoHandle 
-{
-public:
-    inline void RecordStorageChanged(size_t , size_t ) {}
-    inline void RecordRehash(size_t ) {}
-    inline void RecordInsert(size_t , size_t ) {}
-    inline void RecordErase() {}
-    friend inline void swap(HashtablezInfoHandle& ,
-                            HashtablezInfoHandle& ) noexcept {}
-};
-
-static inline HashtablezInfoHandle Sample() { return HashtablezInfoHandle(); }
-
-class HashtablezSampler 
-{
-public:
-    // Returns a global Sampler.
-    static HashtablezSampler& Global() {  static HashtablezSampler hzs; return hzs; }
-    HashtablezInfo* Register() {  static HashtablezInfo info; return &info; }
-    void Unregister(HashtablezInfo* ) {}
-
-    using DisposeCallback = void (*)(const HashtablezInfo&);
-    DisposeCallback SetDisposeCallback(DisposeCallback ) { return nullptr; }
-    int64_t Iterate(const std::function<void(const HashtablezInfo& stack)>& ) { return 0; }
-};
-
-static inline void SetHashtablezEnabled(bool ) {}
-static inline void SetHashtablezSampleParameter(int32_t ) {}
-static inline void SetHashtablezMaxSamples(int32_t ) {}
-
-
-// ----------------------------------------------------------------------------
 // Constructs T into uninitialized storage pointed by `ptr` using the args
 // specified in the tuple.
 // ----------------------------------------------------------------------------
@@ -1443,7 +1395,6 @@ public:
             auto target = find_first_non_full(hashval);
             set_ctrl(target.offset, H2(hashval));
             emplace_at(target.offset, v);
-            infoz_.RecordInsert(hashval, target.probe_length);
         }
         size_ = that.size();
         growth_left() -= that.size();
@@ -1456,7 +1407,6 @@ public:
         slots_(std::exchange(that.slots_, nullptr)),
         size_(std::exchange(that.size_, 0)),
         capacity_(std::exchange(that.capacity_, 0)),
-        infoz_(std::exchange(that.infoz_, HashtablezInfoHandle())),
         // Hash, equality and allocator are copied instead of moved because
         // `that` must be left valid. If Hash is std::function<Key>, moving it
         // would create a nullptr functor that cannot be called.
@@ -1478,7 +1428,6 @@ public:
             std::swap(size_, that.size_);
             std::swap(capacity_, that.capacity_);
             std::swap(growth_left(), that.growth_left());
-            std::swap(infoz_, that.infoz_);
         } else {
             reserve(that.size());
             // Note: this will copy elements of dense_set and unordered_set instead of
@@ -1560,7 +1509,6 @@ public:
             reset_growth_left(capacity_);
         }
         assert(empty());
-        infoz_.RecordStorageChanged(0, capacity_);
     }
 
     // This overload kicks in when the argument is an rvalue of insertable and
@@ -1946,7 +1894,6 @@ public:
         swap(growth_left(), that.growth_left());
         swap(hash_ref(), that.hash_ref());
         swap(eq_ref(), that.eq_ref());
-        swap(infoz_, that.infoz_);
         if (AllocTraits::propagate_on_container_swap::value) {
             swap(alloc_ref(), that.alloc_ref());
         } else {
@@ -1967,7 +1914,6 @@ public:
         if (n == 0 && capacity_ == 0) return;
         if (n == 0 && size_ == 0) {
             destroy_slots();
-            infoz_.RecordStorageChanged(0, 0);
             return;
         }
         // bitor is a faster way of doing `max` here. We will round up to the next
@@ -2263,14 +2209,12 @@ private:
 
         set_ctrl(index, was_never_full ? kEmpty : kDeleted);
         growth_left() += was_never_full;
-        infoz_.RecordErase();
     }
 
     void initialize_slots(size_t new_capacity) {
         assert(new_capacity);
         if (std::is_same_v<SlotAlloc, std::allocator<slot_type>> && 
             slots_ == nullptr) {
-            infoz_ = Sample();
         }
 
         auto layout = MakeLayout(new_capacity);
@@ -2280,7 +2224,6 @@ private:
         slots_ = layout.template Pointer<1>(mem);
         reset_ctrl(new_capacity);
         reset_growth_left(new_capacity);
-        infoz_.RecordStorageChanged(size_, new_capacity);
     }
 
     void destroy_slots() {
@@ -2499,7 +2442,6 @@ protected:
         ++size_;
         growth_left() -= IsEmpty(ctrl_[target.offset]);
         set_ctrl(target.offset, H2(hashval));
-        infoz_.RecordInsert(hashval, target.probe_length);
         return target.offset;
     }
 
@@ -2605,7 +2547,6 @@ private:
     slot_type* slots_ = nullptr;     // [capacity * slot_type]
     size_t size_ = 0;                // number of full slots
     size_t capacity_ = 0;            // total number of slots
-    HashtablezInfoHandle infoz_;
     gtl::priv::CompressedTuple<size_t /* growth_left */, hasher,
                                               key_equal, allocator_type>
     settings_{0, hasher{}, key_equal{}, allocator_type{}};
