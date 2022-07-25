@@ -332,7 +332,7 @@ public:
     std::optional<result_type> contains(Args... args) {
         key_type key(args...);
         if (result_type res;
-            _cache.if_contains(key, [&](const auto &v, list_type &l) { res = v.second->second; }))
+            _cache.if_contains(key, [&](const auto &v, list_type &) { res = v.second->second; }))
             return { res };
         return {};
     }
