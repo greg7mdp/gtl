@@ -31,8 +31,10 @@ double simulate()
     static auto cached_complexMathFunction =
         gtl::mt_memoize_lru<decltype(&complexMathFunction), false>(&complexMathFunction);
     
-    for(int i = 0; i < 50000; i++) 
+    for(int i = 0; i < 50000; i++) {
         res += cached_complexMathFunction(i % 1000, 3.14);
+        assert(cached_complexMathFunction.contains(i % 1000, 3.14));
+    }
 #else
     for(int i = 0; i < 50000; i++) 
         res += complexMathFunction(i % 1000, 3.14);

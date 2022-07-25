@@ -3581,6 +3581,8 @@ public:
         {
             typename Lockable::UniqueLock m(inner);
             inner.set_.clear();
+            if constexpr (!std::is_same_v<gtl::priv::empty, aux_type>)
+                inner->aux_.clear();
         }
     }
 
@@ -3590,6 +3592,8 @@ public:
         Inner& inner = sets_[submap_index];
         typename Lockable::UniqueLock m(inner);
         inner.set_.clear();
+        if constexpr (!std::is_same_v<gtl::priv::empty, aux_type>)
+            inner->aux_.clear();
     }
 
     // This overload kicks in when the argument is an rvalue of insertable and
@@ -3905,12 +3909,16 @@ public:
     // -----------------------------------------------------------------------------------------
     template <class K = key_type, class F, class L>
     bool modify_if_impl(const key_arg<K>& key, F&& f) {
-        static_assert(std::is_invocable_v<F, value_type&>);
         L m;
-        auto ptr = this->template find_ptr<K, L>(key, this->hash(key), m);
+        auto [inner, ptr] = this->template find_ptr<K, L>(key, this->hash(key), m);
         if (ptr == nullptr)
             return false;
-        std::forward<F>(f)(*ptr);
+        if constexpr (std::is_same_v<gtl::priv::empty, aux_type>) {
+            static_assert(std::is_invocable_v<F, value_type&>);
+            std::forward<F>(f)(*ptr);
+        } else {
+            std::forward<F>(f)(*ptr, inner.aux_);
+        }
         return true;
     }
 
@@ -4355,12 +4363,12 @@ private:
 
 protected:
     template <class K = key_type, class L = typename Lockable::SharedLock>
-    pointer find_ptr(const key_arg<K>& key, size_t hashval, L& mutexlock)
+    std::pair<Inner&, pointer> find_ptr(const key_arg<K>& key, size_t hashval, L& mutexlock)
     {
         Inner& inner = sets_[subidx(hashval)];
         auto& set = inner.set_;
         mutexlock = std::move(L(inner));
-        return set.find_ptr(key, hashval);
+        return {inner, set.find_ptr(key, hashval)};
     }
 
     template <class K = key_type, class L = typename Lockable::SharedLock>

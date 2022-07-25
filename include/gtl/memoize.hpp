@@ -329,15 +329,13 @@ public:
         assert(max_size > 2);
     }
 
-#if 0
-    // code this - need extended API like in lazy_emplace_l
     std::optional<result_type> contains(Args... args) {
         key_type key(args...);
-        if (result_type res; _cache.if_contains(key, [&](const auto &v) { res = v.second; }))
+        if (result_type res;
+            _cache.if_contains(key, [&](const auto &v, list_type &l) { res = v.second->second; }))
             return { res };
         return {};
     }
-#endif
     
     result_type operator()(Args... args) { 
         key_type key(args...);
