@@ -17,9 +17,9 @@ public:
     void unlock() { ReleaseSRWLockExclusive(&_lock); }
 };
 
-using Map =  gtl::parallel_flat_hash_map<std::string, int, gtl::priv::hash_default_hash<std::string>,
-                                           gtl::priv::hash_default_eq<std::string>,
-                                           std::allocator<std::pair<const std::string, int>>, 8, srwlock>;
+using Map = gtl::parallel_flat_hash_map<std::string, int, gtl::priv::hash_default_hash<std::string>,
+                                        gtl::priv::hash_default_eq<std::string>,
+                                        std::allocator<std::pair<const std::string, int>>, 8, srwlock>;
 
 class Dict
 {

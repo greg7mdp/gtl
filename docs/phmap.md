@@ -51,7 +51,8 @@ The rules are the same as for `std::unordered_map`, and are valid for all the pa
 
 When the *parallel* containers are created with a mutex template parameter, such as [std::mutex](https://en.cppreference.com/w/cpp/thread/mutex), each submap is created with its own mutex, and internal operations such as `erase` are protected by the mutex of the target submap. 
 
-However, standard apis like `find()` returns an iterator, or `operator[]()` returns a reference, and these are not usable in a multithreaded environment under the internal lock protection. For this reason, the *parallel* containers provide extended APIs built with lambda, allowing to execute user code under the internal mutex protection. These APIs are as follows:
+However, standard apis like `find()` returns an iterator, or `operator[]()` returns a reference, and these are not usable in a multithreaded environment under the internal lock protection. For this reason, the *parallel* containers provide extended APIs with callback functions, allowing to execute user code under the internal mutex protection. These APIs are as follows:
+
 
 #### `if_contains`
 
@@ -65,7 +66,10 @@ bool if_contains(const key_arg<K>& key, F&& f) const;
 example:
 
 ```c++
-    using Map = ThisMap<int, int>;
+    using Map = gtl::parallel_flat_hash_map<int, int, gtl::priv::hash_default_hash<int>,
+                                            gtl::priv::hash_default_eq<int>,
+                                            std::allocator<std::pair<const int, int>>, 
+                                            4, std::mutex>;
     Map m = { {1, 7}, {2, 9} };
     
     auto val = 0; 
@@ -74,6 +78,7 @@ example:
     assert(val == 9);
     
 ```
+
 
 #### `modify_if`
 
@@ -87,13 +92,17 @@ bool modify_if(const key_arg<K>& key, F&& f);
 example:
 
 ```c++
-    using Map = ThisMap<int, int>;
+    using Map = gtl::parallel_flat_hash_map<int, int, gtl::priv::hash_default_hash<int>,
+                                            gtl::priv::hash_default_eq<int>,
+                                            std::allocator<std::pair<const int, int>>, 
+                                            4, std::mutex>;
     Map m = { {1, 7}, {2, 9} };
 
     auto set_value = [](Map::value_type& v) { v.second = 11; };
     m.modify_if(2, set_value); // calls lambda which sets m[2] to 11, and returns true
     m.modify_if(3, set_value); // returns false, because m[3] does not exist
 ```
+
 
 #### `erase_if`
 
@@ -107,7 +116,10 @@ bool erase_if(const key_arg<K>& key, F&& f);
 example:
 
 ```c++
-    using Map = ThisMap<int, int>;
+    using Map = gtl::parallel_flat_hash_map<int, int, gtl::priv::hash_default_hash<int>,
+                                            gtl::priv::hash_default_eq<int>,
+                                            std::allocator<std::pair<const int, int>>, 
+                                            4, std::mutex>;
     Map m = { {1, 7}, {2, 9}, {5, 6} };
 
     assert(m.erase_if(9, [](Map::value_type& v) { assert(0); return v.second == 12; }) == false); // m[9] not present - lambda not called
@@ -116,9 +128,10 @@ example:
     assert(m.erase_if(5, [](Map::value_type& v) { return v.second == 6; }) == true);              // lambda returns true, so m[5] erased
 ```
 
+
 #### `try_emplace_l`
 
-if the container does not contains the provided key, it is inserted and the mapped value is value-constructed with the provided arguments (if any), as with `try_emplace`. If the container already  contains the provided key, then the lambda is called with the `value_type` (under write lock protection) and can update the mapped value. Returns` true` if the key was not already present, `false` otherwise.
+if the container does not contains the provided key, it is inserted and the mapped value is value-constructed with the provided arguments (if any), as with `try_emplace`. If the container already  contains the provided key, then the lambda is called with the `value_type` (under write lock protection) and can update the mapped value. Returns `true` if the key was not already present, `false` otherwise.
 
 ```c++
 template <class K = key_type, class F, class... Args>
@@ -128,7 +141,10 @@ bool try_emplace_l(K&& k, F&& f, Args&&... args);
 example:
 
 ```c++
-    using Map = ThisMap<int, int>;
+    using Map = gtl::parallel_flat_hash_map<int, int, gtl::priv::hash_default_hash<int>,
+                                            gtl::priv::hash_default_eq<int>,
+                                            std::allocator<std::pair<const int, int>>, 
+                                            4, std::mutex>;
     Map m = { {1, 7}, {2, 9} };
 
     // overwrite an existing value
@@ -148,9 +164,10 @@ example:
     assert(m[4] == 999);
 ```
 
+
 #### `lazy_emplace_l`
 
-if the container already contains the provided key, the first lambda is called with the `value_type` (under  write lock protection) and can update the mapped value.  if the container does not contains the provided key, the second lambda is called and it should invoke the passed constructor to construct the value. Returns true if key was not already present, false otherwise.
+If the container already contains the provided key, the first lambda is called with the `value_type` (under  write lock protection) and can update the mapped value.  if the container does not contains the provided key, the second lambda is called (under  write lock protection as well) and it should invoke the passed constructor to construct the value. Returns `true` if key was not already present, `false` otherwise.
     
 ```c++
 template <class K = key_type, class FExists, class FEmplace>
@@ -159,7 +176,10 @@ bool lazy_emplace_l(const key_arg<K>& key, FExists&& fExists, FEmplace&& fEmplac
 example:
 
 ```c++
-    using Map = ThisMap<int, int>;
+    using Map = gtl::parallel_flat_hash_map<int, int, gtl::priv::hash_default_hash<int>,
+                                            gtl::priv::hash_default_eq<int>,
+                                            std::allocator<std::pair<const int, int>>, 
+                                            4, std::mutex>;
     Map m = { {1, 7}, {2, 9} };
  
     // insert a value that is not already present.
@@ -175,6 +195,7 @@ example:
                      [](const Map::constructor& ctor) { ctor(5, 13); }); // construct value_type in place when key not present
     assert(m[5] == 6);
 ```
+
 
 #### `with_submap`/ `with_submap_m`
 
@@ -192,7 +213,10 @@ void with_submap_m(size_t idx, F&& fCallback); // non-const version
 example:
 
 ```c++
-    using Map = ThisMap<int, int>;
+    using Map = gtl::parallel_flat_hash_map<int, int, gtl::priv::hash_default_hash<int>,
+                                            gtl::priv::hash_default_eq<int>,
+                                            std::allocator<std::pair<const int, int>>, 
+                                            4, std::mutex>;
     Map m = { {1, 7}, {2, 8}, {5, 11} };
     int counter = 0;
     for (size_t i=0; i<m.subcnt(); ++i) {
@@ -205,6 +229,7 @@ example:
     }
     assert(counter == 3);
 ```
+
 
 #### `for_each` / `for_each_m`
 
@@ -221,7 +246,10 @@ void for_each_m(F&& fCallback); // non-const version
 example:
 
 ```c++
-    using Map = ThisMap<int, int>;
+    using Map = gtl::parallel_flat_hash_map<int, int, gtl::priv::hash_default_hash<int>,
+                                            gtl::priv::hash_default_eq<int>,
+                                            std::allocator<std::pair<const int, int>>, 
+                                            4, std::mutex>;
     Map m = { {1, 7}, {2, 8}, {5, 11} };
 
     // increment all values by 1
