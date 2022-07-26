@@ -3936,7 +3936,8 @@ public:
     }
 
     // this version allows to modify the values
-    void for_each_m(std::function<void (value_type&)> && fCallback) {
+    template <class F>
+    void for_each_m(F&& fCallback) {
         for (auto& inner : sets_) {
             typename Lockable::UniqueLock m(const_cast<Inner&>(inner));
             std::for_each(inner.set_.begin(), inner.set_.end(), fCallback);
@@ -3960,7 +3961,7 @@ public:
         std::for_each(
             std::forward<ExecutionPolicy>(policy), sets_.begin(), sets_.end(),
             [&](auto& inner) {
-                typename Lockable::UniqueLock m(const_cast<Inner&>(inner));
+                typename Lockable::UniqueLock m(inner);
                 std::for_each(inner.set_.begin(), inner.set_.end(), fCallback);
             }
         );
@@ -3981,10 +3982,10 @@ public:
     }
 
     template <class F>
-    void with_submap_m(size_t idx, F&& fCallback) const {
+    void with_submap_m(size_t idx, F&& fCallback) {
         Inner& inner   = sets_[idx];
         auto&  set     = inner.set_;
-        typename Lockable::UniqueLock m(const_cast<Inner&>(inner));
+        typename Lockable::UniqueLock m(inner);
         fCallback(set);
     }
 

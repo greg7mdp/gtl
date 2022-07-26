@@ -53,9 +53,8 @@ TEST(THIS_TEST_NAME, TryEmplaceL) {
 
     // insert a value that is not already present. Will be default initialised to 0 and lambda not called
     m.try_emplace_l(3, 
-                    [](Map::value_type& v) { v.second = 6; }, // called only when key was already present
-                    1);                    // argument to construct new value is key not present
-    EXPECT_EQ(m[3], 1);
+                    [](Map::value_type& v) { v.second = 6; }); // called only when key was already present
+    EXPECT_EQ(m[3], 0);
     
     // insert a value that is not already present, provide argument to value-construct it
     m.try_emplace_l(4, 
@@ -117,6 +116,9 @@ TEST(THIS_TEST_NAME, ForEach) {
         });
     EXPECT_EQ(counter, 3);
 
+    // ----------------
+    // test with_submap
+    // ----------------
     counter = 0;
     for (size_t i=0; i<m.subcnt(); ++i) {
         m.with_submap(i, [&](const Map::EmbeddedSet& set) {
