@@ -3527,7 +3527,7 @@ public:
         }
     }
 
-    // extension - clears only soecified submap
+    // extension - clears only specified submap
     // ----------------------------------------
     void clear(std::size_t submap_index) {
         Inner& inner = sets_[submap_index];
@@ -3926,10 +3926,19 @@ public:
     // s.for_each([](auto const & key) {
     //    // Safely iterates over all the keys
     // });
+    // -------------------------------------------------
     template <class F>
     void for_each(F&& fCallback) const {
         for (auto const& inner : sets_) {
             typename Lockable::SharedLock m(const_cast<Inner&>(inner));
+            std::for_each(inner.set_.begin(), inner.set_.end(), fCallback);
+        }
+    }
+
+    // this version allows to modify the values
+    void for_each_m(std::function<void (value_type&)> && fCallback) {
+        for (auto& inner : sets_) {
+            typename Lockable::UniqueLock m(const_cast<Inner&>(inner));
             std::for_each(inner.set_.begin(), inner.set_.end(), fCallback);
         }
     }
@@ -3945,17 +3954,7 @@ public:
             }
         );
     }
-#endif
 
-    // this version allows to modify the values
-    void for_each_m(std::function<void (value_type&)> && fCallback) {
-        for (auto& inner : sets_) {
-            typename Lockable::UniqueLock m(const_cast<Inner&>(inner));
-            std::for_each(inner.set_.begin(), inner.set_.end(), fCallback);
-        }
-    }
-
-#if __cplusplus >= 201703L
     template <class ExecutionPolicy, class F>
     void for_each_m(ExecutionPolicy&& policy, F&& fCallback) {
         std::for_each(
@@ -3967,6 +3966,27 @@ public:
         );
     }
 #endif
+
+    // Extension API: access internal submaps by index
+    // under lock protection
+    // ex: m.with_submap(i, [&](const Map::EmbeddedSet& set) {
+    //        for (auto& p : set) { ...; }});
+    // -------------------------------------------------
+    template <class F>
+    void with_submap(size_t idx, F&& fCallback) const {
+        const Inner& inner     = sets_[idx];
+        const auto&  set = inner.set_;
+        typename Lockable::SharedLock m(const_cast<Inner&>(inner));
+        fCallback(set);
+    }
+
+    template <class F>
+    void with_submap_m(size_t idx, F&& fCallback) const {
+        Inner& inner   = sets_[idx];
+        auto&  set     = inner.set_;
+        typename Lockable::UniqueLock m(const_cast<Inner&>(inner));
+        fCallback(set);
+    }
 
     // Extension API: support for heterogeneous keys.
     //
