@@ -152,7 +152,7 @@ When printed, converted to `std::string`, or displayed in the debugger with the 
 The classes from the `memoize.hpp` header provide a very efficient way to memoize the return values of pure functions, whether in a multi threaded context or a single threaded one. In particular, the `mt_memoize_lru` class internally uses the extended parallel hashmap APIs to minimize locking contention when the cache is used from concurrrent threads.
 
 
-* `gtl::lru_cache`: a basic lru (least recently used) cache, not intenally thread-safe, probiding APIs like `insert()` to look up (and insert items if not already present)
+* `gtl::lru_cache`: a basic lru (least recently used) cache, not internally thread-safe, providing APIs like `contains()` and`insert()` to look up and insert items if not already present.
 * `gtl::memoize`
 * `gtl::memoize_lru`
 * `gtl::mt_memoize`: 
