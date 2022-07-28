@@ -8,7 +8,7 @@ cmake_policy(SET CMP0048 NEW)                    ## set VERSION as documented by
 cmake_policy(SET CMP0076 NEW)                    ## accept new policy
 
 if(NOT CMAKE_CXX_STANDARD)
-    set(CMAKE_CXX_STANDARD 20)                   ## compile with C++20 support
+    set(CMAKE_CXX_STANDARD 17)                   ## compile with C++17 support
 endif()
 if(NOT CMAKE_CXX_STANDARD_REQUIRED)
     set(CMAKE_CXX_STANDARD_REQUIRED ON)
