@@ -8,7 +8,7 @@ cmake_policy(SET CMP0048 NEW)                    ## set VERSION as documented by
 cmake_policy(SET CMP0076 NEW)                    ## accept new policy
 
 if(NOT CMAKE_CXX_STANDARD)
-    set(CMAKE_CXX_STANDARD 17)                   ## compile with C++17 support
+    set(CMAKE_CXX_STANDARD 20)                   ## compile with C++20 support
 endif()
 if(NOT CMAKE_CXX_STANDARD_REQUIRED)
     set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -108,7 +108,7 @@ if (GTL_BUILD_TESTS)
     gtl_cc_test(NAME btree SRCS "tests/btree/btree_test.cpp" DEPS ${GTL_GTEST_LIBS})
 
     ## --------------- misc -----------------------------------------------
-    gtl_cc_test(NAME memoize SRCS "tests/misc/memoize_test.cpp" DEPS ${GTL_GTEST_LIBS})
+    gtl_cc_test(NAME lru_cache SRCS "tests/misc/lru_cache_test.cpp" DEPS ${GTL_GTEST_LIBS})
     gtl_cc_test(NAME bit_vector SRCS "tests/misc/bitvector_test.cpp" DEPS ${GTL_GTEST_LIBS})
 endif()
 

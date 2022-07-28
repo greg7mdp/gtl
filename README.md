@@ -15,7 +15,7 @@ We also have a fast `bit_vector` implementation, which is an alternative to `std
 
 We are happy to integrate new classes into [gtl](https://github.com/greg7mdp/gtl), provided the license is compatible with ours, and we feel they will be useful to most users. Often, when integrating classes from other sources, we are able to improve their performance both in time and space by using other classes already available in [gtl](https://github.com/greg7mdp/gtl) (such as hash maps, btree, bit_vector, etc...)  instead of the spandard ones.
 
-[gtl](https://github.com/greg7mdp/gtl) requires a C++17 compiler. We currently support:  `Visual Studio 2019 +`, `gcc 8 +`, and `clang 10 +` (or Xcode 12 + on MacOS). The compiler requirement will be raised to C++20 in the near future.
+[gtl](https://github.com/greg7mdp/gtl) requires a C++20 compiler. We currently support:  `Visual Studio 2019 +`, `gcc 8 +`, and `clang 10 +` (or Xcode 12 + on MacOS). 
 
 Because [gtl](https://github.com/greg7mdp/gtl) is a header only library, installation is trivial, just copy the `include/gtl` directory to your project somewhere in your include path and you are good to go. We also support common package managers such as [Conan](https://conan.io/) and [vcpkg](https://vcpkg.io/en/index.html).
 

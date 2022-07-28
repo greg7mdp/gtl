@@ -1,5 +1,5 @@
-#ifndef gtl_lru_cache_h_
-#define gtl_lru_cache_h_
+#ifndef gtl_memoize_h_
+#define gtl_memoize_h_
 
 #include <cstddef>
 #include <cassert>
@@ -9,91 +9,6 @@
 #include <gtl/phmap.hpp>
 
 namespace gtl {
-
-// ------------------------------------------------------------------------------
-// Original author: Alexander Ponomarev (see licenses/license_lamerman)
-// Modified by Gregory Popovitch
-// ------------------------------------------------------------------------------
-template<class K, class V, class Hash = gtl::Hash<K>, class Eq = std::equal_to<K>>
-class lru_cache 
-{
-public:
-    using value_type = typename std::pair<const K, V>;
-    using list_iter  = typename std::list<value_type>::iterator;
-
-    explicit lru_cache(size_t max_size = 128) 
-    {
-        assert(max_size >= 1);
-        set_cache_size(max_size);
-    }
-
-    void set_cache_size(size_t max_size) 
-    {
-        _max_size = max_size; 
-        while (_cache_items_map.size() > _max_size) 
-            remove_oldest();
-    }
-
-    void remove_oldest()
-    {
-        if (!_cache_items_map.empty())
-        {
-            assert(!_cache_items_list.empty());
-
-            auto last = _cache_items_list.end();
-            last--;
-            _cache_items_map.erase(last->first);
-            _cache_items_list.pop_back();
-        }
-    }
-	
-    template <class Val>
-    V *insert(const K& key, Val&& value) 
-    {
-        auto it = _cache_items_map.find(key);
-        
-        if (it != _cache_items_map.end()) {
-            _cache_items_list.erase(it->second);
-            _cache_items_map.erase(it);
-        }
-			
-        _cache_items_list.push_front(value_type(key, std::forward<Val>(value)));
-        _cache_items_map[key] = _cache_items_list.begin();
-		
-        if (_cache_items_map.size() > _max_size) 
-            remove_oldest();
-
-        return &(_cache_items_list.begin()->second);
-    }
-	
-    V *get(const K& key) 
-    {
-        auto it = _cache_items_map.find(key);
-        if (it == _cache_items_map.end()) 
-            return nullptr;
-        
-        _cache_items_list.splice(_cache_items_list.begin(), _cache_items_list, it->second);
-        return &(it->second->second);
-    }
-	
-    bool exists(const K& key) const noexcept {
-        return _cache_items_map.find(key) != _cache_items_map.end();
-    }
-	
-    size_t size() const noexcept {
-        return _cache_items_map.size();
-    }
-
-    void clear() noexcept {
-        _cache_items_map.clear();
-        _cache_items_list.clear();
-    }
-	
-private:
-    std::list<value_type> _cache_items_list;
-    gtl::flat_hash_map<K, list_iter, Hash, Eq> _cache_items_map;
-    size_t _max_size;
-};
 
 // ------------------------------------------------------------------------------
 // deduct the variadic parameter pack of a lambda.
@@ -120,57 +35,6 @@ struct pack_helper<R(LambdaClass::*)(Args...) const> {
 
 template <class F>
 using this_pack_helper = typename pack_helper<F>::args;
-
-#if 0
-// ------------------------------------------------------------------------------
-// Author:  Gregory Popovitch (greg7mdp@gmail.com)
-// 
-// Given a callable object (often a function), this class provides a new 
-// callable which either invokes the original one, caching the returned value,
-// or returns the cached returned value if the arguments match a previous call.
-// Of course this should be used only for pure functions without side effects.
-//
-// This version only keeps a limited number of results in the hash map,
-// configurable with set_max_size(). default max_size = 128
-// ------------------------------------------------------------------------------
-template <class F, class = this_pack_helper<F>>
-class memoize_lru;
-
-template <class F, class... Args>
-class memoize_lru<F, pack<Args...>>
-{
-public:
-    using key_type = std::tuple<Args...>;
-    using result_type = decltype(std::declval<F>()(std::declval<Args>()...));
-
-    memoize_lru(F &&f) : _f(std::move(f)) {}
-
-    memoize_lru(F const& f) : _f(f) {}
-    
-    result_type* contains(Args... args) { 
-        key_type key(args...);
-        return _cache.get(key);
-    }
-    
-    result_type operator()(Args... args) { 
-        key_type key(args...);
-        auto hit = _cache.get(key);
-        if (hit)
-            return *hit;
-        auto res =  _f(args...); 
-        _cache.insert(key, res);
-        return res;
-    }
-
-    void set_max_size(size_t sz) const { _cache.set_cache_size(sz); }
-    size_t size() const { return _cache.size(); }
-    void clear() { _cache.clear(); }
-
-private:
-    F _f;
-    lru_cache<key_type, result_type>  _cache;
-};
-#endif
 
 // ------------------------------------------------------------------------------
 // Author:  Gregory Popovitch (greg7mdp@gmail.com)
@@ -207,16 +71,15 @@ public:
     using result_type = decltype(std::declval<F>()(std::declval<Args>()...));
     using map_type = gtl::parallel_flat_hash_map<
         key_type, result_type,
-        gtl::priv::hash_default_hash<key_type>,
-        gtl::priv::hash_default_eq<key_type>,
-        gtl::priv::Allocator<gtl::priv::Pair<key_type, result_type>>,
+        gtl::Hash<key_type>,
+        std::equal_to<key_type>,
+        std::allocator<std::pair<const key_type, result_type>>,
         N, Mutex>;
-        
 
     mt_memoize(F &&f) : _f(std::move(f)) {}
 
-    mt_memoize(F const& f) : _f(f) {}
-    
+    mt_memoize(F &f) : _f(f) {}
+
     std::optional<result_type> contains(Args... args) {
         key_type key(args...);
         if (result_type res; _cache.if_contains(key, [&](const auto &v) { res = v.second; }))
@@ -231,13 +94,14 @@ public:
             // so use lazy_emplace_l to take the lock only once.
             // --------------------------------------------------------------------
             result_type res;
-            _cache.lazy_emplace_l(key, 
-                                  [&](typename map_type::value_type& v) {
-                                      // called only when key was already present
-                                      res = v.second; },   
-                                  [&](const typename map_type::constructor& ctor) {
-                                      // construct value_type in place when key not present
-                                      res =_f(args...); ctor(key, res); });
+            _cache.lazy_emplace_l(
+                key, 
+                [&](typename map_type::value_type& v) {
+                    // called only when key was already present
+                    res = v.second; },   
+                [&](const typename map_type::constructor& ctor) {
+                    // construct value_type in place when key not present
+                    res =_f(args...); ctor(key, res); });
             return res;
         } else {
             // nullmutex or recursive function -> use two API for allowing more 
@@ -310,23 +174,27 @@ public:
     
     using map_type = gtl::parallel_flat_hash_map<
         key_type, list_iter,
-        gtl::priv::hash_default_hash<key_type>,
-        gtl::priv::hash_default_eq<key_type>,
-        gtl::priv::Allocator<gtl::priv::Pair<key_type, result_type>>,
+        gtl::Hash<key_type>,
+        std::equal_to<key_type>,
+        std::allocator<std::pair<const key_type, list_iter>>,
         N, Mutex, list_type>;
     
     static constexpr size_t num_submaps = map_type::subcnt();
 
     mt_memoize_lru(F &&f, size_t max_size = 65536) :
-        _f(std::move(f)), _max_size(max_size / num_submaps)
+        _f(std::move(f))
     {
-        assert(max_size > 2);
+        reserve(max_size);
+        set_cache_size(max_size);
+        assert(_max_size > 2);
     }
 
-    mt_memoize_lru(F const& f, size_t max_size = 65536) :
-        _f(f), _max_size(max_size / num_submaps)
+    mt_memoize_lru(F &f, size_t max_size = 65536) :
+        _f(f)
     {
-        assert(max_size > 2);
+        reserve(max_size);
+        set_cache_size(max_size);
+        assert(_max_size > 2);
     }
 
     std::optional<result_type> contains(Args... args) {
@@ -340,32 +208,34 @@ public:
     result_type operator()(Args... args) { 
         key_type key(args...);
         result_type res;
-        _cache.lazy_emplace_l(key, 
-                              [&](typename map_type::value_type& v, list_type &l) {
-                                  // called only when key was already present
-                                  res = v.second->second;
-                                  l.splice(l.begin(), l, v.second);
-                              },   
-                              [&](const typename map_type::constructor& ctor, list_type &l) {
-                                  // construct value_type in place when key not present
-                                  res =_f(args...);
-                                  l.push_front(value_type(key, res));
-                                  ctor(key, l.begin());
-                                  if (l.size() >= _max_size) {
-                                      // remove oldest
-                                      auto last = l.end();
-                                      last--;
-                                      auto to_delete = last->first;
-                                      l.pop_back();
-                                      return std::optional<key_type>{to_delete};
-                                  }
-                                  return std::optional<key_type>{};
-                              });
+        _cache.lazy_emplace_l(
+            key, 
+            [&](typename map_type::value_type& v, list_type &l) {
+                // called only when key was already present
+                res = v.second->second;
+                l.splice(l.begin(), l, v.second);
+            },   
+            [&](const typename map_type::constructor& ctor, list_type &l) {
+                // construct value_type in place when key not present
+                res =_f(args...);
+                l.push_front(value_type(key, res));
+                ctor(key, l.begin());
+                if (l.size() >= _max_size) {
+                    // remove oldest
+                    auto last = l.end();
+                    last--;
+                    auto to_delete = last->first;
+                    l.pop_back();
+                    return std::optional<key_type>{to_delete};
+                }
+                return std::optional<key_type>{};
+            });
         return res;
     }
 
-    void clear() { _cache.clear(); }
-    void reserve(size_t n) { _cache.reserve(n); }
+    void clear()           { _cache.clear(); }
+    void reserve(size_t n) { _cache.reserve(size_t(n * 1.1f)); }
+    void set_cache_size(size_t max_size) { _max_size = max_size / num_submaps; }
     size_t size() const { return _cache.size(); }
 
 private:
@@ -438,4 +308,4 @@ private:
 
 }  // namespace gtl
 
-#endif  // gtl_lru_cache_h_
+#endif  // gtl_memoize_h_
