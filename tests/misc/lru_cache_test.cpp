@@ -53,9 +53,3 @@ TEST(CacheTest1, mtKeepsAllValuesWithinCapacity) {
         EXPECT_EQ(i, *cache.get(i));
     }
 }
-
-int main(int argc, char **argv) {
-    ::testing::InitGoogleTest(&argc, argv);
-    int ret = RUN_ALL_TESTS();
-    return ret;
-}
