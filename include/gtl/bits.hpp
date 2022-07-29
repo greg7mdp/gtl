@@ -1,8 +1,8 @@
-#if !defined(gtl_bits_h_guard_)
-#define gtl_bits_h_guard_
+#if !defined(gtl_bits_hpp_guard_)
+#define gtl_bits_hpp_guard_
 
 // ---------------------------------------------------------------------------
-// Copyright (c) 2019, Gregory Popovitch - greg7mdp@gmail.com
+// Copyright (c) 2019-2022, Gregory Popovitch - greg7mdp@gmail.com
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -658,4 +658,4 @@ inline void Store64(void *p, uint64_t v) {
      #pragma warning(pop)  
 #endif
 
-#endif // gtl_bits_h_guard_
+#endif // gtl_bits_hpp_guard_

@@ -1,5 +1,5 @@
-#ifndef gtl_stopwatch_h_guard
-#define gtl_stopwatch_h_guard
+#ifndef gtl_stopwatch_hpp_guard
+#define gtl_stopwatch_hpp_guard
 
 // ---------------------------------------------------------------------------
 // Copyright (c) 2022, Gregory Popovitch - greg7mdp@gmail.com
@@ -57,4 +57,4 @@ namespace gtl
             
 }
 
-#endif // gtl_stopwatch_h_guard
+#endif // gtl_stopwatch_hpp_guard

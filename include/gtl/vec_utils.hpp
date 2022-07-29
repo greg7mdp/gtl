@@ -1,5 +1,5 @@
-#if !defined(vec_utils_h_guard_)
-#define vec_utils_h_guard_
+#if !defined(vec_utils_hpp_guard_)
+#define vec_utils_hpp_guard_
 
 // ---------------------------------------------------------------------------
 // Copyright (c) 2022, Gregory Popovitch - greg7mdp@gmail.com
@@ -77,5 +77,5 @@ auto map(F &&f, const V<T, A>& v)
 
 } // namespace gtl
 
-#endif // vec_utils_h_guard_
+#endif // vec_utils_hpp_guard_
  

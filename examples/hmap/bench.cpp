@@ -314,7 +314,7 @@ Timer _fill_random2(int64_t cnt, HT &hash)
         out(test, total_num_keys(), timer);
     }
     fprintf(stderr, "inserted %.2lfM\n", (double)hash.size() / 1000000);
-    outmem(test, total_num_keys(), spp::GetProcessMemoryUsed());
+    outmem(test, total_num_keys(), gtl::GetProcessMemoryUsed());
     return timer;
 }
 
@@ -354,14 +354,14 @@ Timer _delete(vector<T> &v, HT &hash)
 void memlog()
 {
     std::this_thread::sleep_for(std::chrono::milliseconds(10));
-    uint64_t nbytes_old_out = spp::GetProcessMemoryUsed();
-    uint64_t nbytes_old     = spp::GetProcessMemoryUsed(); // last non outputted mem measurement
+    uint64_t nbytes_old_out = gtl::GetProcessMemoryUsed();
+    uint64_t nbytes_old     = gtl::GetProcessMemoryUsed(); // last non outputted mem measurement
     outmem(test, 0, nbytes_old);
     int64_t last_loop = 0;
 
     while (!all_done)
     {
-        uint64_t nbytes = spp::GetProcessMemoryUsed();
+        uint64_t nbytes = gtl::GetProcessMemoryUsed();
 
         if ((double)_abs(nbytes - nbytes_old_out) / nbytes_old_out > 0.03 ||
             (double)_abs(nbytes - nbytes_old) / nbytes_old > 0.01)

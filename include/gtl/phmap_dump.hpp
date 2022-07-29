@@ -1,8 +1,8 @@
-#if !defined(phmap_dump_h_guard_)
-#define phmap_dump_h_guard_
+#if !defined(phmap_dump_hpp_guard_)
+#define phmap_dump_hpp_guard_
 
 // ---------------------------------------------------------------------------
-// Copyright (c) 2019, Gregory Popovitch - greg7mdp@gmail.com
+// Copyright (c) 2019-2022, Gregory Popovitch - greg7mdp@gmail.com
 //
 //       providing dump/load/mmap_load
 //
@@ -260,4 +260,4 @@ namespace cereal
 
 
 
-#endif // phmap_dump_h_guard_
+#endif // phmap_dump_hpp_guard_

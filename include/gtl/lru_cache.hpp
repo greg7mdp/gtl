@@ -1,5 +1,15 @@
-#ifndef gtl_lru_cache_h_
-#define gtl_lru_cache_h_
+#ifndef gtl_lru_cache_hpp_
+#define gtl_lru_cache_hpp_
+
+// ---------------------------------------------------------------------------
+// Copyright (c) 2022, Gregory Popovitch - greg7mdp@gmail.com
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//      https://www.apache.org/licenses/LICENSE-2.0
+// ---------------------------------------------------------------------------
 
 #include <cstddef>
 #include <cassert>
@@ -10,7 +20,6 @@
 namespace gtl {
 
 // ------------------------------------------------------------------------------
-// Author:  Gregory Popovitch (greg7mdp@gmail.com)
 // ------------------------------------------------------------------------------
 template<class K, class V,
          size_t N = 4,
@@ -117,4 +126,4 @@ using mt_lru_cache = lru_cache_impl<K, V, 6, Hash, Eq, std::mutex>;
     
 }  // namespace gtl
 
-#endif  // gtl_lru_cache_h_
+#endif  // gtl_lru_cache_hpp_

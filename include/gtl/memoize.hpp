@@ -1,5 +1,15 @@
-#ifndef gtl_memoize_h_
-#define gtl_memoize_h_
+#ifndef gtl_memoize_hpp_
+#define gtl_memoize_hpp_
+
+// ---------------------------------------------------------------------------
+// Copyright (c) 2022, Gregory Popovitch - greg7mdp@gmail.com
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//      https://www.apache.org/licenses/LICENSE-2.0
+// ---------------------------------------------------------------------------
 
 #include <cstddef>
 #include <cassert>
@@ -37,8 +47,6 @@ template <class F>
 using this_pack_helper = typename pack_helper<F>::args;
 
 // ------------------------------------------------------------------------------
-// Author:  Gregory Popovitch (greg7mdp@gmail.com)
-// 
 // Given a callable object (often a function), this class provides a new 
 // callable which either invokes the original one, caching the returned value,
 // or returns the cached returned value if the arguments match a previous call.
@@ -57,7 +65,7 @@ using this_pack_helper = typename pack_helper<F>::args;
 // N=6 create 64 submaps. Each submap has its own mutex to reduce contention
 // in a heavily multithreaded context.
 //
-// see example: cache/memoize_mt.cpp
+// see example: examples/memoize/mt_memoize.cpp
 // ------------------------------------------------------------------------------
 template <class F, bool recursive = true, size_t N = 6, 
           class Mutex = std::mutex, class = this_pack_helper<F>>
@@ -133,13 +141,14 @@ private:
 // Of course this should be used only for pure functions without side effects.
 //
 // This version keeps all unique results in the hash map.
+//
+// when the memoized function is used from a single thread, use the gtl::NullMutex
+// so we don't incur any locking cost.
 // ------------------------------------------------------------------------------
 template <class F, size_t N = 4>
 using memoize = mt_memoize<F, true, N, gtl::NullMutex>;
 
 // ------------------------------------------------------------------------------
-// Author:  Gregory Popovitch (greg7mdp@gmail.com)
-// 
 // Given a callable object (often a function), this class provides a new 
 // callable which either invokes the original one, caching the returned value,
 // or returns the cached returned value if the arguments match a previous call.
@@ -154,7 +163,7 @@ using memoize = mt_memoize<F, true, N, gtl::NullMutex>;
 // N=6 create 64 submaps. Each submap has its own mutex to reduce contention
 // in a heavily multithreaded context.
 //
-// see example: cache/memoize_mt.cpp
+// see example: examples/memoize/mt_memoize_lru.cpp
 //
 // ------------------------------------------------------------------------------
 template <class F, size_t N = 6, 
@@ -236,7 +245,7 @@ public:
     void clear()           { _cache.clear(); }
     void reserve(size_t n) { _cache.reserve(size_t(n * 1.1f)); }
     void set_cache_size(size_t max_size) { _max_size = max_size / num_submaps; }
-    size_t size() const { return _cache.size(); }
+    size_t size() const    { return _cache.size(); }
 
 private:
     F _f;
@@ -245,11 +254,14 @@ private:
 };
     
 // ------------------------------------------------------------------------------
+// when the memoized function is used from a single thread, use the gtl::NullMutex
+// so we don't incur any locking cost.
+// ------------------------------------------------------------------------------
 template <class F, size_t N = 4>
 using memoize_lru = mt_memoize_lru<F, N, gtl::NullMutex>;
     
 // ------------------------------------------------------------------------------
-// Author:  Gregory Popovitch (greg7mdp@gmail.com)
+// Attempting to create a lazy list... not ready for prime time :-)
 // ------------------------------------------------------------------------------
 template <class T, class F> 
 class lazy_list 
@@ -308,4 +320,4 @@ private:
 
 }  // namespace gtl
 
-#endif  // gtl_memoize_h_
+#endif  // gtl_memoize_hpp_

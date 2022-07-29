@@ -1,8 +1,8 @@
-#if !defined(phmap_h_guard_)
-#define phmap_h_guard_
+#if !defined(phmap_hpp_guard_)
+#define phmap_hpp_guard_
 
 // ---------------------------------------------------------------------------
-// Copyright (c) 2019, Gregory Popovitch - greg7mdp@gmail.com
+// Copyright (c) 2019-2022, Gregory Popovitch - greg7mdp@gmail.com
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -5598,4 +5598,4 @@ namespace gtl {
 #endif
 
 
-#endif // phmap_h_guard_
+#endif // phmap_hpp_guard_

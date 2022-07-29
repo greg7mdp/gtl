@@ -1,5 +1,8 @@
+#ifndef gtl_btree_container_hpp_
+#define gtl_btree_container_hpp_
+
 // ---------------------------------------------------------------------------
-// Copyright (c) 2019, Gregory Popovitch - greg7mdp@gmail.com
+// Copyright (c) 2019-2022, Gregory Popovitch - greg7mdp@gmail.com
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -30,9 +33,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 // ---------------------------------------------------------------------------
-
-#ifndef GTL_BTREE_BTREE_CONTAINER_H_
-#define GTL_BTREE_BTREE_CONTAINER_H_
 
 #ifdef _MSC_VER
     #pragma warning(push)  
@@ -4327,4 +4327,4 @@ namespace priv {
 #endif
 
 
-#endif  // GTL_BTREE_BTREE_CONTAINER_H_
+#endif  // gtl_btree_container_hpp_

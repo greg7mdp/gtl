@@ -1,8 +1,8 @@
-#if !defined(gtl_intrusive_h_guard_)
-#define gtl_intrusive_h_guard_
+#if !defined(gtl_intrusive_hpp_guard_)
+#define gtl_intrusive_hpp_guard_
 
 // ---------------------------------------------------------------------------
-//  This file Copyright (c) 2022, Gregory Popovitch - greg7mdp@gmail.com
+//  Copyright (c) 2022, Gregory Popovitch - greg7mdp@gmail.com
 //  modified from the boost version - licenses below
 //
 //  Licensed under the Apache License, Version 2.0 (the "License");
@@ -21,6 +21,7 @@
 //    (See accompanying file LICENSE_1_0.txt or copy at
 //          http://www.boost.org/LICENSE_1_0.txt)
 // ---------------------------------------------------------------------------
+
 #include <cassert>
 #include <cstddef>
 #include <atomic>
@@ -485,4 +486,4 @@ protected:
 } // namespace gtl    
 
 
-#endif // gtl_intrusive_h_guard_
+#endif // gtl_intrusive_hpp_guard_

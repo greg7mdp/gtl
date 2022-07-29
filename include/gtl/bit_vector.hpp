@@ -1,5 +1,5 @@
-#if !defined(bit_vector_h_guard_)
-#define bit_vector_h_guard_
+#if !defined(bit_vector_hpp_guard_)
+#define bit_vector_hpp_guard_
 
 // ---------------------------------------------------------------------------
 // Copyright (c) 2022, Gregory Popovitch - greg7mdp@gmail.com
@@ -913,4 +913,4 @@ namespace std
     };
 }
 
-#endif // bit_vector_h_guard_
+#endif // bit_vector_hpp_guard_

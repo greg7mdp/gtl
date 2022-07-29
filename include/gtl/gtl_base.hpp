@@ -1,8 +1,8 @@
-#if !defined(gtl_base_h_guard_)
-#define gtl_base_h_guard_
+#if !defined(gtl_base_hpp_guard_)
+#define gtl_base_hpp_guard_
 
 // ---------------------------------------------------------------------------
-// Copyright (c) 2019, Gregory Popovitch - greg7mdp@gmail.com
+// Copyright (c) 2019-2022, Gregory Popovitch - greg7mdp@gmail.com
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -1220,4 +1220,4 @@ static inline void ThrowStdOutOfRange(const char* what_arg) {
 #endif
 
 
-#endif // gtl_base_h_guard_
+#endif // gtl_base_hpp_guard_

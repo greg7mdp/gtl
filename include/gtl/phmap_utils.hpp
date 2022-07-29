@@ -1,8 +1,8 @@
-#if !defined(phmap_utils_h_guard_)
-#define phmap_utils_h_guard_
+#if !defined(phmap_utils_hpp_guard_)
+#define phmap_utils_hpp_guard_
 
 // ---------------------------------------------------------------------------
-// Copyright (c) 2019, Gregory Popovitch - greg7mdp@gmail.com
+// Copyright (c) 2019-2022, Gregory Popovitch - greg7mdp@gmail.com
 //
 //       minimal header providing gtl::HashState
 //
@@ -37,7 +37,7 @@
 // ---------------------------------------------------------------
 // Absl forward declaration requires global scope.
 // ---------------------------------------------------------------
-#if defined(GTL_USE_ABSL_HASH) && !defined(phmap_fwd_decl_h_guard_) && !defined(ABSL_HASH_HASH_H_)
+#if defined(GTL_USE_ABSL_HASH) && !defined(phmap_fwd_decl_hpp_guard_) && !defined(ABSL_HASH_HASH_H_)
     namespace absl { template <class T> struct Hash; };
 #endif
 
@@ -139,7 +139,7 @@ public:
     static constexpr bool value = std::is_same<decltype(test<T>(0)), yes>::value;
 };
 
-#if defined(GTL_USE_ABSL_HASH) && !defined(phmap_fwd_decl_h_guard_)
+#if defined(GTL_USE_ABSL_HASH) && !defined(phmap_fwd_decl_hpp_guard_)
     template <class T> using Hash = ::absl::Hash<T>;
 #elif !defined(GTL_USE_ABSL_HASH)
 // ---------------------------------------------------------------
@@ -419,4 +419,4 @@ private:
      #pragma warning(pop)  
 #endif
 
-#endif // phmap_utils_h_guard_
+#endif // phmap_utils_hpp_guard_
