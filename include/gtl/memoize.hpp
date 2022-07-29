@@ -233,7 +233,7 @@ public:
                     // remove oldest
                     auto last = l.end();
                     last--;
-                    auto to_delete = last->first;
+                    auto to_delete = std::move(last->first);
                     l.pop_back();
                     return std::optional<key_type>{to_delete};
                 }
