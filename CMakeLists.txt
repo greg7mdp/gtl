@@ -1,3 +1,22 @@
+#[===================================================================[
+    gtl library by Gregory Popovitch
+
+    CMake projects that wish to use this library may do
+    something like :
+
+    include(FetchContent)
+    FetchContent_Declare(
+        gtl
+        GIT_REPOSITORY https://github.com/greg7mdp/gtl.git
+        GIT_TAG        1.01 # adjust tag/branch/commit as needed
+    )
+    FetchContent_MakeAvailable(gtl)
+
+    ...
+    target_link_libraries (my_target PRIVATE gtl)
+
+#]===================================================================]
+
 cmake_minimum_required(VERSION 3.8)
 
 list (APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake")
@@ -62,96 +81,103 @@ if(GTL_INSTALL)
 endif()
 
 
-## ------------------------- building tests and examples -------------
-option(GTL_BUILD_TESTS      "Whether or not to build the tests"      ${GTL_MASTER_PROJECT})
-option(GTL_BUILD_EXAMPLES   "Whether or not to build the examples"   ${GTL_MASTER_PROJECT})
-option(GTL_BUILD_BENCHMARKS "Whether or not to build the benchmarks" ${GTL_MASTER_PROJECT})
-
-if (GTL_BUILD_TESTS)
-
-    if (NOT GTL_GTEST_LIBS)
-        include(cmake/DownloadGTest.cmake)
-        include_directories(${PROJECT_SOURCE_DIR})
-
-        gtl_check_target(gtest)
-        gtl_check_target(gtest_main)
-        gtl_check_target(gmock)
-        set(GTL_GTEST_LIBS gmock_main)
+## However when this repo is used using cmake FetchContent, we don't want to
+## download gtest and define all the test and example targets.
+if(CMAKE_CURRENT_SOURCE_DIR STREQUAL CMAKE_SOURCE_DIR)
+    ## We're in the root directory, define additional targets for developers.
+    
+    ## ------------------------- building tests and examples -------------
+    option(GTL_BUILD_TESTS      "Whether or not to build the tests"      ${GTL_MASTER_PROJECT})
+    option(GTL_BUILD_EXAMPLES   "Whether or not to build the examples"   ${GTL_MASTER_PROJECT})
+    option(GTL_BUILD_BENCHMARKS "Whether or not to build the benchmarks" ${GTL_MASTER_PROJECT})
+    
+    if (GTL_BUILD_TESTS)
+    
+        if (NOT GTL_GTEST_LIBS)
+            include(cmake/DownloadGTest.cmake)
+            include_directories(${PROJECT_SOURCE_DIR})
+    
+            gtl_check_target(gtest)
+            gtl_check_target(gtest_main)
+            gtl_check_target(gmock)
+            set(GTL_GTEST_LIBS gmock_main)
+        endif()
+    
+        enable_testing()
+    
+        ## ---------------- base hash components ----------------------------
+        gtl_cc_test(NAME compressed_tuple SRCS "tests/phmap/compressed_tuple_test.cpp" DEPS ${GTL_GTEST_LIBS})
+        gtl_cc_test(NAME container_memory SRCS "tests/phmap/container_memory_test.cpp" DEPS ${GTL_GTEST_LIBS})
+        gtl_cc_test(NAME hash_policy_testing SRCS "tests/phmap/hash_policy_testing_test.cpp" DEPS ${GTL_GTEST_LIBS})
+        gtl_cc_test(NAME node_hash_policy SRCS "tests/phmap/node_hash_policy_test.cpp" DEPS ${GTL_GTEST_LIBS})
+        gtl_cc_test(NAME raw_hash_set SRCS "tests/phmap/raw_hash_set_test.cpp" DEPS ${GTL_GTEST_LIBS})
+        gtl_cc_test(NAME raw_hash_set_allocator SRCS "tests/phmap/raw_hash_set_allocator_test.cpp" DEPS ${GTL_GTEST_LIBS})
+    
+        ## ---------------- regular hash maps ----------------------------
+        gtl_cc_test(NAME flat_hash_set SRCS "tests/phmap/flat_hash_set_test.cpp"  DEPS ${GTL_GTEST_LIBS})
+        gtl_cc_test(NAME flat_hash_map SRCS "tests/phmap/flat_hash_map_test.cpp" DEPS ${GTL_GTEST_LIBS})
+        gtl_cc_test(NAME node_hash_map SRCS "tests/phmap/node_hash_map_test.cpp" DEPS ${GTL_GTEST_LIBS})
+        gtl_cc_test(NAME node_hash_set SRCS "tests/phmap/node_hash_set_test.cpp" DEPS ${GTL_GTEST_LIBS})
+    
+        ## --------------- parallel hash maps -----------------------------------------------
+        gtl_cc_test(NAME parallel_flat_hash_map SRCS "tests/phmap/parallel_flat_hash_map_test.cpp" DEPS ${GTL_GTEST_LIBS})
+        gtl_cc_test(NAME parallel_flat_hash_set SRCS "tests/phmap/parallel_flat_hash_set_test.cpp" DEPS ${GTL_GTEST_LIBS})
+        gtl_cc_test(NAME parallel_node_hash_map SRCS "tests/phmap/parallel_node_hash_map_test.cpp" DEPS ${GTL_GTEST_LIBS})
+        gtl_cc_test(NAME parallel_node_hash_set SRCS "tests/phmap/parallel_node_hash_set_test.cpp" DEPS ${GTL_GTEST_LIBS})
+        gtl_cc_test(NAME parallel_flat_hash_map_mutex SRCS "tests/phmap/parallel_flat_hash_map_mutex_test.cpp" DEPS ${GTL_GTEST_LIBS})
+        gtl_cc_test(NAME dump_load SRCS "tests/phmap/dump_load_test.cpp" DEPS ${GTL_GTEST_LIBS})
+        gtl_cc_test(NAME erase_if SRCS "tests/phmap/erase_if_test.cpp" DEPS ${GTL_GTEST_LIBS})
+    
+        ## --------------- btree -----------------------------------------------
+        gtl_cc_test(NAME btree SRCS "tests/btree/btree_test.cpp" DEPS ${GTL_GTEST_LIBS})
+    
+        ## --------------- misc -----------------------------------------------
+        gtl_cc_test(NAME lru_cache SRCS "tests/misc/lru_cache_test.cpp" DEPS ${GTL_GTEST_LIBS})
+        gtl_cc_test(NAME bit_vector SRCS "tests/misc/bitvector_test.cpp" DEPS ${GTL_GTEST_LIBS})
+    endif()
+    
+    if (GTL_BUILD_EXAMPLES)
+        set(THREADS_PREFER_PTHREAD_FLAG ON)
+        find_package(Threads REQUIRED)
+    
+        gtl_cc_app(ex_btree SRCS examples/btree/btree.cpp include/gtl/debug_vis/gtl.natvis)
+    
+        gtl_cc_app(ex_insert_bench SRCS examples/phmap/insert_bench.cpp include/gtl/debug_vis/gtl.natvis)
+    
+    if(MSVC)
+        gtl_cc_app(ex_lazy_emplace_l SRCS examples/phmap/lazy_emplace_l.cpp include/gtl/debug_vis/gtl.natvis)
+    endif()
+    
+        gtl_cc_app(ex_allmaps SRCS examples/hmap/allmaps.cpp include/gtl/debug_vis/gtl.natvis)
+        gtl_cc_app(ex_basic SRCS examples/hmap/basic.cpp include/gtl/debug_vis/gtl.natvis)
+        gtl_cc_app(ex_bench SRCS examples/hmap/bench.cpp include/gtl/debug_vis/gtl.natvis LIBS Threads::Threads)
+        gtl_cc_app(ex_emplace SRCS examples/hmap/emplace.cpp include/gtl/debug_vis/gtl.natvis)
+    
+        gtl_cc_app(ex_serialize SRCS examples/hmap/serialize.cpp include/gtl/debug_vis/gtl.natvis)
+        #target_include_directories(ex_serialize PUBLIC $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/../cereal/include>)
+    
+        gtl_cc_app(ex_hash SRCS examples/hmap/hash.cpp include/gtl/debug_vis/gtl.natvis)
+        gtl_cc_app(ex_hash_std SRCS examples/hmap/hash_std.cpp include/gtl/debug_vis/gtl.natvis)
+        gtl_cc_app(ex_hash_value SRCS examples/hmap/hash_value.cpp include/gtl/debug_vis/gtl.natvis)
+        gtl_cc_app(ex_two_files SRCS examples/hmap/f1.cpp examples/hmap/f2.cpp include/gtl/debug_vis/gtl.natvis)
+        gtl_cc_app(ex_knucleotide SRCS examples/hmap/knucleotide.cpp include/gtl/debug_vis/gtl.natvis LIBS Threads::Threads)
+        gtl_cc_app(ex_dump_load SRCS examples/hmap/dump_load.cpp include/gtl/debug_vis/gtl.natvis)
+        gtl_cc_app(ex_matt SRCS examples/hmap/matt.cpp include/gtl/debug_vis/gtl.natvis)
+    
+        gtl_cc_app(ex_soa SRCS examples/misc/soa.cpp include/gtl/debug_vis/gtl.natvis)
+        gtl_cc_app(ex_vec_utils SRCS examples/misc/vec_utils.cpp include/gtl/debug_vis/gtl.natvis)
+        gtl_cc_app(ex_bit_vector SRCS examples/misc/bit_vector.cpp include/gtl/debug_vis/gtl.natvis)
+        gtl_cc_app(ex_intrusive SRCS examples/misc/intrusive.cpp include/gtl/debug_vis/gtl.natvis)
+        
+        ## cache/memoize
+        gtl_cc_app(ex_memoize_fib SRCS examples/memoize/memoize_fib.cpp include/gtl/debug_vis/gtl.natvis)
+        gtl_cc_app(ex_memoize_primes SRCS examples/memoize/memoize_primes.cpp include/gtl/debug_vis/gtl.natvis)
+        gtl_cc_app(ex_mt_memoize SRCS examples/memoize/mt_memoize.cpp include/gtl/debug_vis/gtl.natvis LIBS Threads::Threads)
+        gtl_cc_app(ex_mt_memoize_lru SRCS examples/memoize/mt_memoize_lru.cpp include/gtl/debug_vis/gtl.natvis LIBS Threads::Threads)
+    endif()
+    
+    if (GTL_BUILD_BENCHMARKS)
+        gtl_cc_app(bench_bit_vector SRCS benchmarks/bitvector_bench.cpp include/gtl/debug_vis/gtl.natvis)
     endif()
 
-    enable_testing()
-
-    ## ---------------- base hash components ----------------------------
-    gtl_cc_test(NAME compressed_tuple SRCS "tests/phmap/compressed_tuple_test.cpp" DEPS ${GTL_GTEST_LIBS})
-    gtl_cc_test(NAME container_memory SRCS "tests/phmap/container_memory_test.cpp" DEPS ${GTL_GTEST_LIBS})
-    gtl_cc_test(NAME hash_policy_testing SRCS "tests/phmap/hash_policy_testing_test.cpp" DEPS ${GTL_GTEST_LIBS})
-    gtl_cc_test(NAME node_hash_policy SRCS "tests/phmap/node_hash_policy_test.cpp" DEPS ${GTL_GTEST_LIBS})
-    gtl_cc_test(NAME raw_hash_set SRCS "tests/phmap/raw_hash_set_test.cpp" DEPS ${GTL_GTEST_LIBS})
-    gtl_cc_test(NAME raw_hash_set_allocator SRCS "tests/phmap/raw_hash_set_allocator_test.cpp" DEPS ${GTL_GTEST_LIBS})
-
-    ## ---------------- regular hash maps ----------------------------
-    gtl_cc_test(NAME flat_hash_set SRCS "tests/phmap/flat_hash_set_test.cpp"  DEPS ${GTL_GTEST_LIBS})
-    gtl_cc_test(NAME flat_hash_map SRCS "tests/phmap/flat_hash_map_test.cpp" DEPS ${GTL_GTEST_LIBS})
-    gtl_cc_test(NAME node_hash_map SRCS "tests/phmap/node_hash_map_test.cpp" DEPS ${GTL_GTEST_LIBS})
-    gtl_cc_test(NAME node_hash_set SRCS "tests/phmap/node_hash_set_test.cpp" DEPS ${GTL_GTEST_LIBS})
-
-    ## --------------- parallel hash maps -----------------------------------------------
-    gtl_cc_test(NAME parallel_flat_hash_map SRCS "tests/phmap/parallel_flat_hash_map_test.cpp" DEPS ${GTL_GTEST_LIBS})
-    gtl_cc_test(NAME parallel_flat_hash_set SRCS "tests/phmap/parallel_flat_hash_set_test.cpp" DEPS ${GTL_GTEST_LIBS})
-    gtl_cc_test(NAME parallel_node_hash_map SRCS "tests/phmap/parallel_node_hash_map_test.cpp" DEPS ${GTL_GTEST_LIBS})
-    gtl_cc_test(NAME parallel_node_hash_set SRCS "tests/phmap/parallel_node_hash_set_test.cpp" DEPS ${GTL_GTEST_LIBS})
-    gtl_cc_test(NAME parallel_flat_hash_map_mutex SRCS "tests/phmap/parallel_flat_hash_map_mutex_test.cpp" DEPS ${GTL_GTEST_LIBS})
-    gtl_cc_test(NAME dump_load SRCS "tests/phmap/dump_load_test.cpp" DEPS ${GTL_GTEST_LIBS})
-    gtl_cc_test(NAME erase_if SRCS "tests/phmap/erase_if_test.cpp" DEPS ${GTL_GTEST_LIBS})
-
-    ## --------------- btree -----------------------------------------------
-    gtl_cc_test(NAME btree SRCS "tests/btree/btree_test.cpp" DEPS ${GTL_GTEST_LIBS})
-
-    ## --------------- misc -----------------------------------------------
-    gtl_cc_test(NAME lru_cache SRCS "tests/misc/lru_cache_test.cpp" DEPS ${GTL_GTEST_LIBS})
-    gtl_cc_test(NAME bit_vector SRCS "tests/misc/bitvector_test.cpp" DEPS ${GTL_GTEST_LIBS})
-endif()
-
-if (GTL_BUILD_EXAMPLES)
-    set(THREADS_PREFER_PTHREAD_FLAG ON)
-    find_package(Threads REQUIRED)
-
-    gtl_cc_app(ex_btree SRCS examples/btree/btree.cpp include/gtl/debug_vis/gtl.natvis)
-
-    gtl_cc_app(ex_insert_bench SRCS examples/phmap/insert_bench.cpp include/gtl/debug_vis/gtl.natvis)
-
-if(MSVC)
-    gtl_cc_app(ex_lazy_emplace_l SRCS examples/phmap/lazy_emplace_l.cpp include/gtl/debug_vis/gtl.natvis)
-endif()
-
-    gtl_cc_app(ex_allmaps SRCS examples/hmap/allmaps.cpp include/gtl/debug_vis/gtl.natvis)
-    gtl_cc_app(ex_basic SRCS examples/hmap/basic.cpp include/gtl/debug_vis/gtl.natvis)
-    gtl_cc_app(ex_bench SRCS examples/hmap/bench.cpp include/gtl/debug_vis/gtl.natvis LIBS Threads::Threads)
-    gtl_cc_app(ex_emplace SRCS examples/hmap/emplace.cpp include/gtl/debug_vis/gtl.natvis)
-
-    gtl_cc_app(ex_serialize SRCS examples/hmap/serialize.cpp include/gtl/debug_vis/gtl.natvis)
-    #target_include_directories(ex_serialize PUBLIC $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/../cereal/include>)
-
-    gtl_cc_app(ex_hash SRCS examples/hmap/hash.cpp include/gtl/debug_vis/gtl.natvis)
-    gtl_cc_app(ex_hash_std SRCS examples/hmap/hash_std.cpp include/gtl/debug_vis/gtl.natvis)
-    gtl_cc_app(ex_hash_value SRCS examples/hmap/hash_value.cpp include/gtl/debug_vis/gtl.natvis)
-    gtl_cc_app(ex_two_files SRCS examples/hmap/f1.cpp examples/hmap/f2.cpp include/gtl/debug_vis/gtl.natvis)
-    gtl_cc_app(ex_knucleotide SRCS examples/hmap/knucleotide.cpp include/gtl/debug_vis/gtl.natvis LIBS Threads::Threads)
-    gtl_cc_app(ex_dump_load SRCS examples/hmap/dump_load.cpp include/gtl/debug_vis/gtl.natvis)
-    gtl_cc_app(ex_matt SRCS examples/hmap/matt.cpp include/gtl/debug_vis/gtl.natvis)
-
-    gtl_cc_app(ex_soa SRCS examples/misc/soa.cpp include/gtl/debug_vis/gtl.natvis)
-    gtl_cc_app(ex_vec_utils SRCS examples/misc/vec_utils.cpp include/gtl/debug_vis/gtl.natvis)
-    gtl_cc_app(ex_bit_vector SRCS examples/misc/bit_vector.cpp include/gtl/debug_vis/gtl.natvis)
-    gtl_cc_app(ex_intrusive SRCS examples/misc/intrusive.cpp include/gtl/debug_vis/gtl.natvis)
-    
-    ## cache/memoize
-    gtl_cc_app(ex_memoize_fib SRCS examples/memoize/memoize_fib.cpp include/gtl/debug_vis/gtl.natvis)
-    gtl_cc_app(ex_memoize_primes SRCS examples/memoize/memoize_primes.cpp include/gtl/debug_vis/gtl.natvis)
-    gtl_cc_app(ex_mt_memoize SRCS examples/memoize/mt_memoize.cpp include/gtl/debug_vis/gtl.natvis LIBS Threads::Threads)
-    gtl_cc_app(ex_mt_memoize_lru SRCS examples/memoize/mt_memoize_lru.cpp include/gtl/debug_vis/gtl.natvis LIBS Threads::Threads)
-endif()
-
-if (GTL_BUILD_BENCHMARKS)
-    gtl_cc_app(bench_bit_vector SRCS benchmarks/bitvector_bench.cpp include/gtl/debug_vis/gtl.natvis)
 endif()
