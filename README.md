@@ -21,9 +21,40 @@ Because [gtl](https://github.com/greg7mdp/gtl) is a header only library, install
 
 ## Installation
 
+#### Direct copy of the header files
+
 Copy the gtl directory to your project. Update your include path. That's all.
 
+#### Direct include in cmake project
+
+If you are using cmake, you can use FetchContent to integrate gtl to your project, for example:
+
+```
+    include(FetchContent)
+    FetchContent_Declare(
+        gtl
+        GIT_REPOSITORY https://github.com/greg7mdp/gtl.git
+        GIT_TAG        1.01 # adjust tag/branch/commit as needed
+    )
+    FetchContent_MakeAvailable(gtl)
+
+    ...
+    target_link_libraries (my_target PRIVATE gtl)
+```
+
+#### Using a package manager
+
+GTL supports both **vcpkg** and **Conan** package managers.
+
+#### Debugger support 
+
 If you are using Visual Studio, you probably want to add `include/gtl/debug_vis/gtl.natvis` to your projects. This will allow for a user friendly display of gtl containers in the debugger. Similar debug visualizers are also provided for gdb and lldb in the `include/gtl/debug_vis` directory.
+
+#### Clone the repository and build it
+
+```
+git clone https://github.com/greg7mdp/gtl.git
+```
 
 > A cmake configuration files (CMakeLists.txt) is provided for building the tests and examples. Command for building and running the tests is: <br>
 > `mkdir build && cd build && cmake -DGTL_BUILD_TESTS=ON -DGTL_BUILD_EXAMPLES=ON .. && cmake --build . && make test`
