@@ -100,7 +100,7 @@ if(CMAKE_CURRENT_SOURCE_DIR STREQUAL CMAKE_SOURCE_DIR)
             gtl_check_target(gtest)
             gtl_check_target(gtest_main)
             gtl_check_target(gmock)
-            set(GTL_GTEST_LIBS gmock_main)
+            set(GTL_GTEST_LIBS gmock_main gtest)
         endif()
     
         enable_testing()
