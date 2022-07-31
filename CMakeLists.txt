@@ -8,7 +8,7 @@
     FetchContent_Declare(
         gtl
         GIT_REPOSITORY https://github.com/greg7mdp/gtl.git
-        GIT_TAG        1.01 # adjust tag/branch/commit as needed
+        GIT_TAG        v1.1.0 # adjust tag/branch/commit as needed
     )
     FetchContent_MakeAvailable(gtl)
 
