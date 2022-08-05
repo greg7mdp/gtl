@@ -3179,7 +3179,7 @@ protected:
         }
 
         EmbeddedSet set_;
-        [[no_unique_address]] aux_type aux_;
+        GTL_ATTRIBUTE_NO_UNIQUE_ADDRESS aux_type aux_;
     };
 
 private:
