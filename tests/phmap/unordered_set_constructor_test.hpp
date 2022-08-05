@@ -42,7 +42,7 @@ TYPED_TEST_P(ConstructorTest, BucketCount) {
   TypeParam m(123);
   EXPECT_TRUE(m.empty());
   EXPECT_THAT(keys(m), ::testing::UnorderedElementsAre());
-  EXPECT_GE(m.bucket_count(), 123);
+  EXPECT_GE(m.bucket_count(), 123u);
 }
 
 TYPED_TEST_P(ConstructorTest, BucketCountHash) {
@@ -52,7 +52,7 @@ TYPED_TEST_P(ConstructorTest, BucketCountHash) {
   EXPECT_EQ(m.hash_function(), hasher);
   EXPECT_TRUE(m.empty());
   EXPECT_THAT(keys(m), ::testing::UnorderedElementsAre());
-  EXPECT_GE(m.bucket_count(), 123);
+  EXPECT_GE(m.bucket_count(), 123u);
 }
 
 TYPED_TEST_P(ConstructorTest, BucketCountHashEqual) {
@@ -65,7 +65,7 @@ TYPED_TEST_P(ConstructorTest, BucketCountHashEqual) {
   EXPECT_EQ(m.key_eq(), equal);
   EXPECT_TRUE(m.empty());
   EXPECT_THAT(keys(m), ::testing::UnorderedElementsAre());
-  EXPECT_GE(m.bucket_count(), 123);
+  EXPECT_GE(m.bucket_count(), 123u);
 }
 
 TYPED_TEST_P(ConstructorTest, BucketCountHashEqualAlloc) {
@@ -81,7 +81,7 @@ TYPED_TEST_P(ConstructorTest, BucketCountHashEqualAlloc) {
   EXPECT_EQ(m.get_allocator(), alloc);
   EXPECT_TRUE(m.empty());
   EXPECT_THAT(keys(m), ::testing::UnorderedElementsAre());
-  EXPECT_GE(m.bucket_count(), 123);
+  EXPECT_GE(m.bucket_count(), 123u);
 
   const auto& cm = m;
   EXPECT_EQ(cm.hash_function(), hasher);
@@ -89,7 +89,7 @@ TYPED_TEST_P(ConstructorTest, BucketCountHashEqualAlloc) {
   EXPECT_EQ(cm.get_allocator(), alloc);
   EXPECT_TRUE(cm.empty());
   EXPECT_THAT(keys(cm), ::testing::UnorderedElementsAre());
-  EXPECT_GE(cm.bucket_count(), 123);
+  EXPECT_GE(cm.bucket_count(), 123u);
 }
 
 template <typename T>
@@ -120,7 +120,7 @@ void BucketCountAllocTest(std::true_type) {
   EXPECT_EQ(m.get_allocator(), alloc);
   EXPECT_TRUE(m.empty());
   EXPECT_THAT(keys(m), ::testing::UnorderedElementsAre());
-  EXPECT_GE(m.bucket_count(), 123);
+  EXPECT_GE(m.bucket_count(), 123u);
 }
 
 TYPED_TEST_P(ConstructorTest, BucketCountAlloc) {
@@ -141,7 +141,7 @@ void BucketCountHashAllocTest(std::true_type) {
   EXPECT_EQ(m.get_allocator(), alloc);
   EXPECT_TRUE(m.empty());
   EXPECT_THAT(keys(m), ::testing::UnorderedElementsAre());
-  EXPECT_GE(m.bucket_count(), 123);
+  EXPECT_GE(m.bucket_count(), 123u);
 }
 
 TYPED_TEST_P(ConstructorTest, BucketCountHashAlloc) {
@@ -192,7 +192,7 @@ TYPED_TEST_P(ConstructorTest, InputIteratorBucketHashEqualAlloc) {
   EXPECT_EQ(m.key_eq(), equal);
   EXPECT_EQ(m.get_allocator(), alloc);
   EXPECT_THAT(keys(m), ::testing::UnorderedElementsAreArray(values));
-  EXPECT_GE(m.bucket_count(), 123);
+  EXPECT_GE(m.bucket_count(), 123u);
 }
 
 template <typename TypeParam>
@@ -209,7 +209,7 @@ void InputIteratorBucketAllocTest(std::true_type) {
   TypeParam m(values.begin(), values.end(), 123, alloc);
   EXPECT_EQ(m.get_allocator(), alloc);
   EXPECT_THAT(keys(m), ::testing::UnorderedElementsAreArray(values));
-  EXPECT_GE(m.bucket_count(), 123);
+  EXPECT_GE(m.bucket_count(), 123u);
 }
 
 TYPED_TEST_P(ConstructorTest, InputIteratorBucketAlloc) {
@@ -233,7 +233,7 @@ void InputIteratorBucketHashAllocTest(std::true_type) {
   EXPECT_EQ(m.hash_function(), hasher);
   EXPECT_EQ(m.get_allocator(), alloc);
   EXPECT_THAT(keys(m), ::testing::UnorderedElementsAreArray(values));
-  EXPECT_GE(m.bucket_count(), 123);
+  EXPECT_GE(m.bucket_count(), 123u);
 }
 
 TYPED_TEST_P(ConstructorTest, InputIteratorBucketHashAlloc) {
@@ -346,7 +346,7 @@ TYPED_TEST_P(ConstructorTest, InitializerListBucketHashEqualAlloc) {
   EXPECT_EQ(m.key_eq(), equal);
   EXPECT_EQ(m.get_allocator(), alloc);
   EXPECT_THAT(keys(m), ::testing::UnorderedElementsAreArray(values));
-  EXPECT_GE(m.bucket_count(), 123);
+  EXPECT_GE(m.bucket_count(), 123u);
 }
 
 template <typename TypeParam>
@@ -362,7 +362,7 @@ void InitializerListBucketAllocTest(std::true_type) {
   TypeParam m(values, 123, alloc);
   EXPECT_EQ(m.get_allocator(), alloc);
   EXPECT_THAT(keys(m), ::testing::UnorderedElementsAreArray(values));
-  EXPECT_GE(m.bucket_count(), 123);
+  EXPECT_GE(m.bucket_count(), 123u);
 }
 
 TYPED_TEST_P(ConstructorTest, InitializerListBucketAlloc) {
@@ -385,7 +385,7 @@ void InitializerListBucketHashAllocTest(std::true_type) {
   EXPECT_EQ(m.hash_function(), hasher);
   EXPECT_EQ(m.get_allocator(), alloc);
   EXPECT_THAT(keys(m), ::testing::UnorderedElementsAreArray(values));
-  EXPECT_GE(m.bucket_count(), 123);
+  EXPECT_GE(m.bucket_count(), 123u);
 }
 
 TYPED_TEST_P(ConstructorTest, InitializerListBucketHashAlloc) {

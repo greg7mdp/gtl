@@ -154,7 +154,7 @@ TYPED_TEST_P(ModifiersTest, EraseKey) {
                   hash_internal::Generator<T>());
   TypeParam m(values.begin(), values.end());
   ASSERT_THAT(keys(m), ::testing::UnorderedElementsAreArray(values));
-  EXPECT_EQ(1, m.erase(values[0]));
+  EXPECT_EQ(1u, m.erase(values[0]));
   EXPECT_EQ(0, std::count(m.begin(), m.end(), values[0]));
   EXPECT_THAT(keys(m), ::testing::UnorderedElementsAreArray(values.begin() + 1,
                                                             values.end()));

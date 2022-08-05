@@ -23,20 +23,20 @@ namespace {
 
 TEST(_, Hash) {
   StatefulTestingHash h1;
-  EXPECT_EQ(1, h1.id());
+  EXPECT_EQ(1u, h1.id());
   StatefulTestingHash h2;
-  EXPECT_EQ(2, h2.id());
+  EXPECT_EQ(2u, h2.id());
   StatefulTestingHash h1c(h1);
-  EXPECT_EQ(1, h1c.id());
+  EXPECT_EQ(1u, h1c.id());
   StatefulTestingHash h2m(std::move(h2));
-  EXPECT_EQ(2, h2m.id());
-  EXPECT_EQ(0, h2.id());
+  EXPECT_EQ(2u, h2m.id());
+  EXPECT_EQ(0u, h2.id());
   StatefulTestingHash h3;
-  EXPECT_EQ(3, h3.id());
+  EXPECT_EQ(3u, h3.id());
   h3 = StatefulTestingHash();
-  EXPECT_EQ(4, h3.id());
+  EXPECT_EQ(4u, h3.id());
   h3 = std::move(h1);
-  EXPECT_EQ(1, h3.id());
+  EXPECT_EQ(1u, h3.id());
 }
 
 }  // namespace

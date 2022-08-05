@@ -35,10 +35,10 @@ TYPED_TEST_P(LookupTest, Count) {
                   hash_internal::Generator<T>());
   TypeParam m;
   for (const auto& v : values)
-    EXPECT_EQ(0, m.count(v)) << ::testing::PrintToString(v);
+    EXPECT_EQ(0u, m.count(v)) << ::testing::PrintToString(v);
   m.insert(values.begin(), values.end());
   for (const auto& v : values)
-    EXPECT_EQ(1, m.count(v)) << ::testing::PrintToString(v);
+    EXPECT_EQ(1u, m.count(v)) << ::testing::PrintToString(v);
 }
 
 TYPED_TEST_P(LookupTest, Find) {

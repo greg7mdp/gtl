@@ -593,8 +593,8 @@ namespace {
         // Make sure various methods can be invoked on a const container.
         const_b.verify();
         ASSERT_TRUE(!const_b.empty());
-        EXPECT_EQ(const_b.size(), 1);
-        EXPECT_GT(const_b.max_size(), 0);
+        EXPECT_EQ(const_b.size(), 1u);
+        EXPECT_GT(const_b.max_size(), 0u);
         EXPECT_TRUE(const_b.contains(key_of_value(value)));
         EXPECT_EQ(const_b.count(key_of_value(value)), 1);
     }
@@ -2304,15 +2304,15 @@ namespace {
 
             tracker.ResetCopiesMovesSwaps();
             set2 = std::move(set1);
-            EXPECT_GE(tracker.moves(), 100);
+            EXPECT_GE(tracker.moves(), 100u);
         }
     }
 
     TEST(Btree, EmptyTree) {
         gtl::btree_set<int> s;
         EXPECT_TRUE(s.empty());
-        EXPECT_EQ(s.size(), 0);
-        EXPECT_GT(s.max_size(), 0);
+        EXPECT_EQ(s.size(), 0u);
+        EXPECT_GT(s.max_size(), 0u);
     }
 
     bool IsEven(int k) { return k % 2 == 0; }

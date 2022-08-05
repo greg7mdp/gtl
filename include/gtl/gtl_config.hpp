@@ -396,6 +396,12 @@
     #define GTL_ATTRIBUTE_FUNC_ALIGN(bytes)
 #endif
 
+#if GTL_HAVE_ATTRIBUTE(no_unique_address) || GTL_HAVE_CPP_ATTRIBUTE(no_unique_address)
+    #define GTL_ATTRIBUTE_NO_UNIQUE_ADDRESS [[no_unique_address]]
+#else
+    #define GTL_ATTRIBUTE_NO_UNIQUE_ADDRESS
+#endif
+
 // ----------------------------------------------------------------------
 // Figure out SSE support
 // ----------------------------------------------------------------------

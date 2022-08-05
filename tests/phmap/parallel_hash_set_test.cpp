@@ -125,10 +125,10 @@ TEST(THIS_TEST_NAME, EmplaceSingle) {
     // emplace_single insert a value if not already present, else removes it
     for (int i=0; i<12; ++i)
         m.emplace_single(i, [i](const Set::constructor& ctor) { ctor(i); });
-    EXPECT_EQ(m.count(0), 1);
-    EXPECT_EQ(m.count(1), 0);
-    EXPECT_EQ(m.count(2), 1);
-    EXPECT_EQ(m.count(11), 0);
+    EXPECT_EQ(m.count(0), 1u);
+    EXPECT_EQ(m.count(1), 0u);
+    EXPECT_EQ(m.count(2), 1u);
+    EXPECT_EQ(m.count(11), 0u);
 }
 
 }  // namespace
