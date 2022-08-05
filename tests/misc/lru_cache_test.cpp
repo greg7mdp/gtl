@@ -34,7 +34,7 @@ TEST(CacheTest1, KeepsAllValuesWithinCapacity) {
     }
 
     size_t size = cache.size();
-    EXPECT_EQ(TEST2_CACHE_CAPACITY, size);
+    EXPECT_EQ(static_cast<size_t>(TEST2_CACHE_CAPACITY), size);
 }
 
 TEST(CacheTest1, mtKeepsAllValuesWithinCapacity) {

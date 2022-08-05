@@ -64,7 +64,7 @@ TYPED_TEST_P(MembersTest, Typedefs) {
 }
 
 TYPED_TEST_P(MembersTest, SimpleFunctions) {
-  EXPECT_GT(TypeParam().max_size(), 0);
+  EXPECT_GT(TypeParam().max_size(), 0u);
 }
 
 TYPED_TEST_P(MembersTest, BeginEnd) {

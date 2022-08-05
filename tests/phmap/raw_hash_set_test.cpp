@@ -60,16 +60,16 @@ using ::testing::Pair;
 using ::testing::UnorderedElementsAre;
 
 TEST(Util, NormalizeCapacity) {
-  EXPECT_EQ(1, NormalizeCapacity(0));
-  EXPECT_EQ(1, NormalizeCapacity(1));
-  EXPECT_EQ(3, NormalizeCapacity(2));
-  EXPECT_EQ(3, NormalizeCapacity(3));
-  EXPECT_EQ(7, NormalizeCapacity(4));
-  EXPECT_EQ(7, NormalizeCapacity(7));
-  EXPECT_EQ(15, NormalizeCapacity(8));
-  EXPECT_EQ(15, NormalizeCapacity(15));
-  EXPECT_EQ(15 * 2 + 1, NormalizeCapacity(15 + 1));
-  EXPECT_EQ(15 * 2 + 1, NormalizeCapacity(15 + 2));
+  EXPECT_EQ(1u, NormalizeCapacity(0));
+  EXPECT_EQ(1u, NormalizeCapacity(1));
+  EXPECT_EQ(3u, NormalizeCapacity(2));
+  EXPECT_EQ(3u, NormalizeCapacity(3));
+  EXPECT_EQ(7u, NormalizeCapacity(4));
+  EXPECT_EQ(7u, NormalizeCapacity(7));
+  EXPECT_EQ(15u, NormalizeCapacity(8));
+  EXPECT_EQ(15u, NormalizeCapacity(15));
+  EXPECT_EQ(15u * 2 + 1, NormalizeCapacity(15 + 1));
+  EXPECT_EQ(15u * 2 + 1, NormalizeCapacity(15 + 2));
 }
 
 TEST(Util, GrowthAndCapacity) {
@@ -418,7 +418,7 @@ TEST(Table, EmptyFunctorOptimization) {
 
 TEST(Table, Empty) {
   IntTable t;
-  EXPECT_EQ(0, t.size());
+  EXPECT_EQ(0u, t.size());
   EXPECT_TRUE(t.empty());
 }
 
@@ -481,7 +481,7 @@ TEST(Table, Insert1) {
   auto res = t.emplace(0);
   EXPECT_TRUE(res.second);
   EXPECT_THAT(*res.first, 0);
-  EXPECT_EQ(1, t.size());
+  EXPECT_EQ(1u, t.size());
   EXPECT_THAT(*t.find(0), 0);
 }
 
@@ -491,12 +491,12 @@ TEST(Table, Insert2) {
   auto res = t.emplace(0);
   EXPECT_TRUE(res.second);
   EXPECT_THAT(*res.first, 0);
-  EXPECT_EQ(1, t.size());
+  EXPECT_EQ(1u, t.size());
   EXPECT_TRUE(t.find(1) == t.end());
   res = t.emplace(1);
   EXPECT_TRUE(res.second);
   EXPECT_THAT(*res.first, 1);
-  EXPECT_EQ(2, t.size());
+  EXPECT_EQ(2u, t.size());
   EXPECT_THAT(*t.find(0), 0);
   EXPECT_THAT(*t.find(1), 1);
 }
@@ -507,13 +507,13 @@ TEST(Table, InsertCollision) {
   auto res = t.emplace(1);
   EXPECT_TRUE(res.second);
   EXPECT_THAT(*res.first, 1);
-  EXPECT_EQ(1, t.size());
+  EXPECT_EQ(1u, t.size());
 
   EXPECT_TRUE(t.find(2) == t.end());
   res = t.emplace(2);
   EXPECT_THAT(*res.first, 2);
   EXPECT_TRUE(res.second);
-  EXPECT_EQ(2, t.size());
+  EXPECT_EQ(2u, t.size());
 
   EXPECT_THAT(*t.find(1), 1);
   EXPECT_THAT(*t.find(2), 2);
@@ -536,7 +536,7 @@ TEST(Table, InsertCollisionAndFindAfterDelete) {
   // Remove elements one by one and check
   // that we still can find all other elements.
   for (size_t i = 0; i < kNumInserts; ++i) {
-    EXPECT_EQ(1, t.erase(i)) << i;
+    EXPECT_EQ(1u, t.erase(i)) << i;
     for (size_t j = i + 1; j < kNumInserts; ++j) {
       EXPECT_THAT(*t.find(j), j);
       auto res = t.emplace(j);
@@ -579,7 +579,7 @@ TEST(Table, Contains1) {
   EXPECT_TRUE(t.contains(0));
   EXPECT_FALSE(t.contains(1));
 
-  EXPECT_EQ(1, t.erase(0));
+  EXPECT_EQ(1u, t.erase(0));
   EXPECT_FALSE(t.contains(0));
 }
 
@@ -799,7 +799,7 @@ TEST(Table, InsertEraseStressTest) {
   }
   const size_t kNumIterations = 1000000;
   for (; i < kNumIterations; ++i) {
-    ASSERT_EQ(1, t.erase(keys.front()));
+    ASSERT_EQ(1u, t.erase(keys.front()));
     keys.pop_front();
     t.emplace(i);
     keys.push_back(i);
@@ -865,9 +865,9 @@ TEST(Table, Erase) {
   EXPECT_TRUE(t.find(0) == t.end());
   auto res = t.emplace(0);
   EXPECT_TRUE(res.second);
-  EXPECT_EQ(1, t.size());
+  EXPECT_EQ(1u, t.size());
   t.erase(res.first);
-  EXPECT_EQ(0, t.size());
+  EXPECT_EQ(0u, t.size());
   EXPECT_TRUE(t.find(0) == t.end());
 }
 
@@ -877,7 +877,7 @@ TEST(Table, EraseMaintainsValidIterator) {
   for (int i = 0; i < kNumElements; i ++) {
     EXPECT_TRUE(t.emplace(i).second);
   }
-  EXPECT_EQ(t.size(), kNumElements);
+  EXPECT_EQ(t.size(), static_cast<size_t>(kNumElements));
 
    int num_erase_calls = 0;
   auto it = t.begin();
@@ -1262,28 +1262,28 @@ TEST(Table, EraseCollision) {
   EXPECT_THAT(*t.find(1), 1);
   EXPECT_THAT(*t.find(2), 2);
   EXPECT_THAT(*t.find(3), 3);
-  EXPECT_EQ(3, t.size());
+  EXPECT_EQ(3u, t.size());
 
   // 1 DELETED 3
   t.erase(t.find(2));
   EXPECT_THAT(*t.find(1), 1);
   EXPECT_TRUE(t.find(2) == t.end());
   EXPECT_THAT(*t.find(3), 3);
-  EXPECT_EQ(2, t.size());
+  EXPECT_EQ(2u, t.size());
 
   // DELETED DELETED 3
   t.erase(t.find(1));
   EXPECT_TRUE(t.find(1) == t.end());
   EXPECT_TRUE(t.find(2) == t.end());
   EXPECT_THAT(*t.find(3), 3);
-  EXPECT_EQ(1, t.size());
+  EXPECT_EQ(1u, t.size());
 
   // DELETED DELETED DELETED
   t.erase(t.find(3));
   EXPECT_TRUE(t.find(1) == t.end());
   EXPECT_TRUE(t.find(2) == t.end());
   EXPECT_TRUE(t.find(3) == t.end());
-  EXPECT_EQ(0, t.size());
+  EXPECT_EQ(0u, t.size());
 }
 
 TEST(Table, EraseInsertProbing) {
@@ -1304,7 +1304,7 @@ TEST(Table, EraseInsertProbing) {
   t.emplace(11);
   t.emplace(12);
 
-  EXPECT_EQ(5, t.size());
+  EXPECT_EQ(5u, t.size());
   EXPECT_THAT(t, UnorderedElementsAre(1, 10, 3, 11, 12));
 }
 
@@ -1315,9 +1315,9 @@ TEST(Table, Clear) {
   EXPECT_TRUE(t.find(0) == t.end());
   auto res = t.emplace(0);
   EXPECT_TRUE(res.second);
-  EXPECT_EQ(1, t.size());
+  EXPECT_EQ(1u, t.size());
   t.clear();
-  EXPECT_EQ(0, t.size());
+  EXPECT_EQ(0u, t.size());
   EXPECT_TRUE(t.find(0) == t.end());
 }
 
@@ -1326,11 +1326,11 @@ TEST(Table, Swap) {
   EXPECT_TRUE(t.find(0) == t.end());
   auto res = t.emplace(0);
   EXPECT_TRUE(res.second);
-  EXPECT_EQ(1, t.size());
+  EXPECT_EQ(1u, t.size());
   IntTable u;
   t.swap(u);
-  EXPECT_EQ(0, t.size());
-  EXPECT_EQ(1, u.size());
+  EXPECT_EQ(0u, t.size());
+  EXPECT_EQ(1u, u.size());
   EXPECT_TRUE(t.find(0) == t.end());
   EXPECT_THAT(*u.find(0), 0);
 }
@@ -1340,9 +1340,9 @@ TEST(Table, Rehash) {
   EXPECT_TRUE(t.find(0) == t.end());
   t.emplace(0);
   t.emplace(1);
-  EXPECT_EQ(2, t.size());
+  EXPECT_EQ(2u, t.size());
   t.rehash(128);
-  EXPECT_EQ(2, t.size());
+  EXPECT_EQ(2u, t.size());
   EXPECT_THAT(*t.find(0), 0);
   EXPECT_THAT(*t.find(1), 1);
 }
@@ -1359,16 +1359,16 @@ TEST(Table, RehashDoesNotRehashWhenNotNecessary) {
 TEST(Table, RehashZeroDoesNotAllocateOnEmptyTable) {
   IntTable t;
   t.rehash(0);
-  EXPECT_EQ(0, t.bucket_count());
+  EXPECT_EQ(0u, t.bucket_count());
 }
 
 TEST(Table, RehashZeroDeallocatesEmptyTable) {
   IntTable t;
   t.emplace(0);
   t.clear();
-  EXPECT_NE(0, t.bucket_count());
+  EXPECT_NE(0u, t.bucket_count());
   t.rehash(0);
-  EXPECT_EQ(0, t.bucket_count());
+  EXPECT_EQ(0u, t.bucket_count());
 }
 
 TEST(Table, RehashZeroForcesRehash) {
@@ -1391,20 +1391,20 @@ TEST(Table, ConstructFromInitList) {
 TEST(Table, CopyConstruct) {
   IntTable t;
   t.emplace(0);
-  EXPECT_EQ(1, t.size());
+  EXPECT_EQ(1u, t.size());
   {
     IntTable u(t);
-    EXPECT_EQ(1, u.size());
+    EXPECT_EQ(1u, u.size());
     EXPECT_THAT(*u.find(0), 0);
   }
   {
     IntTable u{t};
-    EXPECT_EQ(1, u.size());
+    EXPECT_EQ(1u, u.size());
     EXPECT_THAT(*u.find(0), 0);
   }
   {
     IntTable u = t;
-    EXPECT_EQ(1, u.size());
+    EXPECT_EQ(1u, u.size());
     EXPECT_THAT(*u.find(0), 0);
   }
 }
@@ -1412,9 +1412,9 @@ TEST(Table, CopyConstruct) {
 TEST(Table, CopyConstructWithAlloc) {
   StringTable t;
   t.emplace("a", "b");
-  EXPECT_EQ(1, t.size());
+  EXPECT_EQ(1u, t.size());
   StringTable u(t, Alloc<std::pair<std::string, std::string>>());
-  EXPECT_EQ(1, u.size());
+  EXPECT_EQ(1u, u.size());
   EXPECT_THAT(*u.find("a"), Pair("a", "b"));
 }
 
@@ -1426,35 +1426,35 @@ struct ExplicitAllocIntTable
 
 TEST(Table, AllocWithExplicitCtor) {
   ExplicitAllocIntTable t;
-  EXPECT_EQ(0, t.size());
+  EXPECT_EQ(0u, t.size());
 }
 
 TEST(Table, MoveConstruct) {
   {
     StringTable t;
     t.emplace("a", "b");
-    EXPECT_EQ(1, t.size());
+    EXPECT_EQ(1u, t.size());
 
     StringTable u(std::move(t));
-    EXPECT_EQ(1, u.size());
+    EXPECT_EQ(1u, u.size());
     EXPECT_THAT(*u.find("a"), Pair("a", "b"));
   }
   {
     StringTable t;
     t.emplace("a", "b");
-    EXPECT_EQ(1, t.size());
+    EXPECT_EQ(1u, t.size());
 
     StringTable u{std::move(t)};
-    EXPECT_EQ(1, u.size());
+    EXPECT_EQ(1u, u.size());
     EXPECT_THAT(*u.find("a"), Pair("a", "b"));
   }
   {
     StringTable t;
     t.emplace("a", "b");
-    EXPECT_EQ(1, t.size());
+    EXPECT_EQ(1u, t.size());
 
     StringTable u = std::move(t);
-    EXPECT_EQ(1, u.size());
+    EXPECT_EQ(1u, u.size());
     EXPECT_THAT(*u.find("a"), Pair("a", "b"));
   }
 }
@@ -1462,38 +1462,38 @@ TEST(Table, MoveConstruct) {
 TEST(Table, MoveConstructWithAlloc) {
   StringTable t;
   t.emplace("a", "b");
-  EXPECT_EQ(1, t.size());
+  EXPECT_EQ(1u, t.size());
   StringTable u(std::move(t), Alloc<std::pair<std::string, std::string>>());
-  EXPECT_EQ(1, u.size());
+  EXPECT_EQ(1u, u.size());
   EXPECT_THAT(*u.find("a"), Pair("a", "b"));
 }
 
 TEST(Table, CopyAssign) {
   StringTable t;
   t.emplace("a", "b");
-  EXPECT_EQ(1, t.size());
+  EXPECT_EQ(1u, t.size());
   StringTable u;
   u = t;
-  EXPECT_EQ(1, u.size());
+  EXPECT_EQ(1u, u.size());
   EXPECT_THAT(*u.find("a"), Pair("a", "b"));
 }
 
 TEST(Table, CopySelfAssign) {
   StringTable t;
   t.emplace("a", "b");
-  EXPECT_EQ(1, t.size());
+  EXPECT_EQ(1u, t.size());
   t = *&t;
-  EXPECT_EQ(1, t.size());
+  EXPECT_EQ(1u, t.size());
   EXPECT_THAT(*t.find("a"), Pair("a", "b"));
 }
 
 TEST(Table, MoveAssign) {
   StringTable t;
   t.emplace("a", "b");
-  EXPECT_EQ(1, t.size());
+  EXPECT_EQ(1u, t.size());
   StringTable u;
   u = std::move(t);
-  EXPECT_EQ(1, u.size());
+  EXPECT_EQ(1u, u.size());
   EXPECT_THAT(*u.find("a"), Pair("a", "b"));
 }
 
@@ -1545,7 +1545,7 @@ TEST(Table, FindFullDeletedRegression) {
     t.emplace(i);
     t.erase(t.find(i));
   }
-  EXPECT_EQ(0, t.size());
+  EXPECT_EQ(0u, t.size());
 }
 
 TEST(Table, ReplacingDeletedSlotDoesNotRehash) {
@@ -1876,7 +1876,7 @@ TEST(Sanitizer, PoisoningUnused) {
   int64_t& v1 = *t.insert(0).first;
 
   // Make sure there is something to test.
-  ASSERT_GT(t.capacity(), 1);
+  ASSERT_GT(t.capacity(), 1u);
 
   int64_t* slots = RawHashSetTestOnlyAccess::GetSlots(t);
   for (size_t i = 0; i < t.capacity(); ++i) {

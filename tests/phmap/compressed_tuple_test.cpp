@@ -107,9 +107,9 @@ TEST(CompressedTupleTest, Nested) {
   // MSVC has a bug where many instances of the same base class are layed out in
   // the same address when using __declspec(empty_bases).
   // This will be fixed in a future version of MSVC.
-  int expected = 1;
+  size_t expected = 1;
 #else
-  int expected = 4;
+  size_t expected = 4;
 #endif
   EXPECT_EQ(expected, sizeof(y));
   EXPECT_EQ(expected, empties.size());

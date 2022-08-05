@@ -32,7 +32,7 @@ using ::testing::Pair;
 TEST(Memory, AlignmentLargerThanBase) {
   std::allocator<int8_t> alloc;
   void* mem = Allocate<2>(&alloc, 3);
-  EXPECT_EQ(0, reinterpret_cast<uintptr_t>(mem) % 2);
+  EXPECT_EQ(0u, reinterpret_cast<uintptr_t>(mem) % 2);
   memcpy(mem, "abc", 3);
   Deallocate<2>(&alloc, mem, 3);
 }
@@ -40,7 +40,7 @@ TEST(Memory, AlignmentLargerThanBase) {
 TEST(Memory, AlignmentSmallerThanBase) {
   std::allocator<int64_t> alloc;
   void* mem = Allocate<2>(&alloc, 3);
-  EXPECT_EQ(0, reinterpret_cast<uintptr_t>(mem) % 2);
+  EXPECT_EQ(0u, reinterpret_cast<uintptr_t>(mem) % 2);
   memcpy(mem, "abc", 3);
   Deallocate<2>(&alloc, mem, 3);
 }
@@ -102,7 +102,7 @@ TEST(PairArgs, Piecewise) {
 }
 
 TEST(WithConstructed, Simple) {
-  EXPECT_EQ(1, WithConstructed<std::string_view>(
+  EXPECT_EQ(1u, WithConstructed<std::string_view>(
                    std::make_tuple(std::string("a")),
                    [](std::string_view str) { return str.size(); }));
 }
