@@ -49,7 +49,7 @@ option(GTL_INSTALL "Enable installation" ${GTL_MASTER_PROJECT})
 
 set(GTL_DIR gtl)
 # See CMP0076
-set(GTL_HEADERS ${CMAKE_CURRENT_SOURCE_DIR}/include/${GTL_DIR}/bit_vector.hpp 
+set(GTL_HEADERS ${CMAKE_CURRENT_SOURCE_DIR}/include/${GTL_DIR}/phmap.hpp 
                 ${CMAKE_CURRENT_SOURCE_DIR}/include/${GTL_DIR}/bits.hpp 
                 ${CMAKE_CURRENT_SOURCE_DIR}/include/${GTL_DIR}/btree.hpp 
                 ${CMAKE_CURRENT_SOURCE_DIR}/include/${GTL_DIR}/gtl_base.hpp 
@@ -58,7 +58,7 @@ set(GTL_HEADERS ${CMAKE_CURRENT_SOURCE_DIR}/include/${GTL_DIR}/bit_vector.hpp
                 ${CMAKE_CURRENT_SOURCE_DIR}/include/${GTL_DIR}/lru_cache.hpp 
                 ${CMAKE_CURRENT_SOURCE_DIR}/include/${GTL_DIR}/meminfo.hpp 
                 ${CMAKE_CURRENT_SOURCE_DIR}/include/${GTL_DIR}/memoize.hpp 
-                ${CMAKE_CURRENT_SOURCE_DIR}/include/${GTL_DIR}/phmap.hpp 
+                ${CMAKE_CURRENT_SOURCE_DIR}/include/${GTL_DIR}/bit_vector.hpp 
                 ${CMAKE_CURRENT_SOURCE_DIR}/include/${GTL_DIR}/phmap_dump.hpp 
                 ${CMAKE_CURRENT_SOURCE_DIR}/include/${GTL_DIR}/phmap_fwd_decl.hpp 
                 ${CMAKE_CURRENT_SOURCE_DIR}/include/${GTL_DIR}/phmap_utils.hpp 
