@@ -932,7 +932,7 @@ struct ProbeStats {
   // Ratios total_probe_length/size for every tested table.
   std::vector<double> single_table_ratios;
 
-  friend ProbeStats operator+(const ProbeStats& a, const ProbeStats& b) {
+  [[maybe_unused]] friend ProbeStats operator+(const ProbeStats& a, const ProbeStats& b) {
     ProbeStats res = a;
     res.all_probes_histogram.resize(std::max(res.all_probes_histogram.size(),
                                              b.all_probes_histogram.size()));
@@ -1016,7 +1016,7 @@ struct ExpectedStats {
   std::vector<std::pair<double, double>> pecentile_ratios;
   std::vector<std::pair<double, double>> pecentile_probes;
 
-  friend std::ostream& operator<<(std::ostream& out, const ExpectedStats& s) {
+  [[maybe_unused]] friend std::ostream& operator<<(std::ostream& out, const ExpectedStats& s) {
     out << "{AvgRatio:" << s.avg_ratio << ", MaxRatio:" << s.max_ratio
         << ", PercentileRatios: [";
     for (auto el : s.pecentile_ratios) {
