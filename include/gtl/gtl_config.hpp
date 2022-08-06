@@ -46,13 +46,6 @@
     #include <cstddef>
 #endif  // __cplusplus
 
-#if defined(__APPLE__)
-    // Included for TARGET_OS_IPHONE, __IPHONE_OS_VERSION_MIN_REQUIRED,
-    // __IPHONE_8_0.
-    #include <Availability.h>
-    #include <TargetConditionals.h>
-#endif
-
 
 // -----------------------------------------------------------------------------
 // Some sanity checks
