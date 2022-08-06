@@ -320,7 +320,6 @@ TEST(BitVectorTest, view_assignment) {
 }
 
 TEST(BitVectorTest, unary_predicates_on_full_bit_vector) {
-    static constexpr size_t sz1 = 199;
     auto check_sz = [](size_t sz) {
         gtl::bit_vector v(sz);
 

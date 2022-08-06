@@ -1,9 +1,8 @@
 #include <gtl/lru_cache.hpp>
 #include "gtest/gtest.h"
 
-const int NUM_OF_TEST1_RECORDS = 100;
-const int NUM_OF_TEST2_RECORDS = 100;
-const int TEST2_CACHE_CAPACITY = 50;
+constexpr int CACHETEST1_NUM_OF_RECORDS = 100;
+constexpr int CACHETEST1_CACHE_CAPACITY = 50;
 
 TEST(CacheTest, SimplePut) {
     gtl::lru_cache<int, int> cache;
@@ -18,23 +17,23 @@ TEST(CacheTest, MissingValue) {
 }
 
 TEST(CacheTest1, KeepsAllValuesWithinCapacity) {
-    gtl::lru_cache<int, int> cache(TEST2_CACHE_CAPACITY);
+    gtl::lru_cache<int, int> cache(CACHETEST1_CACHE_CAPACITY);
 
-    for (int i = 0; i < NUM_OF_TEST2_RECORDS; ++i) {
+    for (int i = 0; i < CACHETEST1_NUM_OF_RECORDS; ++i) {
         cache.insert(i, i);
     }
 
-    for (int i = 0; i < NUM_OF_TEST2_RECORDS - TEST2_CACHE_CAPACITY; ++i) {
+    for (int i = 0; i < CACHETEST1_NUM_OF_RECORDS - CACHETEST1_CACHE_CAPACITY; ++i) {
         EXPECT_FALSE(cache.exists(i));
     }
 
-    for (int i = NUM_OF_TEST2_RECORDS - TEST2_CACHE_CAPACITY; i < NUM_OF_TEST2_RECORDS; ++i) {
+    for (int i = CACHETEST1_NUM_OF_RECORDS - CACHETEST1_CACHE_CAPACITY; i < CACHETEST1_NUM_OF_RECORDS; ++i) {
         EXPECT_TRUE(cache.exists(i));
         EXPECT_EQ(i, *cache.get(i));
     }
 
     size_t size = cache.size();
-    EXPECT_EQ(static_cast<size_t>(TEST2_CACHE_CAPACITY), size);
+    EXPECT_EQ(static_cast<size_t>(CACHETEST1_CACHE_CAPACITY), size);
 }
 
 TEST(CacheTest1, mtKeepsAllValuesWithinCapacity) {
