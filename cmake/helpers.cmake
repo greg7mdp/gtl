@@ -4,8 +4,8 @@ set(GTL_IDE_FOLDER phmap)
 # -------------------------------------------------------------
 function(gtl_set_target_options my_target)
   target_compile_options(${my_target} PRIVATE
-    $<$<OR:$<CXX_COMPILER_ID:Clang>,$<CXX_COMPILER_ID:AppleClang>>:-pedantic -Wall -Wextra -Wcast-align -Wcast-qual -Wdisabled-optimization -Winit-self -Wmissing-include-dirs -Woverloaded-virtual -Wredundant-decls -Wshadow -Wswitch-default -Wno-unused -Wno-gnu-zero-variadic-macro-arguments>
-    $<$<CXX_COMPILER_ID:GNU>:-pedantic -Wall -Wextra -Wcast-align -Wcast-qual -Wdisabled-optimization -Winit-self -Wmissing-include-dirs -Woverloaded-virtual -Wredundant-decls -Wshadow -Wswitch-default -Wno-unused>
+    $<$<OR:$<CXX_COMPILER_ID:Clang>,$<CXX_COMPILER_ID:AppleClang>>:-pedantic -Wall -Wextra -Wcast-align -Wcast-qual -Wdisabled-optimization -Winit-self -Wmissing-include-dirs -Woverloaded-virtual -Wredundant-decls -Wshadow -Wswitch-default -Wunused -Wno-gnu-zero-variadic-macro-arguments>
+    $<$<CXX_COMPILER_ID:GNU>:-pedantic -Wall -Wextra -Wcast-align -Wcast-qual -Wdisabled-optimization -Winit-self -Wmissing-include-dirs -Woverloaded-virtual -Wredundant-decls -Wshadow -Wswitch-default -Wunused>
     $<$<CXX_COMPILER_ID:MSVC>:/W4 /Zc:__cplusplus /bigobj>
   )
 endfunction()
