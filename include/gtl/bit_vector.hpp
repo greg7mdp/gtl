@@ -300,7 +300,7 @@ public:
 
     // -----------------------------------------------------------------------
     template<vt flags, class F>
-    void visit_all(F f) { 
+    void visit_all([[maybe_unused]] F f) { 
         size_t num_slots = slot_cnt(_sz);
         if constexpr (flags & vt::false_) {
             // set all bits to 0
@@ -320,7 +320,7 @@ public:
             size_t slot;
             for (slot=0; slot<num_slots-1; ++slot) {
                 const uint64_t s  = _s[slot];
-                const auto fs = f(s);
+                [[maybe_unused]] const auto fs = f(s);
                 if constexpr (!(flags & vt::view)) {
                     if (s != fs)
                        _s[slot] = fs;
@@ -329,7 +329,7 @@ public:
             }
             const uint64_t m  = mod(_sz) ? himask(_sz) : (uint64_t)0; // m has ones on the bits we don't want to change
             const uint64_t s  = _s[slot];
-            const auto fs = f(oor_bits<flags>(s, m));
+            [[maybe_unused]] const auto fs = f(oor_bits<flags>(s, m));
             if constexpr (!(flags & vt::view)) 
                 if (s != fs) 
                     _s[slot] = fs & ~m;                         // mask last returned value so we don't set bits past end
