@@ -53,9 +53,6 @@
     #include <TargetConditionals.h>
 #endif
 
-#define GTL_XSTR(x) GTL_STR(x)
-#define GTL_STR(x) #x
-#define GTL_VAR_NAME_VALUE(var) #var "="  GTL_STR(var)
 
 // -----------------------------------------------------------------------------
 // Some sanity checks
@@ -116,28 +113,6 @@
     #define GTL_HAVE_BUILTIN(x) 0
 #endif
 
-#define GTL_BRANCHLESS 1
-
-#ifdef __has_feature
-#define PHMAP_HAVE_FEATURE(f) __has_feature(f)
-#else
-#define PHMAP_HAVE_FEATURE(f) 0
-#endif
-
-// Portable check for GCC minimum version:
-// https://gcc.gnu.org/onlinedocs/cpp/Common-Predefined-Macros.html
-#if defined(__GNUC__) && defined(__GNUC_MINOR__)
-    #define PHMAP_INTERNAL_HAVE_MIN_GNUC_VERSION(x, y) (__GNUC__ > (x) || __GNUC__ == (x) && __GNUC_MINOR__ >= (y))
-#else
-    #define PHMAP_INTERNAL_HAVE_MIN_GNUC_VERSION(x, y) 0
-#endif
-
-#if defined(__clang__) && defined(__clang_major__) && defined(__clang_minor__)
-    #define PHMAP_INTERNAL_HAVE_MIN_CLANG_VERSION(x, y) (__clang_major__ > (x) || __clang_major__ == (x) && __clang_minor__ >= (y))
-#else
-    #define PHMAP_INTERNAL_HAVE_MIN_CLANG_VERSION(x, y) 0
-#endif
-
 
 // -----------------------------------------------------------------------------
 // -----------------------------------------------------------------------------
@@ -195,23 +170,6 @@
 #endif
 
 // -----------------------------------------------------------------------------
-// Sanitizer Attributes
-// -----------------------------------------------------------------------------
-//
-// Sanitizer-related attributes are not "defined" in this file (and indeed
-// are not defined as such in any file). To utilize the following
-// sanitizer-related attributes within your builds, define the following macros
-// within your build using a `-D` flag, along with the given value for
-// `-fsanitize`:
-//
-//   * `ADDRESS_SANITIZER` + `-fsanitize=address` (Clang, GCC 4.8)
-//   * `MEMORY_SANITIZER` + `-fsanitize=memory` (Clang-only)
-//   * `THREAD_SANITIZER + `-fsanitize=thread` (Clang, GCC 4.8+)
-//   * `UNDEFINED_BEHAVIOR_SANITIZER` + `-fsanitize=undefined` (Clang, GCC 4.9+)
-//   * `CONTROL_FLOW_INTEGRITY` + -fsanitize=cfi (Clang-only)
-// -----------------------------------------------------------------------------
-
-// -----------------------------------------------------------------------------
 // A function-like feature checking macro that is a wrapper around
 // `__has_attribute`, which is defined by GCC 5+ and Clang and evaluates to a
 // nonzero constant integer if the attribute is supported or 0 if not.
@@ -239,16 +197,6 @@
 // -----------------------------------------------------------------------------
 // Function Attributes
 // -----------------------------------------------------------------------------
-#if GTL_HAVE_ATTRIBUTE(format) || (defined(__GNUC__) && !defined(__clang__))
-    #define GTL_PRINTF_ATTRIBUTE(string_index, first_to_check) \
-      __attribute__((__format__(__printf__, string_index, first_to_check)))
-    #define GTL_SCANF_ATTRIBUTE(string_index, first_to_check) \
-      __attribute__((__format__(__scanf__, string_index, first_to_check)))
-#else
-    #define GTL_PRINTF_ATTRIBUTE(string_index, first_to_check)
-    #define GTL_SCANF_ATTRIBUTE(string_index, first_to_check)
-#endif
-
 #if GTL_HAVE_ATTRIBUTE(always_inline) || (defined(__GNUC__) && !defined(__clang__))
     #define GTL_ATTRIBUTE_ALWAYS_INLINE __attribute__((always_inline))
     #define GTL_HAVE_ATTRIBUTE_ALWAYS_INLINE 1
@@ -263,104 +211,6 @@
     #define GTL_ATTRIBUTE_NOINLINE
 #endif
 
-#if GTL_HAVE_ATTRIBUTE(disable_tail_calls)
-    #define GTL_HAVE_ATTRIBUTE_NO_TAIL_CALL 1
-    #define GTL_ATTRIBUTE_NO_TAIL_CALL __attribute__((disable_tail_calls))
-#elif defined(__GNUC__) && !defined(__clang__)
-    #define GTL_HAVE_ATTRIBUTE_NO_TAIL_CALL 1
-    #define GTL_ATTRIBUTE_NO_TAIL_CALL \
-      __attribute__((optimize("no-optimize-sibling-calls")))
-#else
-    #define GTL_ATTRIBUTE_NO_TAIL_CALL
-    #define GTL_HAVE_ATTRIBUTE_NO_TAIL_CALL 0
-#endif
-
-#if (GTL_HAVE_ATTRIBUTE(weak) || (defined(__GNUC__) && !defined(__clang__))) && \
-    !(defined(__llvm__) && defined(_WIN32))
-    #undef GTL_ATTRIBUTE_WEAK
-    #define GTL_ATTRIBUTE_WEAK __attribute__((weak))
-    #define GTL_HAVE_ATTRIBUTE_WEAK 1
-#else
-    #define GTL_ATTRIBUTE_WEAK
-    #define GTL_HAVE_ATTRIBUTE_WEAK 0
-#endif
-
-#if GTL_HAVE_ATTRIBUTE(nonnull) || (defined(__GNUC__) && !defined(__clang__))
-    #define GTL_ATTRIBUTE_NONNULL(arg_index) __attribute__((nonnull(arg_index)))
-#else
-    #define GTL_ATTRIBUTE_NONNULL(...)
-#endif
-
-#if GTL_HAVE_ATTRIBUTE(noreturn) || (defined(__GNUC__) && !defined(__clang__))
-    #define GTL_ATTRIBUTE_NORETURN __attribute__((noreturn))
-#elif defined(_MSC_VER)
-    #define GTL_ATTRIBUTE_NORETURN __declspec(noreturn)
-#else
-    #define GTL_ATTRIBUTE_NORETURN
-#endif
-
-#if defined(__GNUC__) && defined(ADDRESS_SANITIZER)
-    #define GTL_ATTRIBUTE_NO_SANITIZE_ADDRESS __attribute__((no_sanitize_address))
-#else
-    #define GTL_ATTRIBUTE_NO_SANITIZE_ADDRESS
-#endif
-
-#if defined(__GNUC__) && defined(MEMORY_SANITIZER)
-    #define GTL_ATTRIBUTE_NO_SANITIZE_MEMORY __attribute__((no_sanitize_memory))
-#else
-    #define GTL_ATTRIBUTE_NO_SANITIZE_MEMORY
-#endif
-
-#if defined(__GNUC__) && defined(THREAD_SANITIZER)
-    #define GTL_ATTRIBUTE_NO_SANITIZE_THREAD __attribute__((no_sanitize_thread))
-#else
-    #define GTL_ATTRIBUTE_NO_SANITIZE_THREAD
-#endif
-
-#if defined(__GNUC__) && (defined(UNDEFINED_BEHAVIOR_SANITIZER) || defined(ADDRESS_SANITIZER))
-    #define GTL_ATTRIBUTE_NO_SANITIZE_UNDEFINED __attribute__((no_sanitize("undefined")))
-#else
-    #define GTL_ATTRIBUTE_NO_SANITIZE_UNDEFINED
-#endif
-
-#if defined(__GNUC__) && defined(CONTROL_FLOW_INTEGRITY)
-    #define GTL_ATTRIBUTE_NO_SANITIZE_CFI __attribute__((no_sanitize("cfi")))
-#else
-    #define GTL_ATTRIBUTE_NO_SANITIZE_CFI
-#endif
-
-#if defined(__GNUC__) && defined(SAFESTACK_SANITIZER)
-    #define GTL_ATTRIBUTE_NO_SANITIZE_SAFESTACK __attribute__((no_sanitize("safe-stack")))
-#else
-    #define GTL_ATTRIBUTE_NO_SANITIZE_SAFESTACK
-#endif
-
-#if GTL_HAVE_ATTRIBUTE(returns_nonnull) || (defined(__GNUC__)  && !defined(__clang__))
-    #define GTL_ATTRIBUTE_RETURNS_NONNULL __attribute__((returns_nonnull))
-#else
-    #define GTL_ATTRIBUTE_RETURNS_NONNULL
-#endif
-
-#if GTL_HAVE_ATTRIBUTE(nodiscard)
-    #define GTL_MUST_USE_RESULT [[nodiscard]]
-#elif defined(__clang__) && GTL_HAVE_ATTRIBUTE(warn_unused_result)
-    #define GTL_MUST_USE_RESULT __attribute__((warn_unused_result))
-#else
-    #define GTL_MUST_USE_RESULT
-#endif
-
-#if GTL_HAVE_ATTRIBUTE(hot) || (defined(__GNUC__) && !defined(__clang__))
-    #define GTL_ATTRIBUTE_HOT __attribute__((hot))
-#else
-    #define GTL_ATTRIBUTE_HOT
-#endif
-
-#if GTL_HAVE_ATTRIBUTE(cold) || (defined(__GNUC__) && !defined(__clang__))
-    #define GTL_ATTRIBUTE_COLD __attribute__((cold))
-#else
-    #define GTL_ATTRIBUTE_COLD
-#endif
-
 #if defined(__clang__)
     #if GTL_HAVE_CPP_ATTRIBUTE(clang::reinitializes)
         #define GTL_ATTRIBUTE_REINITIALIZES [[clang::reinitializes]]
@@ -369,31 +219,6 @@
     #endif
 #else
     #define GTL_ATTRIBUTE_REINITIALIZES
-#endif
-
-#if GTL_HAVE_ATTRIBUTE(unused) || (defined(__GNUC__) && !defined(__clang__))
-    #undef GTL_ATTRIBUTE_UNUSED
-    #define GTL_ATTRIBUTE_UNUSED __attribute__((__unused__))
-#else
-    #define GTL_ATTRIBUTE_UNUSED
-#endif
-
-#if GTL_HAVE_ATTRIBUTE(tls_model) || (defined(__GNUC__) && !defined(__clang__))
-    #define GTL_ATTRIBUTE_INITIAL_EXEC __attribute__((tls_model("initial-exec")))
-#else
-    #define GTL_ATTRIBUTE_INITIAL_EXEC
-#endif
-
-#if GTL_HAVE_ATTRIBUTE(packed) || (defined(__GNUC__) && !defined(__clang__))
-    #define GTL_ATTRIBUTE_PACKED __attribute__((__packed__))
-#else
-    #define GTL_ATTRIBUTE_PACKED
-#endif
-
-#if GTL_HAVE_ATTRIBUTE(aligned) || (defined(__GNUC__) && !defined(__clang__))
-    #define GTL_ATTRIBUTE_FUNC_ALIGN(bytes) __attribute__((aligned(bytes)))
-#else
-    #define GTL_ATTRIBUTE_FUNC_ALIGN(bytes)
 #endif
 
 #if GTL_HAVE_ATTRIBUTE(no_unique_address) || GTL_HAVE_CPP_ATTRIBUTE(no_unique_address)
@@ -435,27 +260,5 @@
     #include <tmmintrin.h>
 #endif
 
-
-// ----------------------------------------------------------------------
-// base/macros.h
-// ----------------------------------------------------------------------
-
-// GTL_ARRAYSIZE()
-//
-// Returns the number of elements in an array as a compile-time constant, which
-// can be used in defining new arrays. If you use this macro on a pointer by
-// mistake, you will get a compile-time error.
-// ----------------------------------------------------------------------------
-#define GTL_ARRAYSIZE(array) (sizeof(::gtl::macros_internal::ArraySizeHelper(array)))
-
-namespace gtl {
-    namespace macros_internal {
-        // Note: this internal template function declaration is used by GTL_ARRAYSIZE.
-        // The function doesn't need a definition, as we only use its type.
-        // ---------------------------------------------------------------------------
-        template <typename T, size_t N>
-        auto ArraySizeHelper(const T (&array)[N]) -> char (&)[N];
-    } 
-}
 
 #endif // gtl_config_hpp_guard_
