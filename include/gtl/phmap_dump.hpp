@@ -159,6 +159,19 @@ public:
         return true;
     }
 
+    template<typename V>
+    typename std::enable_if<type_traits_internal::IsTriviallyCopyable<V>::value, bool>::type
+    saveBinary(const V& v) {
+        ofs_.write(reinterpret_cast<const char *>(&v), sizeof(V));
+        return true;
+    }
+
+    template<typename Map>
+    auto saveBinary(const Map& v) -> decltype(v.phmap_dump(*this), bool())
+    {
+        return v.phmap_dump(*this);
+    }
+
 private:
     std::ofstream ofs_;
 };
@@ -173,6 +186,19 @@ public:
     bool loadBinary(void* p, size_t sz) {
         ifs_.read(reinterpret_cast<char*>(p), sz);
         return true;
+    }
+
+    template<typename V>
+    typename std::enable_if<type_traits_internal::IsTriviallyCopyable<V>::value, bool>::type
+    loadBinary(V* v) {
+        ifs_.read(reinterpret_cast<char *>(v), sizeof(V));
+        return true;
+    }
+
+    template<typename Map>
+    auto loadBinary(Map* v) -> decltype(v->phmap_load(*this), bool())
+    {
+        return v->phmap_load(*this);
     }
 
 private:
