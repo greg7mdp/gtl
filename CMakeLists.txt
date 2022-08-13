@@ -168,6 +168,7 @@ endif()
     gtl_cc_app(ex_two_files SRCS examples/hmap/f1.cpp examples/hmap/f2.cpp include/gtl/debug_vis/gtl.natvis)
     gtl_cc_app(ex_knucleotide SRCS examples/hmap/knucleotide.cpp include/gtl/debug_vis/gtl.natvis LIBS Threads::Threads)
     gtl_cc_app(ex_dump_load SRCS examples/hmap/dump_load.cpp include/gtl/debug_vis/gtl.natvis)
+    gtl_cc_app(ex_dump_nested SRCS examples/hmap/dump_nested.cpp include/gtl/debug_vis/gtl.natvis)
     gtl_cc_app(ex_matt SRCS examples/hmap/matt.cpp include/gtl/debug_vis/gtl.natvis)
 
     gtl_cc_app(ex_soa SRCS examples/misc/soa.cpp include/gtl/debug_vis/gtl.natvis)
