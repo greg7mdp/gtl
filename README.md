@@ -21,7 +21,7 @@ We are happy to integrate new classes into [gtl](https://github.com/greg7mdp/gtl
 
 [gtl](https://github.com/greg7mdp/gtl) requires a C++20 compiler. We currently support:  `Visual Studio 2019 +`, `gcc 8 +`, and `clang 10 +` (or Xcode 12 + on MacOS). 
 
-Because [gtl](https://github.com/greg7mdp/gtl) is a header only library, installation is trivial, just copy the `include/gtl` directory to your project somewhere in your include path and you are good to go. We also support common package managers such as [Conan](https://conan.io/) and [vcpkg](https://vcpkg.io/en/index.html).
+Because [gtl](https://github.com/greg7mdp/gtl) is a header only library, installation is trivial, just copy the `include/gtl` directory to your project somewhere in your include path and you are good to go. We also support common package managers such as [Conan](https://conan.io/) (package name `greg7mdp-gtl`) and [vcpkg](https://vcpkg.io/en/index.html).
 
 ## Installation
 
@@ -48,7 +48,7 @@ If you are using cmake, you can use FetchContent to integrate gtl to your projec
 
 #### Using a package manager
 
-GTL supports both **vcpkg** and **Conan** package managers.
+GTL supports both **vcpkg** and **Conan** (package name in conan-io is `greg7mdp-gtl`) package managers.
 
 #### Debugger support 
 
