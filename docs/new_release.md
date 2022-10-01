@@ -16,7 +16,7 @@
 - cd recipes/greg7mdp-gtl/all
 - conan create conanfile.py greg7mdp-gtl/1.1.5@ -pr:b=default -pr:h=default 
 - git diff
-- git commit -am "Bump greg7mdp-gtl version to 1.1.5"
+- git commit -am "[greg7mdp-gtl] Bump version to 1.1.5"
 - git push origin gtl_1.1.5 
 - create PR like [this](https://github.com/conan-io/conan-center-index/pull/13161)
 
@@ -32,10 +32,10 @@ in windows, non-cygwin console
 
 - set VCPKG_ROOT=
 - vcpkg install gtl --triplet x64-windows
-- # update sha in portfile.cmake
+- # update sha in portfile.cmake - run `sha512sum parallel-hashmap-1.3.8.tar.gz` on linux
 - git diff
-- git commit "[gtl] Bump version to 1.3.8"
+- git commit -am "[gtl] Bump version to 1.1.5"
 - vcpkg x-add-version --all --overwrite-version ## (or ./vcpkg.exe --no-dry-run upgrade )
 - git diff
-- git commit ...
+- git commit -am "[gtl] run x-add-version"
 - git push origin gtl_1.1.5 
