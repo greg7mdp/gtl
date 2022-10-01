@@ -8,7 +8,7 @@
     FetchContent_Declare(
         gtl
         GIT_REPOSITORY https://github.com/greg7mdp/gtl.git
-        GIT_TAG        v1.1.0 # adjust tag/branch/commit as needed
+        GIT_TAG        v1.1.4 # adjust tag/branch/commit as needed
     )
     FetchContent_MakeAvailable(gtl)
 
@@ -23,11 +23,11 @@ list (APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake")
 
 include(DetectVersion)
 
-cmake_policy(SET CMP0048 NEW)                    ## set VERSION as documented by the project() command.
-cmake_policy(SET CMP0076 NEW)                    ## accept new policy
+cmake_policy(SET CMP0048 NEW)              ## set VERSION as documented by the project() command.
+cmake_policy(SET CMP0076 NEW)              ## accept new policy
 
 if(NOT CMAKE_CXX_STANDARD)
-    set(CMAKE_CXX_STANDARD 20)                   ## compile with C++20 support
+    set(CMAKE_CXX_STANDARD 20)             ## compile with C++20 support
 endif()
 
 if(NOT CMAKE_CXX_STANDARD_REQUIRED)
