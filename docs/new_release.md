@@ -9,13 +9,14 @@
 
 - fork and clone [conan-center repo](https://github.com/conan-io/conan-center-index)
      (or sync +  git pull)
+- git checkout master
 - git checkout -b gtl_1.1.5
-- update: `recipes/gtl/all/conandata.yml` and `recipes/gtl/config.yml`
+- update: `recipes/greg7mdp-gtl/all/conandata.yml` and `recipes/greg7mdp-gtl/config.yml`
 - sudo pip install conan -U 
-- cd recipes/gtl/all
-- conan create conanfile.py gtl/1.1.5@ -pr:b=default -pr:h=default 
+- cd recipes/greg7mdp-gtl/all
+- conan create conanfile.py greg7mdp-gtl/1.1.5@ -pr:b=default -pr:h=default 
 - git diff
-- git commit ...
+- git commit -am "Bump greg7mdp-gtl version to 1.1.5"
 - git push origin gtl_1.1.5 
 - create PR like [this](https://github.com/conan-io/conan-center-index/pull/13161)
 
@@ -33,7 +34,7 @@ in windows, non-cygwin console
 - vcpkg install gtl --triplet x64-windows
 - # update sha in portfile.cmake
 - git diff
-- git commit ...
+- git commit "[gtl] Bump version to 1.3.8"
 - vcpkg x-add-version --all --overwrite-version ## (or ./vcpkg.exe --no-dry-run upgrade )
 - git diff
 - git commit ...
