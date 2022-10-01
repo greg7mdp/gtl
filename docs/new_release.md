@@ -32,7 +32,7 @@ in windows, non-cygwin console
 
 - set VCPKG_ROOT=
 - vcpkg install gtl --triplet x64-windows
-- # update sha in portfile.cmake - run `sha512sum parallel-hashmap-1.3.8.tar.gz` on linux
+- # update sha in portfile.cmake - run `sha512sum gtl-1.1.5.tar.gz` on linux
 - git diff
 - git commit -am "[gtl] Bump version to 1.1.5"
 - vcpkg x-add-version --all --overwrite-version ## (or ./vcpkg.exe --no-dry-run upgrade )
