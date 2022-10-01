@@ -4932,7 +4932,9 @@ struct HashEq<T*>
         using is_transparent = void;
         template <class U>
         size_t operator()(const U& ptr) const {
-            return gtl::Hash<const T*>{}(HashEq::ToPtr(ptr));
+            // we want phmap::Hash<T*> and not phmap::Hash<const T*>
+            // so "struct std::hash<T*> " override works
+            return gtl::Hash<T*>{}((T*)(uintptr_t)HashEq::ToPtr(ptr));
         }
     };
 
