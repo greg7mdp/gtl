@@ -1526,12 +1526,8 @@ public:
     //   flat_hash_set<std::string> s;
     //   const char* p = "hello";
     //   s.insert(p);
-    //
-    // TODO(romanp): Once we stop supporting gcc 5.1 and below, replace
-    // RequiresInsertable<T> with RequiresInsertable<const T&>.
-    // We are hitting this bug: https://godbolt.org/g/1Vht4f.
     // ----------------------------------------------------------------
-    template <class T, RequiresInsertable<T> = 0,
+    template <class T, RequiresInsertable<const T&> = 0,
               typename std::enable_if_t<IsDecomposable<const T&>::value, int> = 0>
     std::pair<iterator, bool> insert(const T& value) {
         return emplace(value);
@@ -1554,11 +1550,7 @@ public:
         return insert(std::forward<T>(value)).first;
     }
 
-    // TODO(romanp): Once we stop supporting gcc 5.1 and below, replace
-    // RequiresInsertable<T> with RequiresInsertable<const T&>.
-    // We are hitting this bug: https://godbolt.org/g/1Vht4f.
-    // ----------------------------------------------------------------
-    template <class T, RequiresInsertable<T> = 0,
+    template <class T, RequiresInsertable<const T&> = 0,
               typename std::enable_if_t<IsDecomposable<const T&>::value, int> = 0>
     iterator insert(const_iterator, const T& value) {
         return insert(value).first;
@@ -3555,12 +3547,8 @@ public:
     //   flat_hash_set<std::string> s;
     //   const char* p = "hello";
     //   s.insert(p);
-    //
-    // TODO(romanp): Once we stop supporting gcc 5.1 and below, replace
-    // RequiresInsertable<T> with RequiresInsertable<const T&>.
-    // We are hitting this bug: https://godbolt.org/g/1Vht4f.
     // --------------------------------------------------------------------
-    template <class T, RequiresInsertable<T> = 0,
+    template <class T, RequiresInsertable<const T&> = 0,
               typename std::enable_if_t<IsDecomposable<const T&>::value, int> = 0>
     std::pair<iterator, bool> insert(const T& value) {
         return emplace(value);
@@ -3583,12 +3571,8 @@ public:
         return insert(std::forward<T>(value)).first;
     }
 
-    // TODO(romanp): Once we stop supporting gcc 5.1 and below, replace
-    // RequiresInsertable<T> with RequiresInsertable<const T&>.
-    // We are hitting this bug: https://godbolt.org/g/1Vht4f.
-    // --------------------------------------------------------------------
     template <
-        class T, RequiresInsertable<T> = 0,
+        class T, RequiresInsertable<const T&> = 0,
         typename std::enable_if_t<IsDecomposable<const T&>::value, int> = 0>
     iterator insert(const_iterator, const T& value) {
         return insert(value).first;
