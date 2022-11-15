@@ -836,16 +836,6 @@ class GTL_INTERNAL_COMPRESSED_TUPLE_DECLSPEC CompressedTuple<> {};
 
 // -----------------------------------------------------------------------
 // -----------------------------------------------------------------------
-#if defined(__cpp_lib_result_of_sfinae)
-    template <class F, class... ArgTypes>
-    using invoke_result_t = typename std::invoke_result_t<F, ArgTypes...>;
-#else
-    template <class F, class... ArgTypes>
-    using invoke_result_t = typename std::result_of<F(ArgTypes...)>::type;
-#endif
-
-// -----------------------------------------------------------------------
-// -----------------------------------------------------------------------
 template <class, class = void>
 struct IsTransparent : std::false_type {};
 

@@ -567,13 +567,13 @@ namespace gtl {
         }
 
         template <typename Compare, typename K, typename LK,
-                  std::enable_if_t<!std::is_same_v<bool, gtl::invoke_result_t<Compare, const K &, const LK &>>, int> = 0>
+                  std::enable_if_t<!std::is_same_v<bool, std::invoke_result_t<Compare, const K &, const LK &>>, int> = 0>
             constexpr gtl::weak_ordering do_three_way_comparison(const Compare &compare, const K &x, const LK &y) {
             return compare_result_as_ordering(compare(x, y));
         }
 
         template <typename Compare, typename K, typename LK,
-                  std::enable_if_t<std::is_same_v<bool, gtl::invoke_result_t<Compare, const K &, const LK &>>, int> = 0>
+                  std::enable_if_t<std::is_same_v<bool, std::invoke_result_t<Compare, const K &, const LK &>>, int> = 0>
             constexpr gtl::weak_ordering do_three_way_comparison(const Compare &cmp, const K &x, const LK &y) {
             return cmp(x, y) ? gtl::weak_ordering::less
                 : cmp(y, x) ? gtl::weak_ordering::greater
@@ -590,7 +590,7 @@ namespace priv {
     // --------------------------------------------------------------------------
     template <typename Compare, typename T>
     using btree_is_key_compare_to =
-        std::is_convertible<gtl::invoke_result_t<Compare, const T &, const T &>,
+        std::is_convertible<std::invoke_result_t<Compare, const T &, const T &>,
                             gtl::weak_ordering>;
 
     struct StringBtreeDefaultLess {
@@ -2502,7 +2502,7 @@ namespace priv {
         // Verify that key_compare returns an std::{weak,strong}_ordering or bool.
         // -----------------------------------------------------------------------
         using compare_result_type =
-            gtl::invoke_result_t<key_compare, key_type, key_type>;
+            std::invoke_result_t<key_compare, key_type, key_type>;
         static_assert(
             std::is_same_v<compare_result_type, bool> ||
             std::is_convertible_v<compare_result_type, gtl::weak_ordering>,
