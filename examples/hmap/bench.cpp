@@ -1,4 +1,5 @@
 #include <inttypes.h>
+#include <string>
 
 #ifdef STL_UNORDERED
     #include <unordered_map>
@@ -80,7 +81,7 @@ template <class K, class V>
 using HashT      = MAPNAME<K, V EXTRAARGS>;
 
 using hash_t     = HashT<int64_t, int64_t>;
-using str_hash_t = HashT<const char *, int64_t>;
+using str_hash_t = HashT<std::string, int64_t>;
 
 const char *program_slug = phmap_xstr(MAPNAME); // "_4";
 
@@ -153,15 +154,6 @@ public:
         return permuteQPR((permuteQPR(m_index++) + m_intermediateOffset) ^ 0x5bf03635);
     }
 };
-
-// --------------------------------------------------------------------------
-char * new_string_from_integer(uint64_t num)
-{
-    int ndigits = num == 0 ? 1 : (int)log10(num) + 1;
-    char * str = (char *)malloc(ndigits + 1);
-    sprintf(str, "%u", (unsigned int)num);
-    return str;
-}
 
 // --------------------------------------------------------------------------
 template <class T> 
@@ -448,20 +440,20 @@ int main(int argc, char ** argv)
         else if(!strcmp(bench_name, "sequentialstring"))
         {
             for(i = 0; i < num_keys; i++)
-                str_hash.insert(str_hash_t::value_type(new_string_from_integer(i), value));
+                str_hash.insert({std::to_string(i), value});
         }
         else if(!strcmp(bench_name, "randomstring"))
         {
             for(i = 0; i < num_keys; i++)
-                str_hash.insert(str_hash_t::value_type(new_string_from_integer((int)rand()), value));
+                str_hash.insert({std::to_string((int)rand()), value});
         }
         else if(!strcmp(bench_name, "deletestring"))
         {
             for(i = 0; i < num_keys; i++)
-                str_hash.insert(str_hash_t::value_type(new_string_from_integer(i), value));
+                str_hash.insert({std::to_string(i), value});
             timer.reset();
             for(i = 0; i < num_keys; i++)
-                str_hash.erase(new_string_from_integer(i));
+                str_hash.erase(std::to_string(i));
         }
         
  
