@@ -211,14 +211,6 @@ struct IsDecomposable<
                       std::declval<Ts>()...))>,
     Policy, Hash, Eq, Ts...> : std::true_type {};
 
-// TODO(alkis): Switch to std::is_nothrow_swappable when gcc/clang supports it.
-// --------------------------------------------------------------------------
-template <class T>
-constexpr bool IsNoThrowSwappable() {
-    using std::swap;
-    return noexcept(swap(std::declval<T&>(), std::declval<T&>()));
-}
-
 // --------------------------------------------------------------------------
 template <typename T>
 int TrailingZeros(T x) {
@@ -1883,9 +1875,9 @@ public:
     }
 
     void swap(raw_hash_set& that) noexcept(
-        IsNoThrowSwappable<hasher>() && IsNoThrowSwappable<key_equal>() &&
+        std::is_nothrow_swappable_v<hasher> && std::is_nothrow_swappable_v<key_equal> &&
         (!AllocTraits::propagate_on_container_swap::value ||
-         IsNoThrowSwappable<allocator_type>())) {
+         std::is_nothrow_swappable_v<allocator_type>)) {
         using std::swap;
         swap(ctrl_, that.ctrl_);
         swap(slots_, that.slots_);
@@ -4094,9 +4086,9 @@ public:
 
     template<class Mtx2_>
     void swap(parallel_hash_set<N, RefSet, Mtx2_, AuxCont, Policy, Hash, Eq, Alloc>& that) noexcept(
-        IsNoThrowSwappable<EmbeddedSet>() &&
+        std::is_nothrow_swappable_v<EmbeddedSet> &&
         (!AllocTraits::propagate_on_container_swap::value ||
-         IsNoThrowSwappable<allocator_type>())) {
+         std::is_nothrow_swappable_v<allocator_type>)) {
         using std::swap;
         using Lockable2 = LockableImpl<Mtx2_>;
         
