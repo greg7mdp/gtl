@@ -710,21 +710,6 @@ template <typename D, size_t I>
 using ElemT = typename Elem<D, I>::type;
 
 // ---------------------------------------------------------------------------
-// Use the __is_final intrinsic if available. Where it's not available, classes
-// declared with the 'final' specifier cannot be used as CompressedTuple
-// elements.
-// TODO(sbenza): Replace this with std::is_final in C++14.
-// ---------------------------------------------------------------------------
-template <typename T>
-constexpr bool IsFinal() {
-#if defined(__clang__) || defined(__GNUC__)
-    return __is_final(T);
-#else
-    return false;
-#endif
-}
-
-// ----------------------------------------------------------------------------
 template <typename T>
 constexpr bool ShouldUseBase() {
 #ifdef __INTEL_COMPILER
@@ -732,7 +717,7 @@ constexpr bool ShouldUseBase() {
     // assertion failed at: "shared/cfe/edgcpfe/lower_init.c", line 7013
     return false; 
 #else
-    return std::is_class_v<T> && std::is_empty_v<T> && !IsFinal<T>();
+    return std::is_class_v<T> && std::is_empty_v<T> && !std::is_final_v<T>;
 #endif
 }
 
