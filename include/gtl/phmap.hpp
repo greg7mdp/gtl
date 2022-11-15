@@ -1121,12 +1121,6 @@ private:
         std::disjunction_v<std::is_convertible<T, init_type>, SameAsElementReference<T>>,
         int>;
 
-    // RequiresNotInit is a workaround for gcc prior to 7.1.
-    // See https://godbolt.org/g/Y4xsUh.
-    // ----------------------------------------------------------------------------
-    template <class T>
-    using RequiresNotInit = typename std::enable_if_t<!std::is_same_v<T, init_type>, int>;
-
     template <class... Ts>
     using IsDecomposable = IsDecomposable<void, PolicyTraits, Hash, Eq, Ts...>;
 
@@ -1333,10 +1327,8 @@ public:
     // the copy constructor is meant to be called.
     //
     //   gtl::flat_hash_set<int> a, b{a};
-    //
-    // RequiresNotInit<T> is a workaround for gcc prior to 7.1.
     // --------------------------------------------------------------------------
-    template <class T, RequiresNotInit<T> = 0, RequiresInsertable<T> = 0>
+    template <class T, RequiresInsertable<T> = 0>
     raw_hash_set(std::initializer_list<T> init, size_t bucket_cnt = 0,
                  const hasher& hashfn = hasher(), const key_equal& eq = key_equal(),
                  const allocator_type& alloc = allocator_type())
@@ -1347,7 +1339,7 @@ public:
                  const allocator_type& alloc = allocator_type())
         : raw_hash_set(init.begin(), init.end(), bucket_cnt, hashfn, eq, alloc) {}
 
-    template <class T, RequiresNotInit<T> = 0, RequiresInsertable<T> = 0>
+    template <class T, RequiresInsertable<T> = 0>
     raw_hash_set(std::initializer_list<T> init, size_t bucket_cnt,
                  const hasher& hashfn, const allocator_type& alloc)
         : raw_hash_set(init, bucket_cnt, hashfn, key_equal(), alloc) {}
@@ -1356,7 +1348,7 @@ public:
                  const hasher& hashfn, const allocator_type& alloc)
         : raw_hash_set(init, bucket_cnt, hashfn, key_equal(), alloc) {}
 
-    template <class T, RequiresNotInit<T> = 0, RequiresInsertable<T> = 0>
+    template <class T, RequiresInsertable<T> = 0>
     raw_hash_set(std::initializer_list<T> init, size_t bucket_cnt,
                  const allocator_type& alloc)
         : raw_hash_set(init, bucket_cnt, hasher(), key_equal(), alloc) {}
@@ -1365,7 +1357,7 @@ public:
                  const allocator_type& alloc)
         : raw_hash_set(init, bucket_cnt, hasher(), key_equal(), alloc) {}
 
-    template <class T, RequiresNotInit<T> = 0, RequiresInsertable<T> = 0>
+    template <class T, RequiresInsertable<T> = 0>
     raw_hash_set(std::initializer_list<T> init, const allocator_type& alloc)
         : raw_hash_set(init, 0, hasher(), key_equal(), alloc) {}
 
@@ -1592,7 +1584,7 @@ public:
             emplace(*first);
     }
 
-    template <class T, RequiresNotInit<T> = 0, RequiresInsertable<const T&> = 0>
+    template <class T, RequiresInsertable<const T&> = 0>
     void insert(std::initializer_list<T> ilist) {
         insert(ilist.begin(), ilist.end());
     }
@@ -3195,11 +3187,6 @@ private:
     using RequiresInsertable = typename std::enable_if_t<
         std::disjunction_v<std::is_convertible<T, init_type>, SameAsElementReference<T>>, int>;
 
-    // RequiresNotInit is a workaround for gcc prior to 7.1.
-    // See https://godbolt.org/g/Y4xsUh.
-    template <class T>
-    using RequiresNotInit = typename std::enable_if_t<!std::is_same_v<T, init_type>, int>;
-
     template <class... Ts>
     using IsDecomposable = IsDecomposable<void, PolicyTraits, Hash, Eq, Ts...>;
 
@@ -3396,10 +3383,8 @@ public:
     // the copy constructor is meant to be called.
     //
     //   gtl::flat_hash_set<int> a, b{a};
-    //
-    // RequiresNotInit<T> is a workaround for gcc prior to 7.1.
     // --------------------------------------------------------------------
-    template <class T, RequiresNotInit<T> = 0, RequiresInsertable<T> = 0>
+    template <class T, RequiresInsertable<T> = 0>
     parallel_hash_set(std::initializer_list<T> init, size_t bucket_cnt = 0,
                       const hasher& hash_param = hasher(), const key_equal& eq = key_equal(),
                       const allocator_type& alloc = allocator_type())
@@ -3410,7 +3395,7 @@ public:
                       const allocator_type& alloc = allocator_type())
         : parallel_hash_set(init.begin(), init.end(), bucket_cnt, hash_param, eq, alloc) {}
 
-    template <class T, RequiresNotInit<T> = 0, RequiresInsertable<T> = 0>
+    template <class T, RequiresInsertable<T> = 0>
     parallel_hash_set(std::initializer_list<T> init, size_t bucket_cnt,
                       const hasher& hash_param, const allocator_type& alloc)
         : parallel_hash_set(init, bucket_cnt, hash_param, key_equal(), alloc) {}
@@ -3419,7 +3404,7 @@ public:
                       const hasher& hash_param, const allocator_type& alloc)
         : parallel_hash_set(init, bucket_cnt, hash_param, key_equal(), alloc) {}
 
-    template <class T, RequiresNotInit<T> = 0, RequiresInsertable<T> = 0>
+    template <class T, RequiresInsertable<T> = 0>
     parallel_hash_set(std::initializer_list<T> init, size_t bucket_cnt,
                       const allocator_type& alloc)
         : parallel_hash_set(init, bucket_cnt, hasher(), key_equal(), alloc) {}
@@ -3428,7 +3413,7 @@ public:
                       const allocator_type& alloc)
         : parallel_hash_set(init, bucket_cnt, hasher(), key_equal(), alloc) {}
 
-    template <class T, RequiresNotInit<T> = 0, RequiresInsertable<T> = 0>
+    template <class T, RequiresInsertable<T> = 0>
     parallel_hash_set(std::initializer_list<T> init, const allocator_type& alloc)
         : parallel_hash_set(init, 0, hasher(), key_equal(), alloc) {}
   
@@ -3587,7 +3572,7 @@ public:
         for (; first != last; ++first) insert(*first);
     }
 
-    template <class T, RequiresNotInit<T> = 0, RequiresInsertable<const T&> = 0>
+    template <class T, RequiresInsertable<const T&> = 0>
     void insert(std::initializer_list<T> ilist) {
         insert(ilist.begin(), ilist.end());
     }
