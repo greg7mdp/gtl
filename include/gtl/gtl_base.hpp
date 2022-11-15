@@ -881,6 +881,19 @@ struct Less
 
 
 // -----------------------------------------------------------------------
+// std::aligned_storage and std::aligned_storage_t are deprecated in C++23
+// -----------------------------------------------------------------------
+template<std::size_t Len, std::size_t Align>
+struct aligned_storage {
+    struct type {
+        alignas(Align) unsigned char data[Len];
+    };
+};
+
+template< std::size_t Len, std::size_t Align>
+using aligned_storage_t = typename aligned_storage<Len, Align>::type;
+
+// -----------------------------------------------------------------------
 // The node_handle concept from C++17.
 // We specialize node_handle for sets and maps. node_handle_base holds the
 // common API of both.
@@ -959,7 +972,7 @@ protected:
 
 private:
     std::optional<allocator_type> alloc_;
-    mutable std::aligned_storage_t<sizeof(slot_type), alignof(slot_type)> slot_space_;
+    mutable gtl::aligned_storage_t<sizeof(slot_type), alignof(slot_type)> slot_space_;
 };
 
 // For sets.
