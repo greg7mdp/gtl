@@ -871,10 +871,6 @@ struct KeyArg<false>
 
 // -----------------------------------------------------------------------
 // -----------------------------------------------------------------------
-template <class T> using Allocator = typename std::allocator<T>;
-
-template<class T1, class T2> using Pair = typename std::pair<T1, T2>;
-
 template <class T>
 struct EqualTo
 {
