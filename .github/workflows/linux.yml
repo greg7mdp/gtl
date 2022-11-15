@@ -11,7 +11,7 @@ jobs:
     strategy:
       matrix:
         os: [ubuntu-latest]
-        compiler: [g++-8, g++-9, clang++-10]
+        compiler: [g++-8, g++-9, g++-10, clang++-10]
         build_type: [Debug, Release]
         standard: [20]
     steps:
@@ -21,7 +21,7 @@ jobs:
     - name: Create Environment
       run: |
         sudo apt update
-        sudo apt install -y g++-8 g++-9 clang-10
+        sudo apt install -y g++-8 g++-9 g++-10 clang-10
         cmake -E make_directory ${{runner.workspace}}/build
 
     - name: Configure
