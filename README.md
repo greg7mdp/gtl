@@ -48,7 +48,7 @@ If you are using cmake, you can use FetchContent to integrate gtl to your projec
 
 #### Using a package manager
 
-GTL supports both **vcpkg** and **Conan** (package name in conan-io is `greg7mdp-gtl`) package managers.
+GTL supports both **vcpkg** and **Conan** package managers (package name in conan-io is `greg7mdp-gtl`).
 
 #### Debugger support 
 
