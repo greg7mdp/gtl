@@ -1590,11 +1590,11 @@ TEST(Table, NoThrowMoveAssign) {
 
 TEST(Table, NoThrowSwappable) {
   ASSERT_TRUE(
-      priv::IsNoThrowSwappable<gtl::Hash<std::string_view>>());
-  ASSERT_TRUE(priv::IsNoThrowSwappable<
-              std::equal_to<std::string_view>>());
-  ASSERT_TRUE(priv::IsNoThrowSwappable<std::allocator<int>>());
-  EXPECT_TRUE(priv::IsNoThrowSwappable<StringTable>());
+      std::is_nothrow_swappable_v<gtl::Hash<std::string_view>>);
+  ASSERT_TRUE(std::is_nothrow_swappable_v<
+              std::equal_to<std::string_view>>);
+  ASSERT_TRUE(std::is_nothrow_swappable_v<std::allocator<int>>);
+  EXPECT_TRUE(std::is_nothrow_swappable_v<StringTable>);
 }
 
 TEST(Table, HeterogeneousLookup) {

@@ -211,14 +211,6 @@ struct IsDecomposable<
                       std::declval<Ts>()...))>,
     Policy, Hash, Eq, Ts...> : std::true_type {};
 
-// TODO(alkis): Switch to std::is_nothrow_swappable when gcc/clang supports it.
-// --------------------------------------------------------------------------
-template <class T>
-constexpr bool IsNoThrowSwappable() {
-    using std::swap;
-    return noexcept(swap(std::declval<T&>(), std::declval<T&>()));
-}
-
 // --------------------------------------------------------------------------
 template <typename T>
 int TrailingZeros(T x) {
@@ -1129,12 +1121,6 @@ private:
         std::disjunction_v<std::is_convertible<T, init_type>, SameAsElementReference<T>>,
         int>;
 
-    // RequiresNotInit is a workaround for gcc prior to 7.1.
-    // See https://godbolt.org/g/Y4xsUh.
-    // ----------------------------------------------------------------------------
-    template <class T>
-    using RequiresNotInit = typename std::enable_if_t<!std::is_same_v<T, init_type>, int>;
-
     template <class... Ts>
     using IsDecomposable = IsDecomposable<void, PolicyTraits, Hash, Eq, Ts...>;
 
@@ -1341,10 +1327,8 @@ public:
     // the copy constructor is meant to be called.
     //
     //   gtl::flat_hash_set<int> a, b{a};
-    //
-    // RequiresNotInit<T> is a workaround for gcc prior to 7.1.
     // --------------------------------------------------------------------------
-    template <class T, RequiresNotInit<T> = 0, RequiresInsertable<T> = 0>
+    template <class T, RequiresInsertable<T> = 0>
     raw_hash_set(std::initializer_list<T> init, size_t bucket_cnt = 0,
                  const hasher& hashfn = hasher(), const key_equal& eq = key_equal(),
                  const allocator_type& alloc = allocator_type())
@@ -1355,7 +1339,7 @@ public:
                  const allocator_type& alloc = allocator_type())
         : raw_hash_set(init.begin(), init.end(), bucket_cnt, hashfn, eq, alloc) {}
 
-    template <class T, RequiresNotInit<T> = 0, RequiresInsertable<T> = 0>
+    template <class T, RequiresInsertable<T> = 0>
     raw_hash_set(std::initializer_list<T> init, size_t bucket_cnt,
                  const hasher& hashfn, const allocator_type& alloc)
         : raw_hash_set(init, bucket_cnt, hashfn, key_equal(), alloc) {}
@@ -1364,7 +1348,7 @@ public:
                  const hasher& hashfn, const allocator_type& alloc)
         : raw_hash_set(init, bucket_cnt, hashfn, key_equal(), alloc) {}
 
-    template <class T, RequiresNotInit<T> = 0, RequiresInsertable<T> = 0>
+    template <class T, RequiresInsertable<T> = 0>
     raw_hash_set(std::initializer_list<T> init, size_t bucket_cnt,
                  const allocator_type& alloc)
         : raw_hash_set(init, bucket_cnt, hasher(), key_equal(), alloc) {}
@@ -1373,7 +1357,7 @@ public:
                  const allocator_type& alloc)
         : raw_hash_set(init, bucket_cnt, hasher(), key_equal(), alloc) {}
 
-    template <class T, RequiresNotInit<T> = 0, RequiresInsertable<T> = 0>
+    template <class T, RequiresInsertable<T> = 0>
     raw_hash_set(std::initializer_list<T> init, const allocator_type& alloc)
         : raw_hash_set(init, 0, hasher(), key_equal(), alloc) {}
 
@@ -1534,12 +1518,8 @@ public:
     //   flat_hash_set<std::string> s;
     //   const char* p = "hello";
     //   s.insert(p);
-    //
-    // TODO(romanp): Once we stop supporting gcc 5.1 and below, replace
-    // RequiresInsertable<T> with RequiresInsertable<const T&>.
-    // We are hitting this bug: https://godbolt.org/g/1Vht4f.
     // ----------------------------------------------------------------
-    template <class T, RequiresInsertable<T> = 0,
+    template <class T, RequiresInsertable<const T&> = 0,
               typename std::enable_if_t<IsDecomposable<const T&>::value, int> = 0>
     std::pair<iterator, bool> insert(const T& value) {
         return emplace(value);
@@ -1562,11 +1542,7 @@ public:
         return insert(std::forward<T>(value)).first;
     }
 
-    // TODO(romanp): Once we stop supporting gcc 5.1 and below, replace
-    // RequiresInsertable<T> with RequiresInsertable<const T&>.
-    // We are hitting this bug: https://godbolt.org/g/1Vht4f.
-    // ----------------------------------------------------------------
-    template <class T, RequiresInsertable<T> = 0,
+    template <class T, RequiresInsertable<const T&> = 0,
               typename std::enable_if_t<IsDecomposable<const T&>::value, int> = 0>
     iterator insert(const_iterator, const T& value) {
         return insert(value).first;
@@ -1608,7 +1584,7 @@ public:
             emplace(*first);
     }
 
-    template <class T, RequiresNotInit<T> = 0, RequiresInsertable<const T&> = 0>
+    template <class T, RequiresInsertable<const T&> = 0>
     void insert(std::initializer_list<T> ilist) {
         insert(ilist.begin(), ilist.end());
     }
@@ -1678,7 +1654,7 @@ public:
     // ---------------------------------------------------------------------------
     template <class... Args, typename std::enable_if_t<!IsDecomposable<Args...>::value, int> = 0>
     std::pair<iterator, bool> emplace(Args&&... args) {
-        typename std::aligned_storage_t<sizeof(slot_type), alignof(slot_type)>
+        typename gtl::aligned_storage_t<sizeof(slot_type), alignof(slot_type)>
             raw;
         slot_type* slot = reinterpret_cast<slot_type*>(&raw);
 
@@ -1689,7 +1665,7 @@ public:
 
     template <class... Args, typename std::enable_if_t<!IsDecomposable<Args...>::value, int> = 0>
     std::pair<iterator, bool> emplace_with_hash(size_t hashval, Args&&... args) {
-        typename std::aligned_storage_t<sizeof(slot_type), alignof(slot_type)> raw;
+        typename gtl::aligned_storage_t<sizeof(slot_type), alignof(slot_type)> raw;
         slot_type* slot = reinterpret_cast<slot_type*>(&raw);
 
         PolicyTraits::construct(&alloc_ref(), slot, std::forward<Args>(args)...);
@@ -1883,9 +1859,9 @@ public:
     }
 
     void swap(raw_hash_set& that) noexcept(
-        IsNoThrowSwappable<hasher>() && IsNoThrowSwappable<key_equal>() &&
+        std::is_nothrow_swappable_v<hasher> && std::is_nothrow_swappable_v<key_equal> &&
         (!AllocTraits::propagate_on_container_swap::value ||
-         IsNoThrowSwappable<allocator_type>())) {
+         std::is_nothrow_swappable_v<allocator_type>)) {
         using std::swap;
         swap(ctrl_, that.ctrl_);
         swap(slots_, that.slots_);
@@ -2293,7 +2269,7 @@ private:
         //       repeat procedure for current slot with moved from element (target)
         // ------------------------------------------------------------------------
         ConvertDeletedToEmptyAndFullToDeleted(ctrl_, capacity_);
-        typename std::aligned_storage_t<sizeof(slot_type), alignof(slot_type)> raw;
+        typename gtl::aligned_storage_t<sizeof(slot_type), alignof(slot_type)> raw;
         slot_type* slot = reinterpret_cast<slot_type*>(&raw);
         for (size_t i = 0; i != capacity_; ++i) {
             if (!IsDeleted(ctrl_[i])) continue;
@@ -3211,11 +3187,6 @@ private:
     using RequiresInsertable = typename std::enable_if_t<
         std::disjunction_v<std::is_convertible<T, init_type>, SameAsElementReference<T>>, int>;
 
-    // RequiresNotInit is a workaround for gcc prior to 7.1.
-    // See https://godbolt.org/g/Y4xsUh.
-    template <class T>
-    using RequiresNotInit = typename std::enable_if_t<!std::is_same_v<T, init_type>, int>;
-
     template <class... Ts>
     using IsDecomposable = IsDecomposable<void, PolicyTraits, Hash, Eq, Ts...>;
 
@@ -3412,10 +3383,8 @@ public:
     // the copy constructor is meant to be called.
     //
     //   gtl::flat_hash_set<int> a, b{a};
-    //
-    // RequiresNotInit<T> is a workaround for gcc prior to 7.1.
     // --------------------------------------------------------------------
-    template <class T, RequiresNotInit<T> = 0, RequiresInsertable<T> = 0>
+    template <class T, RequiresInsertable<T> = 0>
     parallel_hash_set(std::initializer_list<T> init, size_t bucket_cnt = 0,
                       const hasher& hash_param = hasher(), const key_equal& eq = key_equal(),
                       const allocator_type& alloc = allocator_type())
@@ -3426,7 +3395,7 @@ public:
                       const allocator_type& alloc = allocator_type())
         : parallel_hash_set(init.begin(), init.end(), bucket_cnt, hash_param, eq, alloc) {}
 
-    template <class T, RequiresNotInit<T> = 0, RequiresInsertable<T> = 0>
+    template <class T, RequiresInsertable<T> = 0>
     parallel_hash_set(std::initializer_list<T> init, size_t bucket_cnt,
                       const hasher& hash_param, const allocator_type& alloc)
         : parallel_hash_set(init, bucket_cnt, hash_param, key_equal(), alloc) {}
@@ -3435,7 +3404,7 @@ public:
                       const hasher& hash_param, const allocator_type& alloc)
         : parallel_hash_set(init, bucket_cnt, hash_param, key_equal(), alloc) {}
 
-    template <class T, RequiresNotInit<T> = 0, RequiresInsertable<T> = 0>
+    template <class T, RequiresInsertable<T> = 0>
     parallel_hash_set(std::initializer_list<T> init, size_t bucket_cnt,
                       const allocator_type& alloc)
         : parallel_hash_set(init, bucket_cnt, hasher(), key_equal(), alloc) {}
@@ -3444,7 +3413,7 @@ public:
                       const allocator_type& alloc)
         : parallel_hash_set(init, bucket_cnt, hasher(), key_equal(), alloc) {}
 
-    template <class T, RequiresNotInit<T> = 0, RequiresInsertable<T> = 0>
+    template <class T, RequiresInsertable<T> = 0>
     parallel_hash_set(std::initializer_list<T> init, const allocator_type& alloc)
         : parallel_hash_set(init, 0, hasher(), key_equal(), alloc) {}
   
@@ -3563,12 +3532,8 @@ public:
     //   flat_hash_set<std::string> s;
     //   const char* p = "hello";
     //   s.insert(p);
-    //
-    // TODO(romanp): Once we stop supporting gcc 5.1 and below, replace
-    // RequiresInsertable<T> with RequiresInsertable<const T&>.
-    // We are hitting this bug: https://godbolt.org/g/1Vht4f.
     // --------------------------------------------------------------------
-    template <class T, RequiresInsertable<T> = 0,
+    template <class T, RequiresInsertable<const T&> = 0,
               typename std::enable_if_t<IsDecomposable<const T&>::value, int> = 0>
     std::pair<iterator, bool> insert(const T& value) {
         return emplace(value);
@@ -3591,12 +3556,8 @@ public:
         return insert(std::forward<T>(value)).first;
     }
 
-    // TODO(romanp): Once we stop supporting gcc 5.1 and below, replace
-    // RequiresInsertable<T> with RequiresInsertable<const T&>.
-    // We are hitting this bug: https://godbolt.org/g/1Vht4f.
-    // --------------------------------------------------------------------
     template <
-        class T, RequiresInsertable<T> = 0,
+        class T, RequiresInsertable<const T&> = 0,
         typename std::enable_if_t<IsDecomposable<const T&>::value, int> = 0>
     iterator insert(const_iterator, const T& value) {
         return insert(value).first;
@@ -3611,7 +3572,7 @@ public:
         for (; first != last; ++first) insert(*first);
     }
 
-    template <class T, RequiresNotInit<T> = 0, RequiresInsertable<const T&> = 0>
+    template <class T, RequiresInsertable<const T&> = 0>
     void insert(std::initializer_list<T> ilist) {
         insert(ilist.begin(), ilist.end());
     }
@@ -3693,7 +3654,7 @@ public:
     // --------------------------------------------------------------------
     template <class... Args, typename std::enable_if_t<!IsDecomposable<Args...>::value, int> = 0>
     std::pair<iterator, bool> emplace_with_hash(size_t hashval, Args&&... args) {
-        typename std::aligned_storage_t<sizeof(slot_type), alignof(slot_type)> raw;
+        typename gtl::aligned_storage_t<sizeof(slot_type), alignof(slot_type)> raw;
         slot_type* slot = reinterpret_cast<slot_type*>(&raw);
 
         PolicyTraits::construct(&alloc_ref(), slot, std::forward<Args>(args)...);
@@ -3764,7 +3725,7 @@ public:
     // --------------------------------------------------------------------
     template <class... Args, typename std::enable_if_t<!IsDecomposable<Args...>::value, int> = 0>
     std::pair<iterator, bool> emplace(Args&&... args) {
-        typename std::aligned_storage_t<sizeof(slot_type), alignof(slot_type)> raw;
+        typename gtl::aligned_storage_t<sizeof(slot_type), alignof(slot_type)> raw;
         slot_type* slot = reinterpret_cast<slot_type*>(&raw);
         size_t hashval  = this->hash(PolicyTraits::key(slot));
 
@@ -4094,9 +4055,9 @@ public:
 
     template<class Mtx2_>
     void swap(parallel_hash_set<N, RefSet, Mtx2_, AuxCont, Policy, Hash, Eq, Alloc>& that) noexcept(
-        IsNoThrowSwappable<EmbeddedSet>() &&
+        std::is_nothrow_swappable_v<EmbeddedSet> &&
         (!AllocTraits::propagate_on_container_swap::value ||
-         IsNoThrowSwappable<allocator_type>())) {
+         std::is_nothrow_swappable_v<allocator_type>)) {
         using std::swap;
         using Lockable2 = LockableImpl<Mtx2_>;
         

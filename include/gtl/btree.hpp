@@ -83,203 +83,6 @@
 
 namespace gtl {
 
-    namespace type_traits_internal {
-
-        // Silence MSVC warnings about the destructor being defined as deleted.
-#if defined(_MSC_VER) && !defined(__GNUC__)
-    #pragma warning(push)
-    #pragma warning(disable : 4624)
-#endif  // defined(_MSC_VER) && !defined(__GNUC__)
-
-        template <class T>
-        union SingleMemberUnion {
-            T t;
-        };
-
-        // Restore the state of the destructor warning that was silenced above.
-#if defined(_MSC_VER) && !defined(__GNUC__)
-    #pragma warning(pop)
-#endif  // defined(_MSC_VER) && !defined(__GNUC__)
-
-        template <class T>
-        struct IsTriviallyMoveConstructibleObject
-            : std::integral_constant<bool, std::is_move_constructible_v<type_traits_internal::SingleMemberUnion<T>> &&
-                                     std::is_trivially_destructible_v<T>> {};
-
-        template <class T>
-        struct IsTriviallyCopyConstructibleObject
-            : std::integral_constant<bool, std::is_copy_constructible_v<type_traits_internal::SingleMemberUnion<T>> &&
-                                     std::is_trivially_destructible_v<T>> {};
-
-        template <class T>
-        struct IsTriviallyMoveAssignableReference : std::false_type {};
-
-        template <class T>
-        struct IsTriviallyMoveAssignableReference<T&>
-            : std::is_trivially_move_assignable<T>::type {};
-
-        template <class T>
-        struct IsTriviallyMoveAssignableReference<T&&>
-            : std::is_trivially_move_assignable<T>::type {};
-
-
-        template <typename... Ts>
-        struct VoidTImpl {
-            using type = void;
-        };
-
-        // This trick to retrieve a default alignment is necessary for our
-        // implementation of aligned_storage_t to be consistent with any implementation
-        // of std::aligned_storage.
-        // ---------------------------------------------------------------------------
-        template <size_t Len, typename T = std::aligned_storage<Len>>
-            struct default_alignment_of_aligned_storage;
-
-        template <size_t Len, size_t Align>
-        struct default_alignment_of_aligned_storage<Len, std::aligned_storage<Len, Align>> {
-            static constexpr size_t value = Align;
-        };
-
-        // NOTE: The `is_detected` family of templates here differ from the library
-        // fundamentals specification in that for library fundamentals, `Op<Args...>` is
-        // evaluated as soon as the type `is_detected<Op, Args...>` undergoes
-        // substitution, regardless of whether or not the `::value` is accessed. That
-        // is inconsistent with all other standard traits and prevents lazy evaluation
-        // in larger contexts (such as if the `is_detected` check is a trailing argument
-        // of a `conjunction`. This implementation opts to instead be lazy in the same
-        // way that the standard traits are (this "defect" of the detection idiom
-        // specifications has been reported).
-        // ---------------------------------------------------------------------------
-
-        template <class Enabler, template <class...> class Op, class... Args>
-        struct is_detected_impl {
-            using type = std::false_type;
-        };
-
-        template <template <class...> class Op, class... Args>
-        struct is_detected_impl<typename VoidTImpl<Op<Args...>>::type, Op, Args...> {
-            using type = std::true_type;
-        };
-
-        template <template <class...> class Op, class... Args>
-        struct is_detected : is_detected_impl<void, Op, Args...>::type {};
-
-        template <class Enabler, class To, template <class...> class Op, class... Args>
-        struct is_detected_convertible_impl {
-            using type = std::false_type;
-        };
-
-        template <class To, template <class...> class Op, class... Args>
-        struct is_detected_convertible_impl<
-            typename std::enable_if_t<std::is_convertible_v<Op<Args...>, To>>,
-            To, Op, Args...> {
-            using type = std::true_type;
-        };
-
-        template <class To, template <class...> class Op, class... Args>
-        struct is_detected_convertible
-            : is_detected_convertible_impl<void, To, Op, Args...>::type {};
-
-        template <typename T>
-        using IsCopyAssignableImpl =
-            decltype(std::declval<T&>() = std::declval<const T&>());
-
-        template <typename T>
-        using IsMoveAssignableImpl = decltype(std::declval<T&>() = std::declval<T&&>());
-
-    }  // namespace type_traits_internal
-
-    template <typename T>
-    struct is_copy_assignable : 
-        type_traits_internal::is_detected<type_traits_internal::IsCopyAssignableImpl, T> {
-    };
-
-    template <typename T>
-    struct is_move_assignable : 
-        type_traits_internal::is_detected<type_traits_internal::IsMoveAssignableImpl, T> {
-    };
-
-    template <typename T>
-    struct is_function
-        : std::integral_constant<bool, !(std::is_reference_v<T> ||
-                                         std::is_const_v<typename std::add_const_t<T>>)> {};
-
-
-    namespace type_traits_internal {
-
-        template <typename T>
-        class is_trivially_copyable_impl {
-            using ExtentsRemoved = typename std::remove_all_extents<T>::type;
-
-            static constexpr bool kIsCopyOrMoveConstructible =
-                std::is_copy_constructible_v<ExtentsRemoved> ||
-                std::is_move_constructible_v<ExtentsRemoved>;
-
-            static constexpr bool kIsCopyOrMoveAssignable =
-                std::is_copy_assignable_v<ExtentsRemoved> ||
-                std::is_move_assignable_v<ExtentsRemoved>;
-
-        public:
-            static constexpr bool kValue =
-                (__has_trivial_copy(ExtentsRemoved) || !kIsCopyOrMoveConstructible) &&
-                (__has_trivial_assign(ExtentsRemoved) || !kIsCopyOrMoveAssignable) &&
-                (kIsCopyOrMoveConstructible || kIsCopyOrMoveAssignable) &&
-                std::is_trivially_destructible_v<ExtentsRemoved> &&
-                // We need to check for this explicitly because otherwise we'll say
-                // references are trivial copyable when compiled by MSVC.
-                !std::is_reference_v<ExtentsRemoved>;
-        };
-
-        template <typename T>
-        struct is_trivially_copyable
-            : std::integral_constant<bool, type_traits_internal::is_trivially_copyable_impl<T>::kValue> {};
-    }  // namespace type_traits_internal
-
-    namespace swap_internal {
-
-        // Necessary for the traits.
-        using std::swap;
-
-        // This declaration prevents global `swap` and `gtl::swap` overloads from being
-        // considered unless ADL picks them up.
-        void swap();
-
-        template <class T>
-        using IsSwappableImpl = decltype(swap(std::declval<T&>(), std::declval<T&>()));
-
-        // NOTE: This dance with the default template parameter is for MSVC.
-        template <class T,
-                  class IsNoexcept = std::integral_constant<
-                      bool, noexcept(swap(std::declval<T&>(), std::declval<T&>()))>>
-            using IsNothrowSwappableImpl = typename std::enable_if_t<IsNoexcept::value>;
-
-        template <class T>
-        struct IsSwappable
-            : gtl::type_traits_internal::is_detected<IsSwappableImpl, T> {};
-
-        template <class T>
-        struct IsNothrowSwappable
-            : gtl::type_traits_internal::is_detected<IsNothrowSwappableImpl, T> {};
-
-        template <class T, std::enable_if_t<IsSwappable<T>::value, int> = 0>
-        void Swap(T& lhs, T& rhs) noexcept(IsNothrowSwappable<T>::value) {
-            swap(lhs, rhs);
-        }
-
-        using StdSwapIsUnconstrained = IsSwappable<void()>;
-
-    }  // namespace swap_internal
-
-    namespace type_traits_internal {
-
-        // Make the swap-related traits/function accessible from this namespace.
-        using swap_internal::IsNothrowSwappable;
-        using swap_internal::IsSwappable;
-        using swap_internal::Swap;
-        using swap_internal::StdSwapIsUnconstrained;
-
-    }  // namespace type_traits_internal
-
     namespace compare_internal {
 
         using value_type = int8_t;
@@ -764,13 +567,13 @@ namespace gtl {
         }
 
         template <typename Compare, typename K, typename LK,
-                  std::enable_if_t<!std::is_same_v<bool, gtl::invoke_result_t<Compare, const K &, const LK &>>, int> = 0>
+                  std::enable_if_t<!std::is_same_v<bool, std::invoke_result_t<Compare, const K &, const LK &>>, int> = 0>
             constexpr gtl::weak_ordering do_three_way_comparison(const Compare &compare, const K &x, const LK &y) {
             return compare_result_as_ordering(compare(x, y));
         }
 
         template <typename Compare, typename K, typename LK,
-                  std::enable_if_t<std::is_same_v<bool, gtl::invoke_result_t<Compare, const K &, const LK &>>, int> = 0>
+                  std::enable_if_t<std::is_same_v<bool, std::invoke_result_t<Compare, const K &, const LK &>>, int> = 0>
             constexpr gtl::weak_ordering do_three_way_comparison(const Compare &cmp, const K &x, const LK &y) {
             return cmp(x, y) ? gtl::weak_ordering::less
                 : cmp(y, x) ? gtl::weak_ordering::greater
@@ -787,7 +590,7 @@ namespace priv {
     // --------------------------------------------------------------------------
     template <typename Compare, typename T>
     using btree_is_key_compare_to =
-        std::is_convertible<gtl::invoke_result_t<Compare, const T &, const T &>,
+        std::is_convertible<std::invoke_result_t<Compare, const T &, const T &>,
                             gtl::weak_ordering>;
 
     struct StringBtreeDefaultLess {
@@ -2699,7 +2502,7 @@ namespace priv {
         // Verify that key_compare returns an std::{weak,strong}_ordering or bool.
         // -----------------------------------------------------------------------
         using compare_result_type =
-            gtl::invoke_result_t<key_compare, key_type, key_type>;
+            std::invoke_result_t<key_compare, key_type, key_type>;
         static_assert(
             std::is_same_v<compare_result_type, bool> ||
             std::is_convertible_v<compare_result_type, gtl::weak_ordering>,

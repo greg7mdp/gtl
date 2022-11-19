@@ -710,21 +710,6 @@ template <typename D, size_t I>
 using ElemT = typename Elem<D, I>::type;
 
 // ---------------------------------------------------------------------------
-// Use the __is_final intrinsic if available. Where it's not available, classes
-// declared with the 'final' specifier cannot be used as CompressedTuple
-// elements.
-// TODO(sbenza): Replace this with std::is_final in C++14.
-// ---------------------------------------------------------------------------
-template <typename T>
-constexpr bool IsFinal() {
-#if defined(__clang__) || defined(__GNUC__)
-    return __is_final(T);
-#else
-    return false;
-#endif
-}
-
-// ----------------------------------------------------------------------------
 template <typename T>
 constexpr bool ShouldUseBase() {
 #ifdef __INTEL_COMPILER
@@ -732,7 +717,7 @@ constexpr bool ShouldUseBase() {
     // assertion failed at: "shared/cfe/edgcpfe/lower_init.c", line 7013
     return false; 
 #else
-    return std::is_class_v<T> && std::is_empty_v<T> && !IsFinal<T>();
+    return std::is_class_v<T> && std::is_empty_v<T> && !std::is_final_v<T>;
 #endif
 }
 
@@ -851,16 +836,6 @@ class GTL_INTERNAL_COMPRESSED_TUPLE_DECLSPEC CompressedTuple<> {};
 
 // -----------------------------------------------------------------------
 // -----------------------------------------------------------------------
-#if defined(__cpp_lib_result_of_sfinae)
-    template <class F, class... ArgTypes>
-    using invoke_result_t = typename std::invoke_result_t<F, ArgTypes...>;
-#else
-    template <class F, class... ArgTypes>
-    using invoke_result_t = typename std::result_of<F(ArgTypes...)>::type;
-#endif
-
-// -----------------------------------------------------------------------
-// -----------------------------------------------------------------------
 template <class, class = void>
 struct IsTransparent : std::false_type {};
 
@@ -886,10 +861,6 @@ struct KeyArg<false>
 
 // -----------------------------------------------------------------------
 // -----------------------------------------------------------------------
-template <class T> using Allocator = typename std::allocator<T>;
-
-template<class T1, class T2> using Pair = typename std::pair<T1, T2>;
-
 template <class T>
 struct EqualTo
 {
@@ -908,6 +879,19 @@ struct Less
     }
 };
 
+
+// -----------------------------------------------------------------------
+// std::aligned_storage and std::aligned_storage_t are deprecated in C++23
+// -----------------------------------------------------------------------
+template<std::size_t Len, std::size_t Align>
+struct aligned_storage {
+    struct type {
+        alignas(Align) unsigned char data[Len];
+    };
+};
+
+template< std::size_t Len, std::size_t Align>
+using aligned_storage_t = typename aligned_storage<Len, Align>::type;
 
 // -----------------------------------------------------------------------
 // The node_handle concept from C++17.
@@ -988,7 +972,7 @@ protected:
 
 private:
     std::optional<allocator_type> alloc_;
-    mutable std::aligned_storage_t<sizeof(slot_type), alignof(slot_type)> slot_space_;
+    mutable gtl::aligned_storage_t<sizeof(slot_type), alignof(slot_type)> slot_space_;
 };
 
 // For sets.
