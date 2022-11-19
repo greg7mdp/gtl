@@ -75,7 +75,7 @@ uint64_t num_factors(uint64_t n) {
             return 1;
         //printf("%d %d\n", i,  factor);
         if (n % factor == 0)
-            return 1 + num_factors(n / factor);
+            return 1 + num_factors(n / factor); // should restart from n
     }
     assert(0);
 }
