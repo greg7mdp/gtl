@@ -881,38 +881,14 @@ void MapTest()
     BtreeMapTest<BtreeMap>();
 }
 
-TEST(Btree, set_int32)
-{
-    SetTest<int32_t>();
-}
-TEST(Btree, set_int64)
-{
-    SetTest<int64_t>();
-}
-TEST(Btree, set_string)
-{
-    SetTest<std::string>();
-}
-TEST(Btree, set_pair)
-{
-    SetTest<std::pair<int, int>>();
-}
-TEST(Btree, map_int32)
-{
-    MapTest<int32_t>();
-}
-TEST(Btree, map_int64)
-{
-    MapTest<int64_t>();
-}
-TEST(Btree, map_string)
-{
-    MapTest<std::string>();
-}
-TEST(Btree, map_pair)
-{
-    MapTest<std::pair<int, int>>();
-}
+TEST(Btree, set_int32) { SetTest<int32_t>(); }
+TEST(Btree, set_int64) { SetTest<int64_t>(); }
+TEST(Btree, set_string) { SetTest<std::string>(); }
+TEST(Btree, set_pair) { SetTest<std::pair<int, int>>(); }
+TEST(Btree, map_int32) { MapTest<int32_t>(); }
+TEST(Btree, map_int64) { MapTest<int64_t>(); }
+TEST(Btree, map_string) { MapTest<std::string>(); }
+TEST(Btree, map_pair) { MapTest<std::pair<int, int>>(); }
 
 template<typename K, int N = 256>
 void MultiSetTest()
@@ -938,38 +914,14 @@ void MultiMapTest()
     BtreeAllocatorTest<CountingBtreeMMap>();
 }
 
-TEST(Btree, multiset_int32)
-{
-    MultiSetTest<int32_t>();
-}
-TEST(Btree, multiset_int64)
-{
-    MultiSetTest<int64_t>();
-}
-TEST(Btree, multiset_string)
-{
-    MultiSetTest<std::string>();
-}
-TEST(Btree, multiset_pair)
-{
-    MultiSetTest<std::pair<int, int>>();
-}
-TEST(Btree, multimap_int32)
-{
-    MultiMapTest<int32_t>();
-}
-TEST(Btree, multimap_int64)
-{
-    MultiMapTest<int64_t>();
-}
-TEST(Btree, multimap_string)
-{
-    MultiMapTest<std::string>();
-}
-TEST(Btree, multimap_pair)
-{
-    MultiMapTest<std::pair<int, int>>();
-}
+TEST(Btree, multiset_int32) { MultiSetTest<int32_t>(); }
+TEST(Btree, multiset_int64) { MultiSetTest<int64_t>(); }
+TEST(Btree, multiset_string) { MultiSetTest<std::string>(); }
+TEST(Btree, multiset_pair) { MultiSetTest<std::pair<int, int>>(); }
+TEST(Btree, multimap_int32) { MultiMapTest<int32_t>(); }
+TEST(Btree, multimap_int64) { MultiMapTest<int64_t>(); }
+TEST(Btree, multimap_string) { MultiMapTest<std::string>(); }
+TEST(Btree, multimap_pair) { MultiMapTest<std::pair<int, int>>(); }
 
 struct CompareIntToString
 {
@@ -1808,10 +1760,7 @@ TEST(Btree, ConstIteratorAccessors)
 // We can't use EXPECT_EQ/etc. to compare gtl::weak_ordering because they
 // convert literal 0 to int and gtl::weak_ordering can only be compared with
 // literal 0. Defining this function allows for avoiding ClangTidy warnings.
-bool Identity(const bool b)
-{
-    return b;
-}
+bool Identity(const bool b) { return b; }
 
 TEST(Btree, ValueComp)
 {
@@ -2578,10 +2527,7 @@ TEST(Btree, EmptyTree)
     EXPECT_GT(s.max_size(), 0u);
 }
 
-bool IsEven(int k)
-{
-    return k % 2 == 0;
-}
+bool IsEven(int k) { return k % 2 == 0; }
 
 TEST(Btree, EraseIf)
 {

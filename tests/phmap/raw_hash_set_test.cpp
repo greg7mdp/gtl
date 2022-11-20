@@ -1960,10 +1960,7 @@ IntTable MakeSimpleTable(size_t size)
     return t;
 }
 
-std::vector<int> OrderOfIteration(const IntTable& t)
-{
-    return { t.begin(), t.end() };
-}
+std::vector<int> OrderOfIteration(const IntTable& t) { return { t.begin(), t.end() }; }
 
 // These IterationOrderChanges tests depend on non-deterministic behavior.
 // We are injecting non-determinism from the pointer of the table, but do so in

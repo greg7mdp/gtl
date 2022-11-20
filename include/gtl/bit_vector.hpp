@@ -27,33 +27,23 @@ namespace bitv {
 
 static constexpr size_t   stride = 64;
 static constexpr uint64_t ones   = (uint64_t)-1;
-static constexpr size_t   mod(size_t n)
-{
-    return (n & 0x3f);
-}
-static constexpr size_t slot(size_t n)
-{
-    return n >> 6;
-}
-static constexpr size_t slot_cnt(size_t n)
-{
-    return slot(n + 63);
-}
-static constexpr uint64_t bitmask(size_t n)
-{
-    return (uint64_t)1 << mod(n);
-} // a mask for this bit in its slot
-static constexpr uint64_t lowmask(size_t n)
-{
-    return bitmask(n) - 1;
-} // a mask for bits lower than n in slot
-static constexpr uint64_t himask(size_t n)
-{
-    return ~lowmask(n);
-} // a mask for bits higher than n-1 in slot
+
+static constexpr size_t mod(size_t n) { return (n & 0x3f); }
+static constexpr size_t slot(size_t n) { return n >> 6; }
+static constexpr size_t slot_cnt(size_t n) { return slot(n + 63); }
+
+// a mask for this bit in its slot
+static constexpr uint64_t bitmask(size_t n) { return (uint64_t)1 << mod(n); }
+
+// a mask for bits lower than n in slot
+static constexpr uint64_t lowmask(size_t n) { return bitmask(n) - 1; }
+
+// a mask for bits higher than n-1 in slot
+static constexpr uint64_t himask(size_t n) { return ~lowmask(n); }
 
 static constexpr size_t _popcount64(uint64_t y)
-{ // https://gist.github.com/enjoylife/4091854
+{
+    // https://gist.github.com/enjoylife/4091854
     y -= ((y >> 1) & 0x5555555555555555ull);
     y = (y & 0x3333333333333333ull) + (y >> 2 & 0x3333333333333333ull);
     return ((y + (y >> 4)) & 0xf0f0f0f0f0f0f0full) * 0x101010101010101ull >> 56;
@@ -83,14 +73,8 @@ enum class vt
 
 using vt_type = std::underlying_type<vt>::type;
 
-constexpr bool operator&(vt a, vt b)
-{
-    return (vt_type)a & (vt_type)b;
-}
-constexpr vt operator|(vt a, vt b)
-{
-    return (vt)((vt_type)a | (vt_type)b);
-}
+constexpr bool operator&(vt a, vt b) { return (vt_type)a & (vt_type)b; }
+constexpr vt   operator|(vt a, vt b) { return (vt)((vt_type)a | (vt_type)b); }
 
 // ---------------------------------------------------------------------------
 // implements bit storage class
@@ -371,22 +355,24 @@ public:
                 return;
             size_t slot;
             for (slot = 0; slot < num_slots - 1; ++slot) {
-                const uint64_t              s  = _s[slot];
-                [[maybe_unused]] const auto fs = f(s);
+                const uint64_t s  = _s[slot];
+                const auto     fs = f(s);
                 if constexpr (!(flags & vt::view)) {
                     if (s != fs)
                         _s[slot] = fs;
                 } else if (fs)
                     return;
             }
-            const uint64_t              m  = mod(_sz)
-                                                 ? himask(_sz)
-                                                 : (uint64_t)0; // m has ones on the bits we don't want to change
-            const uint64_t              s  = _s[slot];
+            const uint64_t m = mod(_sz)
+                                   ? himask(_sz)
+                                   : (uint64_t)0; // m has ones on the bits we don't want to change
+            const uint64_t s = _s[slot];
+
             [[maybe_unused]] const auto fs = f(oor_bits<flags>(s, m));
-            if constexpr (!(flags & vt::view))
+            if constexpr (!(flags & vt::view)) {
                 if (s != fs)
                     _s[slot] = fs & ~m; // mask last returned value so we don't set bits past end
+            }
         }
         _check_extra_bits();
     }
@@ -587,7 +573,8 @@ public:
     // assignment operators
     // --------------------
     _view& operator=(uint64_t val)
-    { // only works for view width <= 64 bits
+    {
+        // only works for view width <= 64 bits
         assert(size() <= stride);
         _bv.storage().template visit<vt::none>(
             _first, _last, [val](uint64_t, int shl) { return shl >= 0 ? val << shl : val >> shl; });

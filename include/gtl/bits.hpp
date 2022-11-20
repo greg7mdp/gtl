@@ -79,35 +79,17 @@ extern "C"
 namespace gtl {
 namespace bits {
 
-inline uint16_t UnalignedLoad16(const void* p)
-{
-    return __sanitizer_unaligned_load16(p);
-}
+inline uint16_t UnalignedLoad16(const void* p) { return __sanitizer_unaligned_load16(p); }
 
-inline uint32_t UnalignedLoad32(const void* p)
-{
-    return __sanitizer_unaligned_load32(p);
-}
+inline uint32_t UnalignedLoad32(const void* p) { return __sanitizer_unaligned_load32(p); }
 
-inline uint64_t UnalignedLoad64(const void* p)
-{
-    return __sanitizer_unaligned_load64(p);
-}
+inline uint64_t UnalignedLoad64(const void* p) { return __sanitizer_unaligned_load64(p); }
 
-inline void UnalignedStore16(void* p, uint16_t v)
-{
-    __sanitizer_unaligned_store16(p, v);
-}
+inline void UnalignedStore16(void* p, uint16_t v) { __sanitizer_unaligned_store16(p, v); }
 
-inline void UnalignedStore32(void* p, uint32_t v)
-{
-    __sanitizer_unaligned_store32(p, v);
-}
+inline void UnalignedStore32(void* p, uint32_t v) { __sanitizer_unaligned_store32(p, v); }
 
-inline void UnalignedStore64(void* p, uint64_t v)
-{
-    __sanitizer_unaligned_store64(p, v);
-}
+inline void UnalignedStore64(void* p, uint64_t v) { __sanitizer_unaligned_store64(p, v); }
 
 } // namespace bits
 } // namespace gtl
@@ -146,20 +128,11 @@ inline uint64_t UnalignedLoad64(const void* p)
     return t;
 }
 
-inline void UnalignedStore16(void* p, uint16_t v)
-{
-    memcpy(p, &v, sizeof v);
-}
+inline void UnalignedStore16(void* p, uint16_t v) { memcpy(p, &v, sizeof v); }
 
-inline void UnalignedStore32(void* p, uint32_t v)
-{
-    memcpy(p, &v, sizeof v);
-}
+inline void UnalignedStore32(void* p, uint32_t v) { memcpy(p, &v, sizeof v); }
 
-inline void UnalignedStore64(void* p, uint64_t v)
-{
-    memcpy(p, &v, sizeof v);
-}
+inline void UnalignedStore64(void* p, uint64_t v) { memcpy(p, &v, sizeof v); }
 
 } // namespace bits
 } // namespace gtl
@@ -217,10 +190,7 @@ inline uint64_t                         umul128(uint64_t a, uint64_t b, uint64_t
 #elif (defined(_MSC_VER))
     #if defined(_M_X64)
         #pragma intrinsic(_umul128)
-inline uint64_t umul128(uint64_t a, uint64_t b, uint64_t* high)
-{
-    return _umul128(a, b, high);
-}
+inline uint64_t umul128(uint64_t a, uint64_t b, uint64_t* high) { return _umul128(a, b, high); }
         #define GTL_HAS_UMUL128 1
     #endif
 #endif
@@ -468,48 +438,21 @@ namespace gtl {
 #if defined(__clang__) ||                                                                          \
     (defined(__GNUC__) && ((__GNUC__ == 4 && __GNUC_MINOR__ >= 8) || __GNUC__ >= 5))
 
-inline uint64_t gbswap_64(uint64_t host_int)
-{
-    return __builtin_bswap64(host_int);
-}
-inline uint32_t gbswap_32(uint32_t host_int)
-{
-    return __builtin_bswap32(host_int);
-}
-inline uint16_t gbswap_16(uint16_t host_int)
-{
-    return __builtin_bswap16(host_int);
-}
+inline uint64_t gbswap_64(uint64_t host_int) { return __builtin_bswap64(host_int); }
+inline uint32_t gbswap_32(uint32_t host_int) { return __builtin_bswap32(host_int); }
+inline uint16_t gbswap_16(uint16_t host_int) { return __builtin_bswap16(host_int); }
 
 #elif defined(_MSC_VER)
 
-inline uint64_t gbswap_64(uint64_t host_int)
-{
-    return _byteswap_uint64(host_int);
-}
-inline uint32_t gbswap_32(uint32_t host_int)
-{
-    return _byteswap_ulong(host_int);
-}
-inline uint16_t gbswap_16(uint16_t host_int)
-{
-    return _byteswap_ushort(host_int);
-}
+inline uint64_t gbswap_64(uint64_t host_int) { return _byteswap_uint64(host_int); }
+inline uint32_t gbswap_32(uint32_t host_int) { return _byteswap_ulong(host_int); }
+inline uint16_t gbswap_16(uint16_t host_int) { return _byteswap_ushort(host_int); }
 
 #elif defined(__APPLE__)
 
-inline uint64_t gbswap_64(uint64_t host_int)
-{
-    return OSSwapInt16(host_int);
-}
-inline uint32_t gbswap_32(uint32_t host_int)
-{
-    return OSSwapInt32(host_int);
-}
-inline uint16_t gbswap_16(uint16_t host_int)
-{
-    return OSSwapInt64(host_int);
-}
+inline uint64_t gbswap_64(uint64_t host_int) { return OSSwapInt16(host_int); }
+inline uint32_t gbswap_32(uint32_t host_int) { return OSSwapInt32(host_int); }
+inline uint16_t gbswap_16(uint16_t host_int) { return OSSwapInt64(host_int); }
 
 #else
 
@@ -565,54 +508,27 @@ inline uint16_t gbswap_16(uint16_t host_int)
 // correctly handle the (rather involved) definitions of bswap_32.
 // gcc guarantees that inline functions are as fast as macros, so
 // this isn't a performance hit.
-inline uint16_t ghtons(uint16_t x)
-{
-    return gbswap_16(x);
-}
-inline uint32_t ghtonl(uint32_t x)
-{
-    return gbswap_32(x);
-}
-inline uint64_t ghtonll(uint64_t x)
-{
-    return gbswap_64(x);
-}
+inline uint16_t ghtons(uint16_t x) { return gbswap_16(x); }
+inline uint32_t ghtonl(uint32_t x) { return gbswap_32(x); }
+inline uint64_t ghtonll(uint64_t x) { return gbswap_64(x); }
 
 #elif defined GTL_IS_BIG_ENDIAN
 
 // These definitions are simpler on big-endian machines
 // These are functions instead of macros to avoid self-assignment warnings
 // on calls such as "i = ghtnol(i);".  This also provides type checking.
-inline uint16_t ghtons(uint16_t x)
-{
-    return x;
-}
-inline uint32_t ghtonl(uint32_t x)
-{
-    return x;
-}
-inline uint64_t ghtonll(uint64_t x)
-{
-    return x;
-}
+inline uint16_t ghtons(uint16_t x) { return x; }
+inline uint32_t ghtonl(uint32_t x) { return x; }
+inline uint64_t ghtonll(uint64_t x) { return x; }
 
 #else
     #error "Unsupported byte order: Either GTL_IS_BIG_ENDIAN or " \
            "GTL_IS_LITTLE_ENDIAN must be defined"
 #endif // byte order
 
-inline uint16_t gntohs(uint16_t x)
-{
-    return ghtons(x);
-}
-inline uint32_t gntohl(uint32_t x)
-{
-    return ghtonl(x);
-}
-inline uint64_t gntohll(uint64_t x)
-{
-    return ghtonll(x);
-}
+inline uint16_t gntohs(uint16_t x) { return ghtons(x); }
+inline uint32_t gntohl(uint32_t x) { return ghtonl(x); }
+inline uint64_t gntohll(uint64_t x) { return ghtonll(x); }
 
 // Utilities to convert numbers between the current hosts's native byte
 // order and little-endian byte order
@@ -622,104 +538,44 @@ namespace little_endian {
 // Conversion functions.
 #ifdef GTL_IS_LITTLE_ENDIAN
 
-inline uint16_t FromHost16(uint16_t x)
-{
-    return x;
-}
-inline uint16_t ToHost16(uint16_t x)
-{
-    return x;
-}
+inline uint16_t FromHost16(uint16_t x) { return x; }
+inline uint16_t ToHost16(uint16_t x) { return x; }
 
-inline uint32_t FromHost32(uint32_t x)
-{
-    return x;
-}
-inline uint32_t ToHost32(uint32_t x)
-{
-    return x;
-}
+inline uint32_t FromHost32(uint32_t x) { return x; }
+inline uint32_t ToHost32(uint32_t x) { return x; }
 
-inline uint64_t FromHost64(uint64_t x)
-{
-    return x;
-}
-inline uint64_t ToHost64(uint64_t x)
-{
-    return x;
-}
+inline uint64_t FromHost64(uint64_t x) { return x; }
+inline uint64_t ToHost64(uint64_t x) { return x; }
 
-inline constexpr bool IsLittleEndian()
-{
-    return true;
-}
+inline constexpr bool IsLittleEndian() { return true; }
 
 #elif defined GTL_IS_BIG_ENDIAN
 
-inline uint16_t FromHost16(uint16_t x)
-{
-    return gbswap_16(x);
-}
-inline uint16_t ToHost16(uint16_t x)
-{
-    return gbswap_16(x);
-}
+inline uint16_t FromHost16(uint16_t x) { return gbswap_16(x); }
+inline uint16_t ToHost16(uint16_t x) { return gbswap_16(x); }
 
-inline uint32_t FromHost32(uint32_t x)
-{
-    return gbswap_32(x);
-}
-inline uint32_t ToHost32(uint32_t x)
-{
-    return gbswap_32(x);
-}
+inline uint32_t FromHost32(uint32_t x) { return gbswap_32(x); }
+inline uint32_t ToHost32(uint32_t x) { return gbswap_32(x); }
 
-inline uint64_t FromHost64(uint64_t x)
-{
-    return gbswap_64(x);
-}
-inline uint64_t ToHost64(uint64_t x)
-{
-    return gbswap_64(x);
-}
+inline uint64_t FromHost64(uint64_t x) { return gbswap_64(x); }
+inline uint64_t ToHost64(uint64_t x) { return gbswap_64(x); }
 
-inline constexpr bool IsLittleEndian()
-{
-    return false;
-}
+inline constexpr bool IsLittleEndian() { return false; }
 
 #endif /* ENDIAN */
 
 // Functions to do unaligned loads and stores in little-endian order.
-inline uint16_t Load16(const void* p)
-{
-    return ToHost16(GTL_INTERNAL_UNALIGNED_LOAD16(p));
-}
+inline uint16_t Load16(const void* p) { return ToHost16(GTL_INTERNAL_UNALIGNED_LOAD16(p)); }
 
-inline void Store16(void* p, uint16_t v)
-{
-    GTL_INTERNAL_UNALIGNED_STORE16(p, FromHost16(v));
-}
+inline void Store16(void* p, uint16_t v) { GTL_INTERNAL_UNALIGNED_STORE16(p, FromHost16(v)); }
 
-inline uint32_t Load32(const void* p)
-{
-    return ToHost32(GTL_INTERNAL_UNALIGNED_LOAD32(p));
-}
+inline uint32_t Load32(const void* p) { return ToHost32(GTL_INTERNAL_UNALIGNED_LOAD32(p)); }
 
-inline void Store32(void* p, uint32_t v)
-{
-    GTL_INTERNAL_UNALIGNED_STORE32(p, FromHost32(v));
-}
+inline void Store32(void* p, uint32_t v) { GTL_INTERNAL_UNALIGNED_STORE32(p, FromHost32(v)); }
 
-inline uint64_t Load64(const void* p)
-{
-    return ToHost64(GTL_INTERNAL_UNALIGNED_LOAD64(p));
-}
+inline uint64_t Load64(const void* p) { return ToHost64(GTL_INTERNAL_UNALIGNED_LOAD64(p)); }
 
-inline void Store64(void* p, uint64_t v)
-{
-    GTL_INTERNAL_UNALIGNED_STORE64(p, FromHost64(v));
-}
+inline void Store64(void* p, uint64_t v) { GTL_INTERNAL_UNALIGNED_STORE64(p, FromHost64(v)); }
 
 } // namespace little_endian
 
@@ -730,104 +586,44 @@ inline void Store64(void* p, uint64_t v)
 namespace big_endian {
 #ifdef GTL_IS_LITTLE_ENDIAN
 
-inline uint16_t FromHost16(uint16_t x)
-{
-    return gbswap_16(x);
-}
-inline uint16_t ToHost16(uint16_t x)
-{
-    return gbswap_16(x);
-}
+inline uint16_t FromHost16(uint16_t x) { return gbswap_16(x); }
+inline uint16_t ToHost16(uint16_t x) { return gbswap_16(x); }
 
-inline uint32_t FromHost32(uint32_t x)
-{
-    return gbswap_32(x);
-}
-inline uint32_t ToHost32(uint32_t x)
-{
-    return gbswap_32(x);
-}
+inline uint32_t FromHost32(uint32_t x) { return gbswap_32(x); }
+inline uint32_t ToHost32(uint32_t x) { return gbswap_32(x); }
 
-inline uint64_t FromHost64(uint64_t x)
-{
-    return gbswap_64(x);
-}
-inline uint64_t ToHost64(uint64_t x)
-{
-    return gbswap_64(x);
-}
+inline uint64_t FromHost64(uint64_t x) { return gbswap_64(x); }
+inline uint64_t ToHost64(uint64_t x) { return gbswap_64(x); }
 
-inline constexpr bool IsLittleEndian()
-{
-    return true;
-}
+inline constexpr bool IsLittleEndian() { return true; }
 
 #elif defined GTL_IS_BIG_ENDIAN
 
-inline uint16_t FromHost16(uint16_t x)
-{
-    return x;
-}
-inline uint16_t ToHost16(uint16_t x)
-{
-    return x;
-}
+inline uint16_t FromHost16(uint16_t x) { return x; }
+inline uint16_t ToHost16(uint16_t x) { return x; }
 
-inline uint32_t FromHost32(uint32_t x)
-{
-    return x;
-}
-inline uint32_t ToHost32(uint32_t x)
-{
-    return x;
-}
+inline uint32_t FromHost32(uint32_t x) { return x; }
+inline uint32_t ToHost32(uint32_t x) { return x; }
 
-inline uint64_t FromHost64(uint64_t x)
-{
-    return x;
-}
-inline uint64_t ToHost64(uint64_t x)
-{
-    return x;
-}
+inline uint64_t FromHost64(uint64_t x) { return x; }
+inline uint64_t ToHost64(uint64_t x) { return x; }
 
-inline constexpr bool IsLittleEndian()
-{
-    return false;
-}
+inline constexpr bool IsLittleEndian() { return false; }
 
 #endif /* ENDIAN */
 
 // Functions to do unaligned loads and stores in big-endian order.
-inline uint16_t Load16(const void* p)
-{
-    return ToHost16(GTL_INTERNAL_UNALIGNED_LOAD16(p));
-}
+inline uint16_t Load16(const void* p) { return ToHost16(GTL_INTERNAL_UNALIGNED_LOAD16(p)); }
 
-inline void Store16(void* p, uint16_t v)
-{
-    GTL_INTERNAL_UNALIGNED_STORE16(p, FromHost16(v));
-}
+inline void Store16(void* p, uint16_t v) { GTL_INTERNAL_UNALIGNED_STORE16(p, FromHost16(v)); }
 
-inline uint32_t Load32(const void* p)
-{
-    return ToHost32(GTL_INTERNAL_UNALIGNED_LOAD32(p));
-}
+inline uint32_t Load32(const void* p) { return ToHost32(GTL_INTERNAL_UNALIGNED_LOAD32(p)); }
 
-inline void Store32(void* p, uint32_t v)
-{
-    GTL_INTERNAL_UNALIGNED_STORE32(p, FromHost32(v));
-}
+inline void Store32(void* p, uint32_t v) { GTL_INTERNAL_UNALIGNED_STORE32(p, FromHost32(v)); }
 
-inline uint64_t Load64(const void* p)
-{
-    return ToHost64(GTL_INTERNAL_UNALIGNED_LOAD64(p));
-}
+inline uint64_t Load64(const void* p) { return ToHost64(GTL_INTERNAL_UNALIGNED_LOAD64(p)); }
 
-inline void Store64(void* p, uint64_t v)
-{
-    GTL_INTERNAL_UNALIGNED_STORE64(p, FromHost64(v));
-}
+inline void Store64(void* p, uint64_t v) { GTL_INTERNAL_UNALIGNED_STORE64(p, FromHost64(v)); }
 
 } // namespace big_endian
 

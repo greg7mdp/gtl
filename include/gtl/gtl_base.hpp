@@ -366,27 +366,15 @@ constexpr size_t Find(Needle, T, Ts...)
     return adl_barrier::Find(Needle(), Ts()...) + 1;
 }
 
-constexpr bool IsPow2(size_t n)
-{
-    return !(n & (n - 1));
-}
+constexpr bool IsPow2(size_t n) { return !(n & (n - 1)); }
 
 // Returns `q * m` for the smallest `q` such that `q * m >= n`.
 // Requires: `m` is a power of two. It's enforced by IsLegalElementType below.
-constexpr size_t Align(size_t n, size_t m)
-{
-    return (n + m - 1) & ~(m - 1);
-}
+constexpr size_t Align(size_t n, size_t m) { return (n + m - 1) & ~(m - 1); }
 
-constexpr size_t Min(size_t a, size_t b)
-{
-    return b < a ? b : a;
-}
+constexpr size_t Min(size_t a, size_t b) { return b < a ? b : a; }
 
-constexpr size_t Max(size_t a)
-{
-    return a;
-}
+constexpr size_t Max(size_t a) { return a; }
 
 template<class... Ts>
 constexpr size_t Max(size_t a, size_t b, Ts... rest)
@@ -1271,10 +1259,7 @@ static inline void ThrowStdOutOfRange(const std::string& what_arg)
 {
     Throw(std::out_of_range(what_arg));
 }
-static inline void ThrowStdOutOfRange(const char* what_arg)
-{
-    Throw(std::out_of_range(what_arg));
-}
+static inline void ThrowStdOutOfRange(const char* what_arg) { Throw(std::out_of_range(what_arg)); }
 
 } // gtl
 

@@ -106,10 +106,7 @@ const char* program_slug = phmap_xstr(MAPNAME); // "_4";
 #include <vector>
 using std::vector;
 
-int64_t _abs(int64_t x)
-{
-    return (x < 0) ? -x : x;
-}
+int64_t _abs(int64_t x) { return (x < 0) ? -x : x; }
 
 #ifdef _MSC_VER
     #pragma warning(disable : 4996)

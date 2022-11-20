@@ -206,10 +206,7 @@ using PropagateOnAll    = PropagateTest<kPropagateOnCopy | kPropagateOnMove | kP
 using NoPropagateOnCopy = PropagateTest<kPropagateOnMove | kPropagateOnSwap>;
 using NoPropagateOnMove = PropagateTest<kPropagateOnCopy | kPropagateOnSwap>;
 
-TEST_F(PropagateOnAll, Empty)
-{
-    EXPECT_EQ(0u, a1.num_allocs());
-}
+TEST_F(PropagateOnAll, Empty) { EXPECT_EQ(0u, a1.num_allocs()); }
 
 TEST_F(PropagateOnAll, InsertAllocates)
 {

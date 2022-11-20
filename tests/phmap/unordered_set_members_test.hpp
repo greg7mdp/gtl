@@ -61,10 +61,7 @@ TYPED_TEST_P(MembersTest, Typedefs)
                  typename TypeParam::const_pointer>()));
 }
 
-TYPED_TEST_P(MembersTest, SimpleFunctions)
-{
-    EXPECT_GT(TypeParam().max_size(), 0u);
-}
+TYPED_TEST_P(MembersTest, SimpleFunctions) { EXPECT_GT(TypeParam().max_size(), 0u); }
 
 TYPED_TEST_P(MembersTest, BeginEnd)
 {
