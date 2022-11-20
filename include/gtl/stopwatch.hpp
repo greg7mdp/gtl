@@ -13,48 +13,56 @@
 
 #include <chrono>
 
-namespace gtl
+namespace gtl {
+// -------------------------------------------------------------------------------
+template<typename time_unit = std::milli>
+class stopwatch
 {
-    // -------------------------------------------------------------------------------
-    template<typename time_unit = std::milli>
-    class stopwatch 
+public:
+    stopwatch(bool do_start = true)
     {
-    public:
-        stopwatch(bool do_start = true) { if (do_start) start(); }
+        if (do_start)
+            start();
+    }
 
-        void start()     { _start = _snap = clock::now();  }
-        void snap()      { _snap = clock::now();  }
+    void start() { _start = _snap = clock::now(); }
+    void snap() { _snap = clock::now(); }
 
-        float since_start() const     { return get_diff<float>(_start, clock::now()); }
-        float since_snap() const      { return get_diff<float>(_snap, clock::now());  }
-        float start_to_snap()  const  { return get_diff<float>(_start, _snap);  }
-        
-    private:
-        using clock = std::chrono::high_resolution_clock;
-        using point = std::chrono::time_point<clock>;
+    float since_start() const { return get_diff<float>(_start, clock::now()); }
+    float since_snap() const { return get_diff<float>(_snap, clock::now()); }
+    float start_to_snap() const { return get_diff<float>(_start, _snap); }
 
-        template<typename T>
-        static T get_diff(const point& start, const point& end) 
-        {
-            using duration_t = std::chrono::duration<T, time_unit>;
-            return std::chrono::duration_cast<duration_t>(end - start).count();
-        }
+private:
+    using clock = std::chrono::high_resolution_clock;
+    using point = std::chrono::time_point<clock>;
 
-        point _start;
-        point _snap;
-    };
+    template<typename T>
+    static T get_diff(const point& start, const point& end)
+    {
+        using duration_t = std::chrono::duration<T, time_unit>;
+        return std::chrono::duration_cast<duration_t>(end - start).count();
+    }
 
-    // -------------------------------------------------------------------------------
-    template<typename StopWatch>
-    class start_snap {
-    public:
-        start_snap(StopWatch &sw) : _sw(sw) { _sw.start(); }
-        ~start_snap() {_sw.snap(); }
+    point _start;
+    point _snap;
+};
 
-    private:
-        StopWatch &_sw;
-    };
-            
+// -------------------------------------------------------------------------------
+template<typename StopWatch>
+class start_snap
+{
+public:
+    start_snap(StopWatch& sw)
+        : _sw(sw)
+    {
+        _sw.start();
+    }
+    ~start_snap() { _sw.snap(); }
+
+private:
+    StopWatch& _sw;
+};
+
 }
 
 #endif // gtl_stopwatch_hpp_guard

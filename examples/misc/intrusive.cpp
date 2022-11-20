@@ -19,22 +19,20 @@ struct B : public gtl::intrusive_ref_counter<B, gtl::thread_unsafe_counter>
     int x;
 };
 
-
-
-
 int main()
 {
     {
-        gtl::intrusive_ptr<A> a = new A;;
+        gtl::intrusive_ptr<A> a = new A;
+        ;
 
         {
-            auto a2 = a;
-            gtl::intrusive_ptr<D> d = new D ;
+            auto                  a2 = a;
+            gtl::intrusive_ptr<D> d  = new D;
             {
-                gtl::intrusive_ptr<A> d2 = d ;
+                gtl::intrusive_ptr<A> d2 = d;
             }
         }
     }
 
-     return 0;
+    return 0;
 }

@@ -5,28 +5,27 @@
  *
  */
 
-#include <iostream>
 #include <gtl/phmap_dump.hpp>
+#include <iostream>
 
-template <class K, class V>
+template<class K, class V>
 class MyMap : public gtl::flat_hash_map<K, gtl::flat_hash_set<V>>
 {
 public:
     using Set = gtl::flat_hash_set<V>;
 
-    void dump(const std::string &filename) 
+    void dump(const std::string& filename)
     {
-        gtl::BinaryOutputArchive ar_out (filename.c_str());
+        gtl::BinaryOutputArchive ar_out(filename.c_str());
 
         ar_out.saveBinary(this->size());
-        for (auto& [k, v] : *this) 
-        {
+        for (auto& [k, v] : *this) {
             ar_out.saveBinary(k);
             ar_out.saveBinary(v);
         }
     }
 
-    void load(const std::string & filename) 
+    void load(const std::string& filename)
     {
         gtl::BinaryInputArchive ar_in(filename.c_str());
 
@@ -34,9 +33,8 @@ public:
         ar_in.loadBinary(&size);
         this->reserve(size);
 
-        while (size--)
-        {
-            K k;
+        while (size--) {
+            K   k;
             Set v;
 
             ar_in.loadBinary(&k);
@@ -46,16 +44,15 @@ public:
         }
     }
 
-    void insert(K k, V v) 
+    void insert(K k, V v)
     {
-        Set &set = (*this)[k];
+        Set& set = (*this)[k];
         set.insert(v);
     }
 
     friend std::ostream& operator<<(std::ostream& os, const MyMap& map)
     {
-        for (const auto& [k, m] : map)
-        {
+        for (const auto& [k, m] : map) {
             os << k << ": [";
             for (const auto& x : m)
                 os << x << ", ";
@@ -75,13 +72,13 @@ int main()
     m.insert(1, 27);
     m.insert(2, 10);
     m.insert(2, 13);
-    
+
     std::cout << m << "\n";
-    
+
     m.dump("test_archive");
     m.clear();
     m.load("test_archive");
-    
+
     std::cout << m << "\n";
 
     return 0;

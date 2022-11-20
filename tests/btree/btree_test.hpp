@@ -36,19 +36,17 @@
 
 #include <algorithm>
 #include <cassert>
-#include <random>
-#include <string>
-#include <utility>
-#include <vector>
 #include <cstdint>
+#include <cstdlib>
 #include <map>
 #include <memory>
+#include <ostream>
+#include <random>
 #include <stdexcept>
 #include <string>
 #include <type_traits>
 #include <utility>
-#include <cstdlib>
-#include <ostream>
+#include <vector>
 
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
@@ -60,305 +58,357 @@ namespace gtl {
 
 namespace test_internal {
 
-    // A type that counts number of occurrences of the type, the live occurrences of
-    // the type, as well as the number of copies, moves, swaps, and comparisons that
-    // have occurred on the type. This is used as a base class for the copyable,
-    // copyable+movable, and movable types below that are used in actual tests. Use
-    // InstanceTracker in tests to track the number of instances.
-    class BaseCountedInstance {
-    public:
-        explicit BaseCountedInstance(size_t x) : value_(x) {
-            ++num_instances_;
+// A type that counts number of occurrences of the type, the live occurrences of
+// the type, as well as the number of copies, moves, swaps, and comparisons that
+// have occurred on the type. This is used as a base class for the copyable,
+// copyable+movable, and movable types below that are used in actual tests. Use
+// InstanceTracker in tests to track the number of instances.
+class BaseCountedInstance
+{
+public:
+    explicit BaseCountedInstance(size_t x)
+        : value_(x)
+    {
+        ++num_instances_;
+        ++num_live_instances_;
+    }
+    BaseCountedInstance(const BaseCountedInstance& x)
+        : value_(x.value_)
+        , is_live_(x.is_live_)
+    {
+        ++num_instances_;
+        if (is_live_)
             ++num_live_instances_;
-        }
-        BaseCountedInstance(const BaseCountedInstance& x)
-            : value_(x.value_), is_live_(x.is_live_) {
-            ++num_instances_;
-            if (is_live_) ++num_live_instances_;
-            ++num_copies_;
-        }
-        BaseCountedInstance(BaseCountedInstance&& x)
-            : value_(x.value_), is_live_(x.is_live_) {
-            x.is_live_ = false;
-            ++num_instances_;
-            ++num_moves_;
-        }
-        ~BaseCountedInstance() {
-            --num_instances_;
-            if (is_live_) --num_live_instances_;
-        }
+        ++num_copies_;
+    }
+    BaseCountedInstance(BaseCountedInstance&& x)
+        : value_(x.value_)
+        , is_live_(x.is_live_)
+    {
+        x.is_live_ = false;
+        ++num_instances_;
+        ++num_moves_;
+    }
+    ~BaseCountedInstance()
+    {
+        --num_instances_;
+        if (is_live_)
+            --num_live_instances_;
+    }
 
-        BaseCountedInstance& operator=(const BaseCountedInstance& x) {
-            value_ = x.value_;
-            if (is_live_) --num_live_instances_;
-            is_live_ = x.is_live_;
-            if (is_live_) ++num_live_instances_;
-            ++num_copies_;
-            return *this;
-        }
-        BaseCountedInstance& operator=(BaseCountedInstance&& x) {
-            value_ = x.value_;
-            if (is_live_) --num_live_instances_;
-            is_live_ = x.is_live_;
-            x.is_live_ = false;
-            ++num_moves_;
-            return *this;
-        }
+    BaseCountedInstance& operator=(const BaseCountedInstance& x)
+    {
+        value_ = x.value_;
+        if (is_live_)
+            --num_live_instances_;
+        is_live_ = x.is_live_;
+        if (is_live_)
+            ++num_live_instances_;
+        ++num_copies_;
+        return *this;
+    }
+    BaseCountedInstance& operator=(BaseCountedInstance&& x)
+    {
+        value_ = x.value_;
+        if (is_live_)
+            --num_live_instances_;
+        is_live_   = x.is_live_;
+        x.is_live_ = false;
+        ++num_moves_;
+        return *this;
+    }
 
-        bool operator==(const BaseCountedInstance& x) const {
-            ++num_comparisons_;
-            return value_ == x.value_;
-        }
+    bool operator==(const BaseCountedInstance& x) const
+    {
+        ++num_comparisons_;
+        return value_ == x.value_;
+    }
 
-        bool operator!=(const BaseCountedInstance& x) const {
-            ++num_comparisons_;
-            return value_ != x.value_;
-        }
+    bool operator!=(const BaseCountedInstance& x) const
+    {
+        ++num_comparisons_;
+        return value_ != x.value_;
+    }
 
-        bool operator<(const BaseCountedInstance& x) const {
-            ++num_comparisons_;
-            return value_ < x.value_;
-        }
+    bool operator<(const BaseCountedInstance& x) const
+    {
+        ++num_comparisons_;
+        return value_ < x.value_;
+    }
 
-        bool operator>(const BaseCountedInstance& x) const {
-            ++num_comparisons_;
-            return value_ > x.value_;
-        }
+    bool operator>(const BaseCountedInstance& x) const
+    {
+        ++num_comparisons_;
+        return value_ > x.value_;
+    }
 
-        bool operator<=(const BaseCountedInstance& x) const {
-            ++num_comparisons_;
-            return value_ <= x.value_;
-        }
+    bool operator<=(const BaseCountedInstance& x) const
+    {
+        ++num_comparisons_;
+        return value_ <= x.value_;
+    }
 
-        bool operator>=(const BaseCountedInstance& x) const {
-            ++num_comparisons_;
-            return value_ >= x.value_;
-        }
+    bool operator>=(const BaseCountedInstance& x) const
+    {
+        ++num_comparisons_;
+        return value_ >= x.value_;
+    }
 
-        gtl::weak_ordering compare(const BaseCountedInstance& x) const {
-            ++num_comparisons_;
-            return value_ < x.value_
-                            ? gtl::weak_ordering::less
-                            : value_ == x.value_ ? gtl::weak_ordering::equivalent
-                            : gtl::weak_ordering::greater;
-        }
+    gtl::weak_ordering compare(const BaseCountedInstance& x) const
+    {
+        ++num_comparisons_;
+        return value_ < x.value_    ? gtl::weak_ordering::less
+               : value_ == x.value_ ? gtl::weak_ordering::equivalent
+                                    : gtl::weak_ordering::greater;
+    }
 
-        size_t value() const {
-            if (!is_live_) std::abort();
-            return value_;
-        }
+    size_t value() const
+    {
+        if (!is_live_)
+            std::abort();
+        return value_;
+    }
 
-        friend std::ostream& operator<<(std::ostream& o,
-                                        const BaseCountedInstance& v) {
-            return o << "[value:" << v.value() << "]";
-        }
+    friend std::ostream& operator<<(std::ostream& o, const BaseCountedInstance& v)
+    {
+        return o << "[value:" << v.value() << "]";
+    }
 
-        // Implementation of efficient swap() that counts swaps.
-        static void SwapImpl(
-            BaseCountedInstance& lhs,    // NOLINT(runtime/references)
-            BaseCountedInstance& rhs) {  // NOLINT(runtime/references)
-            using std::swap;
-            swap(lhs.value_, rhs.value_);
-            swap(lhs.is_live_, rhs.is_live_);
-            ++BaseCountedInstance::num_swaps_;
-        }
+    // Implementation of efficient swap() that counts swaps.
+    static void SwapImpl(BaseCountedInstance& lhs, // NOLINT(runtime/references)
+                         BaseCountedInstance& rhs)
+    { // NOLINT(runtime/references)
+        using std::swap;
+        swap(lhs.value_, rhs.value_);
+        swap(lhs.is_live_, rhs.is_live_);
+        ++BaseCountedInstance::num_swaps_;
+    }
 
-    private:
-        friend class InstanceTracker;
+private:
+    friend class InstanceTracker;
 
-        size_t value_;
+    size_t value_;
 
-        // Indicates if the value is live, ie it hasn't been moved away from.
-        bool is_live_ = true;
+    // Indicates if the value is live, ie it hasn't been moved away from.
+    bool is_live_ = true;
 
-        // Number of instances.
-        static size_t num_instances_;
+    // Number of instances.
+    static size_t num_instances_;
 
-        // Number of live instances (those that have not been moved away from.)
-        static size_t num_live_instances_;
+    // Number of live instances (those that have not been moved away from.)
+    static size_t num_live_instances_;
 
-        // Number of times that BaseCountedInstance objects were moved.
-        static size_t num_moves_;
+    // Number of times that BaseCountedInstance objects were moved.
+    static size_t num_moves_;
 
-        // Number of times that BaseCountedInstance objects were copied.
-        static size_t num_copies_;
+    // Number of times that BaseCountedInstance objects were copied.
+    static size_t num_copies_;
 
-        // Number of times that BaseCountedInstance objects were swapped.
-        static size_t num_swaps_;
+    // Number of times that BaseCountedInstance objects were swapped.
+    static size_t num_swaps_;
 
-        // Number of times that BaseCountedInstance objects were compared.
-        static size_t num_comparisons_;
-    };
-    
-    // Helper to track the BaseCountedInstance instance counters. Expects that the
-    // number of instances and live_instances are the same when it is constructed
-    // and when it is destructed.
-    class InstanceTracker {
-    public:
-        InstanceTracker()
-            : start_instances_(BaseCountedInstance::num_instances_),
-              start_live_instances_(BaseCountedInstance::num_live_instances_) {
-            ResetCopiesMovesSwaps();
-        }
-        ~InstanceTracker() {
-            if (instances() != 0) std::abort();
-            if (live_instances() != 0) std::abort();
-        }
+    // Number of times that BaseCountedInstance objects were compared.
+    static size_t num_comparisons_;
+};
 
-        // Returns the number of BaseCountedInstance instances both containing valid
-        // values and those moved away from compared to when the InstanceTracker was
-        // constructed
-        size_t instances() const {
-            return BaseCountedInstance::num_instances_ - start_instances_;
-        }
+// Helper to track the BaseCountedInstance instance counters. Expects that the
+// number of instances and live_instances are the same when it is constructed
+// and when it is destructed.
+class InstanceTracker
+{
+public:
+    InstanceTracker()
+        : start_instances_(BaseCountedInstance::num_instances_)
+        , start_live_instances_(BaseCountedInstance::num_live_instances_)
+    {
+        ResetCopiesMovesSwaps();
+    }
+    ~InstanceTracker()
+    {
+        if (instances() != 0)
+            std::abort();
+        if (live_instances() != 0)
+            std::abort();
+    }
 
-        // Returns the number of live BaseCountedInstance instances compared to when
-        // the InstanceTracker was constructed
-        size_t live_instances() const {
-            return BaseCountedInstance::num_live_instances_ - start_live_instances_;
-        }
+    // Returns the number of BaseCountedInstance instances both containing valid
+    // values and those moved away from compared to when the InstanceTracker was
+    // constructed
+    size_t instances() const { return BaseCountedInstance::num_instances_ - start_instances_; }
 
-        // Returns the number of moves on BaseCountedInstance objects since
-        // construction or since the last call to ResetCopiesMovesSwaps().
-        size_t moves() const { return BaseCountedInstance::num_moves_ - start_moves_; }
+    // Returns the number of live BaseCountedInstance instances compared to when
+    // the InstanceTracker was constructed
+    size_t live_instances() const
+    {
+        return BaseCountedInstance::num_live_instances_ - start_live_instances_;
+    }
 
-        // Returns the number of copies on BaseCountedInstance objects since
-        // construction or the last call to ResetCopiesMovesSwaps().
-        size_t copies() const {
-            return BaseCountedInstance::num_copies_ - start_copies_;
-        }
+    // Returns the number of moves on BaseCountedInstance objects since
+    // construction or since the last call to ResetCopiesMovesSwaps().
+    size_t moves() const { return BaseCountedInstance::num_moves_ - start_moves_; }
 
-        // Returns the number of swaps on BaseCountedInstance objects since
-        // construction or the last call to ResetCopiesMovesSwaps().
-        size_t swaps() const { return BaseCountedInstance::num_swaps_ - start_swaps_; }
+    // Returns the number of copies on BaseCountedInstance objects since
+    // construction or the last call to ResetCopiesMovesSwaps().
+    size_t copies() const { return BaseCountedInstance::num_copies_ - start_copies_; }
 
-        // Returns the number of comparisons on BaseCountedInstance objects since
-        // construction or the last call to ResetCopiesMovesSwaps().
-        size_t comparisons() const {
-            return BaseCountedInstance::num_comparisons_ - start_comparisons_;
-        }
+    // Returns the number of swaps on BaseCountedInstance objects since
+    // construction or the last call to ResetCopiesMovesSwaps().
+    size_t swaps() const { return BaseCountedInstance::num_swaps_ - start_swaps_; }
 
-        // Resets the base values for moves, copies, comparisons, and swaps to the
-        // current values, so that subsequent Get*() calls for moves, copies,
-        // comparisons, and swaps will compare to the situation at the point of this
-        // call.
-        void ResetCopiesMovesSwaps() {
-            start_moves_ = BaseCountedInstance::num_moves_;
-            start_copies_ = BaseCountedInstance::num_copies_;
-            start_swaps_ = BaseCountedInstance::num_swaps_;
-            start_comparisons_ = BaseCountedInstance::num_comparisons_;
-        }
+    // Returns the number of comparisons on BaseCountedInstance objects since
+    // construction or the last call to ResetCopiesMovesSwaps().
+    size_t comparisons() const
+    {
+        return BaseCountedInstance::num_comparisons_ - start_comparisons_;
+    }
 
-    private:
-        size_t start_instances_;
-        size_t start_live_instances_;
-        size_t start_moves_;
-        size_t start_copies_;
-        size_t start_swaps_;
-        size_t start_comparisons_;
-    };
+    // Resets the base values for moves, copies, comparisons, and swaps to the
+    // current values, so that subsequent Get*() calls for moves, copies,
+    // comparisons, and swaps will compare to the situation at the point of this
+    // call.
+    void ResetCopiesMovesSwaps()
+    {
+        start_moves_       = BaseCountedInstance::num_moves_;
+        start_copies_      = BaseCountedInstance::num_copies_;
+        start_swaps_       = BaseCountedInstance::num_swaps_;
+        start_comparisons_ = BaseCountedInstance::num_comparisons_;
+    }
 
-    // Copyable, not movable.
-    class CopyableOnlyInstance : public BaseCountedInstance {
-    public:
-        explicit CopyableOnlyInstance(size_t x) : BaseCountedInstance(x) {}
-        CopyableOnlyInstance(const CopyableOnlyInstance& rhs) = default;
-        CopyableOnlyInstance& operator=(const CopyableOnlyInstance& rhs) = default;
+private:
+    size_t start_instances_;
+    size_t start_live_instances_;
+    size_t start_moves_;
+    size_t start_copies_;
+    size_t start_swaps_;
+    size_t start_comparisons_;
+};
 
-        friend void swap(CopyableOnlyInstance& lhs, CopyableOnlyInstance& rhs) {
-            BaseCountedInstance::SwapImpl(lhs, rhs);
-        }
+// Copyable, not movable.
+class CopyableOnlyInstance : public BaseCountedInstance
+{
+public:
+    explicit CopyableOnlyInstance(size_t x)
+        : BaseCountedInstance(x)
+    {
+    }
+    CopyableOnlyInstance(const CopyableOnlyInstance& rhs)            = default;
+    CopyableOnlyInstance& operator=(const CopyableOnlyInstance& rhs) = default;
 
-        static bool supports_move() { return false; }
-    };
+    friend void swap(CopyableOnlyInstance& lhs, CopyableOnlyInstance& rhs)
+    {
+        BaseCountedInstance::SwapImpl(lhs, rhs);
+    }
 
-    // Copyable and movable.
-    class CopyableMovableInstance : public BaseCountedInstance {
-    public:
-        explicit CopyableMovableInstance(size_t x) : BaseCountedInstance(x) {}
-        CopyableMovableInstance(const CopyableMovableInstance& rhs) = default;
-        CopyableMovableInstance(CopyableMovableInstance&& rhs) = default;
-        CopyableMovableInstance& operator=(const CopyableMovableInstance& rhs) =
-    default;
-        CopyableMovableInstance& operator=(CopyableMovableInstance&& rhs) = default;
+    static bool supports_move() { return false; }
+};
 
-        friend void swap(CopyableMovableInstance& lhs, CopyableMovableInstance& rhs) {
-            BaseCountedInstance::SwapImpl(lhs, rhs);
-        }
+// Copyable and movable.
+class CopyableMovableInstance : public BaseCountedInstance
+{
+public:
+    explicit CopyableMovableInstance(size_t x)
+        : BaseCountedInstance(x)
+    {
+    }
+    CopyableMovableInstance(const CopyableMovableInstance& rhs)            = default;
+    CopyableMovableInstance(CopyableMovableInstance&& rhs)                 = default;
+    CopyableMovableInstance& operator=(const CopyableMovableInstance& rhs) = default;
+    CopyableMovableInstance& operator=(CopyableMovableInstance&& rhs)      = default;
 
-        static bool supports_move() { return true; }
-    };
+    friend void swap(CopyableMovableInstance& lhs, CopyableMovableInstance& rhs)
+    {
+        BaseCountedInstance::SwapImpl(lhs, rhs);
+    }
 
-    // Only movable, not default-constructible.
-    class MovableOnlyInstance : public BaseCountedInstance {
-    public:
-        explicit MovableOnlyInstance(size_t x) : BaseCountedInstance(x) {}
-        MovableOnlyInstance(MovableOnlyInstance&& other) = default;
-        MovableOnlyInstance& operator=(MovableOnlyInstance&& other) = default;
+    static bool supports_move() { return true; }
+};
 
-        friend void swap(MovableOnlyInstance& lhs, MovableOnlyInstance& rhs) {
-            BaseCountedInstance::SwapImpl(lhs, rhs);
-        }
+// Only movable, not default-constructible.
+class MovableOnlyInstance : public BaseCountedInstance
+{
+public:
+    explicit MovableOnlyInstance(size_t x)
+        : BaseCountedInstance(x)
+    {
+    }
+    MovableOnlyInstance(MovableOnlyInstance&& other)            = default;
+    MovableOnlyInstance& operator=(MovableOnlyInstance&& other) = default;
 
-        static bool supports_move() { return true; }
-    };
+    friend void swap(MovableOnlyInstance& lhs, MovableOnlyInstance& rhs)
+    {
+        BaseCountedInstance::SwapImpl(lhs, rhs);
+    }
 
-}  // namespace test_internal
+    static bool supports_move() { return true; }
+};
 
+} // namespace test_internal
 
 namespace priv {
 
-    // Like remove_const but propagates the removal through std::pair.
-    template <typename T>
-    struct remove_pair_const {
-        using type = typename std::remove_const<T>::type;
-    };
-    template <typename T, typename U>
-    struct remove_pair_const<std::pair<T, U> > {
-        using type = std::pair<typename remove_pair_const<T>::type,
-                               typename remove_pair_const<U>::type>;
-    };
+// Like remove_const but propagates the removal through std::pair.
+template<typename T>
+struct remove_pair_const
+{
+    using type = typename std::remove_const<T>::type;
+};
+template<typename T, typename U>
+struct remove_pair_const<std::pair<T, U>>
+{
+    using type =
+        std::pair<typename remove_pair_const<T>::type, typename remove_pair_const<U>::type>;
+};
 
-    // Utility class to provide an accessor for a key given a value. The default
-    // behavior is to treat the value as a pair and return the first element.
-    template <typename K, typename V>
-    struct KeyOfValue {
-        struct type {
-            const K& operator()(const V& p) const { return p.first; }
-        };
+// Utility class to provide an accessor for a key given a value. The default
+// behavior is to treat the value as a pair and return the first element.
+template<typename K, typename V>
+struct KeyOfValue
+{
+    struct type
+    {
+        const K& operator()(const V& p) const { return p.first; }
     };
+};
 
-    // Partial specialization of KeyOfValue class for when the key and value are
-    // the same type such as in set<> and btree_set<>.
-    template <typename K>
-    struct KeyOfValue<K, K> {
-        struct type {
-            const K& operator()(const K& k) const { return k; }
-        };
+// Partial specialization of KeyOfValue class for when the key and value are
+// the same type such as in set<> and btree_set<>.
+template<typename K>
+struct KeyOfValue<K, K>
+{
+    struct type
+    {
+        const K& operator()(const K& k) const { return k; }
     };
+};
 
-    inline char* GenerateDigits(char buf[16], unsigned val, unsigned maxval) {
-        assert(val <= maxval);
-        constexpr unsigned kBase = 64;  // avoid integer division.
-        unsigned p = 15;
-        buf[p--] = 0;
-        while (maxval > 0) {
-            buf[p--] = ' ' + (val % kBase);
-            val /= kBase;
-            maxval /= kBase;
-        }
-        return buf + p + 1;
+inline char* GenerateDigits(char buf[16], unsigned val, unsigned maxval)
+{
+    assert(val <= maxval);
+    constexpr unsigned kBase = 64; // avoid integer division.
+    unsigned           p     = 15;
+    buf[p--]                 = 0;
+    while (maxval > 0) {
+        buf[p--] = ' ' + (val % kBase);
+        val /= kBase;
+        maxval /= kBase;
     }
+    return buf + p + 1;
+}
 
-    template <typename K>
-    struct Generator {
-        int maxval;
-        explicit Generator(int m) : maxval(m) {}
-        K operator()(int i) const {
-            assert(i <= maxval);
-            return K(i);
-        }
-    };
+template<typename K>
+struct Generator
+{
+    int maxval;
+    explicit Generator(int m)
+        : maxval(m)
+    {
+    }
+    K operator()(int i) const
+    {
+        assert(i <= maxval);
+        return K(i);
+    }
+};
 
 #if 0
     template <>
@@ -369,122 +419,145 @@ namespace priv {
     };
 #endif
 
-    template <>
-    struct Generator<std::string> {
-        int maxval;
-        explicit Generator(int m) : maxval(m) {}
-        std::string operator()(int i) const {
-            char buf[16];
-            return GenerateDigits(buf, i, maxval);
+template<>
+struct Generator<std::string>
+{
+    int maxval;
+    explicit Generator(int m)
+        : maxval(m)
+    {
+    }
+    std::string operator()(int i) const
+    {
+        char buf[16];
+        return GenerateDigits(buf, i, maxval);
+    }
+};
+
+template<typename T, typename U>
+struct Generator<std::pair<T, U>>
+{
+    Generator<typename remove_pair_const<T>::type> tgen;
+    Generator<typename remove_pair_const<U>::type> ugen;
+
+    explicit Generator(int m)
+        : tgen(m)
+        , ugen(m)
+    {
+    }
+    std::pair<T, U> operator()(int i) const { return std::make_pair(tgen(i), ugen(i)); }
+};
+
+// Generate n values for our tests and benchmarks. Value range is [0, maxval].
+inline std::vector<int> GenerateNumbersWithSeed(size_t n, int maxval, int seed)
+{
+    // NOTE: Some tests rely on generated numbers not changing between test runs.
+    // We use std::minstd_rand0 because it is well-defined, but don't use
+    // std::uniform_int_distribution because platforms use different algorithms.
+    std::minstd_rand0 rng(seed);
+
+    std::vector<int>        values;
+    gtl::flat_hash_set<int> unique_values;
+    if (values.size() < n) {
+        for (size_t i = values.size(); i < n; i++) {
+            int value;
+            do {
+                value = static_cast<int>(rng()) % (maxval + 1);
+            } while (!unique_values.insert(value).second);
+
+            values.push_back(value);
         }
-    };
+    }
+    return values;
+}
 
-    template <typename T, typename U>
-    struct Generator<std::pair<T, U> > {
-        Generator<typename remove_pair_const<T>::type> tgen;
-        Generator<typename remove_pair_const<U>::type> ugen;
+// Generates n values in the range [0, maxval].
+template<typename V>
+std::vector<V> GenerateValuesWithSeed(size_t n, int maxval, int seed)
+{
+    const std::vector<int> nums = GenerateNumbersWithSeed(n, maxval, seed);
+    Generator<V>           gen(maxval);
+    std::vector<V>         vec;
 
-        explicit Generator(int m) : tgen(m), ugen(m) {}
-        std::pair<T, U> operator()(int i) const {
-            return std::make_pair(tgen(i), ugen(i));
-        }
-    };
-
-    // Generate n values for our tests and benchmarks. Value range is [0, maxval].
-    inline std::vector<int> GenerateNumbersWithSeed(size_t n, int maxval, int seed) {
-        // NOTE: Some tests rely on generated numbers not changing between test runs.
-        // We use std::minstd_rand0 because it is well-defined, but don't use
-        // std::uniform_int_distribution because platforms use different algorithms.
-        std::minstd_rand0 rng(seed);
-
-        std::vector<int> values;
-        gtl::flat_hash_set<int> unique_values;
-        if (values.size() < n) {
-            for (size_t i = values.size(); i < n; i++) {
-                int value;
-                do {
-                    value = static_cast<int>(rng()) % (maxval + 1);
-                } while (!unique_values.insert(value).second);
-
-                values.push_back(value);
-            }
-        }
-        return values;
+    vec.reserve(n);
+    for (size_t i = 0; i < n; i++) {
+        vec.push_back(gen(nums[i]));
     }
 
-    // Generates n values in the range [0, maxval].
-    template <typename V>
-    std::vector<V> GenerateValuesWithSeed(size_t n, int maxval, int seed) {
-        const std::vector<int> nums = GenerateNumbersWithSeed(n, maxval, seed);
-        Generator<V> gen(maxval);
-        std::vector<V> vec;
+    return vec;
+}
 
-        vec.reserve(n);
-        for (size_t i = 0; i < n; i++) {
-            vec.push_back(gen(nums[i]));
-        }
-
-        return vec;
-    }
-
-}  // namespace priv
+} // namespace priv
 
 namespace priv {
 
-    // This is a stateful allocator, but the state lives outside of the
-    // allocator (in whatever test is using the allocator). This is odd
-    // but helps in tests where the allocator is propagated into nested
-    // containers - that chain of allocators uses the same state and is
-    // thus easier to query for aggregate allocation information.
-    template <typename T>
-    class CountingAllocator : public std::allocator<T> {
+// This is a stateful allocator, but the state lives outside of the
+// allocator (in whatever test is using the allocator). This is odd
+// but helps in tests where the allocator is propagated into nested
+// containers - that chain of allocators uses the same state and is
+// thus easier to query for aggregate allocation information.
+template<typename T>
+class CountingAllocator : public std::allocator<T>
+{
+public:
+    using Alloc       = std::allocator<T>;
+    using AllocTraits = typename std::allocator_traits<Alloc>;
+    using pointer     = typename AllocTraits::pointer;
+    using size_type   = typename AllocTraits::size_type;
+
+    CountingAllocator()
+        : bytes_used_(nullptr)
+    {
+    }
+    explicit CountingAllocator(int64_t* b)
+        : bytes_used_(b)
+    {
+    }
+
+    template<typename U>
+    CountingAllocator(const CountingAllocator<U>& x)
+        : Alloc(x)
+        , bytes_used_(x.bytes_used_)
+    {
+    }
+
+    pointer allocate(size_type                                                  n,
+                     std::allocator_traits<std::allocator<void>>::const_pointer hint = nullptr)
+    {
+        assert(bytes_used_ != nullptr);
+        *bytes_used_ += n * sizeof(T);
+        return AllocTraits::allocate(*this, n, hint);
+    }
+
+    void deallocate(pointer p, size_type n)
+    {
+        AllocTraits::deallocate(*this, p, n);
+        assert(bytes_used_ != nullptr);
+        *bytes_used_ -= n * sizeof(T);
+    }
+
+    template<typename U>
+    class rebind
+    {
     public:
-        using Alloc = std::allocator<T>;
-        using AllocTraits = typename std::allocator_traits<Alloc>;
-        using pointer = typename AllocTraits::pointer;
-        using size_type = typename AllocTraits::size_type;
-
-        CountingAllocator() : bytes_used_(nullptr) {}
-        explicit CountingAllocator(int64_t* b) : bytes_used_(b) {}
-
-        template <typename U>
-        CountingAllocator(const CountingAllocator<U>& x)
-            : Alloc(x), bytes_used_(x.bytes_used_) {}
-
-        pointer allocate(size_type n,
-                         std::allocator_traits<std::allocator<void>>::const_pointer hint = nullptr) {
-            assert(bytes_used_ != nullptr);
-            *bytes_used_ += n * sizeof(T);
-            return AllocTraits::allocate(*this, n, hint);
-        }
-
-        void deallocate(pointer p, size_type n) {
-            AllocTraits::deallocate(*this, p, n);
-            assert(bytes_used_ != nullptr);
-            *bytes_used_ -= n * sizeof(T);
-        }
-
-        template<typename U>
-        class rebind {
-        public:
-            using other = CountingAllocator<U>;
-        };
-
-        friend bool operator==(const CountingAllocator& a,
-                               const CountingAllocator& b) {
-            return a.bytes_used_ == b.bytes_used_;
-        }
-
-        friend bool operator!=(const CountingAllocator& a,
-                               const CountingAllocator& b) {
-            return !(a == b);
-        }
-
-        int64_t* bytes_used_;
+        using other = CountingAllocator<U>;
     };
 
-}  // namespace priv
+    friend bool operator==(const CountingAllocator& a, const CountingAllocator& b)
+    {
+        return a.bytes_used_ == b.bytes_used_;
+    }
 
-}  // namespace gtl
+    friend bool operator!=(const CountingAllocator& a, const CountingAllocator& b)
+    {
+        return !(a == b);
+    }
 
-#endif  // GTL_CONTAINER_BTREE_TEST_H_
+    int64_t* bytes_used_;
+};
+
+} // namespace priv
+
+} // namespace gtl
+
+#endif // GTL_CONTAINER_BTREE_TEST_H_

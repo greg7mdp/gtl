@@ -7,17 +7,17 @@ using std::string;
 
 struct Person
 {
-    bool operator==(const Person &o) const
-    { 
-        return _first == o._first && _last == o._last && _age == o._age; 
+    bool operator==(const Person& o) const
+    {
+        return _first == o._first && _last == o._last && _age == o._age;
     }
 
     // Demonstrates how to provide the hash function as a friend member function of the class
     // This can be used as an alternative to providing a std::hash<Person> specialization
     // --------------------------------------------------------------------------------------
-    friend size_t hash_value(const Person &p) 
+    friend size_t hash_value(const Person& p)
     {
-            return gtl::HashState().combine(0, p._first, p._last, p._age);
+        return gtl::HashState().combine(0, p._first, p._last, p._age);
     }
 
     string _first;

@@ -1,4 +1,4 @@
-#if !defined(gtl_config_hpp_guard_)
+#ifndef gtl_config_hpp_guard_
 #define gtl_config_hpp_guard_
 
 // ---------------------------------------------------------------------------
@@ -18,7 +18,7 @@
 //
 // Includes work from abseil-cpp (https://github.com/abseil/abseil-cpp)
 // with modifications.
-// 
+//
 // Copyright 2018 The Abseil Authors.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -44,8 +44,7 @@
 #ifdef __cplusplus
     // Included for __GLIBCXX__, _LIBCPP_VERSION
     #include <cstddef>
-#endif  // __cplusplus
-
+#endif // __cplusplus
 
 // -----------------------------------------------------------------------------
 // Some sanity checks
@@ -67,14 +66,14 @@
     #error "gtl requires __apple_build_version__ of 4211165 or higher."
 #endif
 
-// Enforce C++11 as the minimum. 
+// Enforce C++11 as the minimum.
 #if defined(__cplusplus) && !defined(_MSC_VER)
     #if __cplusplus < 201402L
         #error "C++ versions less than C++20 are not supported."
     #endif
 #endif
 
-// We have chosen glibc 2.12 as the minimum 
+// We have chosen glibc 2.12 as the minimum
 #if defined(__GLIBC__) && defined(__GLIBC_PREREQ)
     #if !__GLIBC_PREREQ(2, 12)
         #error "Minimum required version of glibc is 2.12."
@@ -89,12 +88,10 @@
     #error "gtl assumes CHAR_BIT == 8."
 #endif
 
-// gtl currently assumes that an int is 4 bytes. 
+// gtl currently assumes that an int is 4 bytes.
 #if INT_MAX < 2147483647
     #error "gtl assumes that int is at least 4 bytes. "
 #endif
-
-
 
 // -----------------------------------------------------------------------------
 // Compiler Feature Checks
@@ -106,31 +103,30 @@
     #define GTL_HAVE_BUILTIN(x) 0
 #endif
 
-
 // -----------------------------------------------------------------------------
 // -----------------------------------------------------------------------------
 #if defined(__cpp_lib_three_way_comparison)
     #define GTL_HAS_COMPARE 1
 #else
     #define GTL_HAS_COMPARE 0
-#endif    
+#endif
 
 // ------------------------------------------------------------
-// Checks whether the __int128 compiler extension for a 128-bit 
+// Checks whether the __int128 compiler extension for a 128-bit
 // integral type is supported.
 // ------------------------------------------------------------
 #ifdef GTL_HAVE_INTRINSIC_INT128
     #error GTL_HAVE_INTRINSIC_INT128 cannot be directly set
 #elif defined(__SIZEOF_INT128__)
-    #if (defined(__clang__) && !defined(_WIN32) && !defined(__aarch64__)) || \
-        (defined(__CUDACC__) && __CUDACC_VER_MAJOR__ >= 9) ||                \
+    #if (defined(__clang__) && !defined(_WIN32) && !defined(__aarch64__)) ||                       \
+        (defined(__CUDACC__) && __CUDACC_VER_MAJOR__ >= 9) ||                                      \
         (defined(__GNUC__) && !defined(__clang__) && !defined(__CUDACC__))
         #define GTL_HAVE_INTRINSIC_INT128 1
     #elif defined(__CUDACC__)
         #if __CUDACC_VER__ >= 70000
             #define GTL_HAVE_INTRINSIC_INT128 1
-        #endif  // __CUDACC_VER__ >= 70000
-    #endif  // defined(__CUDACC__)
+        #endif // __CUDACC_VER__ >= 70000
+    #endif     // defined(__CUDACC__)
 #endif
 
 // -----------------------------------------------------------------------
@@ -144,9 +140,11 @@
     #error "GTL_IS_LITTLE_ENDIAN cannot be directly set."
 #endif
 
-#if (defined(__BYTE_ORDER__) && defined(__ORDER_LITTLE_ENDIAN__) && __BYTE_ORDER__ == __ORDER_LITTLE_ENDIAN__)
+#if (defined(__BYTE_ORDER__) && defined(__ORDER_LITTLE_ENDIAN__) &&                                \
+     __BYTE_ORDER__ == __ORDER_LITTLE_ENDIAN__)
     #define GTL_IS_LITTLE_ENDIAN 1
-#elif defined(__BYTE_ORDER__) && defined(__ORDER_BIG_ENDIAN__) && __BYTE_ORDER__ == __ORDER_BIG_ENDIAN__
+#elif defined(__BYTE_ORDER__) && defined(__ORDER_BIG_ENDIAN__) &&                                  \
+    __BYTE_ORDER__ == __ORDER_BIG_ENDIAN__
     #define GTL_IS_BIG_ENDIAN 1
 #elif defined(_WIN32)
     #define GTL_IS_LITTLE_ENDIAN 1
@@ -197,7 +195,8 @@
     #define GTL_ATTRIBUTE_ALWAYS_INLINE
 #endif
 
-#if !defined(__INTEL_COMPILER) && (GTL_HAVE_ATTRIBUTE(noinline) || (defined(__GNUC__) && !defined(__clang__)))
+#if !defined(__INTEL_COMPILER) &&                                                                  \
+    (GTL_HAVE_ATTRIBUTE(noinline) || (defined(__GNUC__) && !defined(__clang__)))
     #define GTL_ATTRIBUTE_NOINLINE __attribute__((noinline))
     #define GTL_HAVE_ATTRIBUTE_NOINLINE 1
 #else
@@ -224,9 +223,8 @@
 // Figure out SSE support
 // ----------------------------------------------------------------------
 #ifndef GTL_HAVE_SSE2
-    #if defined(__SSE2__) ||  \
-        (defined(_MSC_VER) && \
-         (defined(_M_X64) || (defined(_M_IX86) && _M_IX86_FP >= 2)))
+    #if defined(__SSE2__) ||                                                                       \
+        (defined(_MSC_VER) && (defined(_M_X64) || (defined(_M_IX86) && _M_IX86_FP >= 2)))
         #define GTL_HAVE_SSE2 1
     #else
         #define GTL_HAVE_SSE2 0
@@ -252,6 +250,5 @@
 #if GTL_HAVE_SSSE3
     #include <tmmintrin.h>
 #endif
-
 
 #endif // gtl_config_hpp_guard_

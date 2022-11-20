@@ -7,9 +7,9 @@ using std::string;
 
 struct Person
 {
-    bool operator==(const Person &o) const
-    { 
-        return _first == o._first && _last == o._last && _age == o._age; 
+    bool operator==(const Person& o) const
+    {
+        return _first == o._first && _last == o._last && _age == o._age;
     }
 
     string _first;
@@ -17,18 +17,18 @@ struct Person
     int    _age;
 };
 
-namespace std
+namespace std {
+// inject specialization of std::hash for Person into namespace std
+// An alternative is to provide a hash_value() friend function (see hash_value.hpp)
+// ------------------------------------------------------------------------------
+template<>
+struct hash<Person>
 {
-    // inject specialization of std::hash for Person into namespace std
-    // An alternative is to provide a hash_value() friend function (see hash_value.hpp)
-    // ------------------------------------------------------------------------------
-    template<> struct hash<Person>
+    std::size_t operator()(Person const& p) const
     {
-        std::size_t operator()(Person const &p) const
-        {
-            return gtl::HashState().combine(0, p._first, p._last, p._age);
-        }
-    };
+        return gtl::HashState().combine(0, p._first, p._last, p._age);
+    }
+};
 }
 
 #endif // phmap_example_hash_std_

@@ -13,8 +13,8 @@
 // limitations under the License.
 
 #ifndef THIS_HASH_SET
-    #define THIS_HASH_SET   node_hash_set
-    #define THIS_TEST_NAME  NodeHashSet
+    #define THIS_HASH_SET node_hash_set
+    #define THIS_TEST_NAME NodeHashSet
 #endif
 
 #include "gtl/phmap.hpp"
@@ -34,77 +34,79 @@ using ::testing::UnorderedElementsAre;
 
 using SetTypes = ::testing::Types<
     THIS_HASH_SET<int, StatefulTestingHash, StatefulTestingEqual, Alloc<int>>,
-    THIS_HASH_SET<std::string, StatefulTestingHash, StatefulTestingEqual,
-                  Alloc<std::string>>,
+    THIS_HASH_SET<std::string, StatefulTestingHash, StatefulTestingEqual, Alloc<std::string>>,
     THIS_HASH_SET<Enum, StatefulTestingHash, StatefulTestingEqual, Alloc<Enum>>,
-    THIS_HASH_SET<EnumClass, StatefulTestingHash, StatefulTestingEqual,
-                  Alloc<EnumClass>>>;
+    THIS_HASH_SET<EnumClass, StatefulTestingHash, StatefulTestingEqual, Alloc<EnumClass>>>;
 
 INSTANTIATE_TYPED_TEST_SUITE_P(THIS_TEST_NAME, ConstructorTest, SetTypes);
 INSTANTIATE_TYPED_TEST_SUITE_P(THIS_TEST_NAME, LookupTest, SetTypes);
 INSTANTIATE_TYPED_TEST_SUITE_P(THIS_TEST_NAME, MembersTest, SetTypes);
 INSTANTIATE_TYPED_TEST_SUITE_P(THIS_TEST_NAME, ModifiersTest, SetTypes);
 
-TEST(THIS_TEST_NAME, MoveableNotCopyableCompiles) {
-  THIS_HASH_SET<std::unique_ptr<void*>> t;
-  THIS_HASH_SET<std::unique_ptr<void*>> u;
-  u = std::move(t);
+TEST(THIS_TEST_NAME, MoveableNotCopyableCompiles)
+{
+    THIS_HASH_SET<std::unique_ptr<void*>> t;
+    THIS_HASH_SET<std::unique_ptr<void*>> u;
+    u = std::move(t);
 }
 
-TEST(THIS_TEST_NAME, MergeExtractInsert) {
-  struct Hash {
-    size_t operator()(const std::unique_ptr<int>& p) const { return *p; }
-  };
-  struct Eq {
-    bool operator()(const std::unique_ptr<int>& a,
-                    const std::unique_ptr<int>& b) const {
-      return *a == *b;
-    }
-  };
-  gtl::THIS_HASH_SET<std::unique_ptr<int>, Hash, Eq> set1, set2;
-  set1.insert(std::make_unique<int>(7));
-  set1.insert(std::make_unique<int>(17));
+TEST(THIS_TEST_NAME, MergeExtractInsert)
+{
+    struct Hash
+    {
+        size_t operator()(const std::unique_ptr<int>& p) const { return *p; }
+    };
+    struct Eq
+    {
+        bool operator()(const std::unique_ptr<int>& a, const std::unique_ptr<int>& b) const
+        {
+            return *a == *b;
+        }
+    };
+    gtl::THIS_HASH_SET<std::unique_ptr<int>, Hash, Eq> set1, set2;
+    set1.insert(std::make_unique<int>(7));
+    set1.insert(std::make_unique<int>(17));
 
-  set2.insert(std::make_unique<int>(7));
-  set2.insert(std::make_unique<int>(19));
+    set2.insert(std::make_unique<int>(7));
+    set2.insert(std::make_unique<int>(19));
 
-  EXPECT_THAT(set1, UnorderedElementsAre(Pointee(7), Pointee(17)));
-  EXPECT_THAT(set2, UnorderedElementsAre(Pointee(7), Pointee(19)));
+    EXPECT_THAT(set1, UnorderedElementsAre(Pointee(7), Pointee(17)));
+    EXPECT_THAT(set2, UnorderedElementsAre(Pointee(7), Pointee(19)));
 
-  set1.merge(set2);
+    set1.merge(set2);
 
-  EXPECT_THAT(set1, UnorderedElementsAre(Pointee(7), Pointee(17), Pointee(19)));
-  EXPECT_THAT(set2, UnorderedElementsAre(Pointee(7)));
+    EXPECT_THAT(set1, UnorderedElementsAre(Pointee(7), Pointee(17), Pointee(19)));
+    EXPECT_THAT(set2, UnorderedElementsAre(Pointee(7)));
 
-  auto node = set1.extract(std::make_unique<int>(7));
-  EXPECT_TRUE(node);
-  EXPECT_THAT(node.value(), Pointee(7));
-  EXPECT_THAT(set1, UnorderedElementsAre(Pointee(17), Pointee(19)));
+    auto node = set1.extract(std::make_unique<int>(7));
+    EXPECT_TRUE(node);
+    EXPECT_THAT(node.value(), Pointee(7));
+    EXPECT_THAT(set1, UnorderedElementsAre(Pointee(17), Pointee(19)));
 
-  auto insert_result = set2.insert(std::move(node));
-  EXPECT_FALSE(node);
-  EXPECT_FALSE(insert_result.inserted);
-  EXPECT_TRUE(insert_result.node);
-  EXPECT_THAT(insert_result.node.value(), Pointee(7));
-  EXPECT_EQ(**insert_result.position, 7);
-  EXPECT_NE(insert_result.position->get(), insert_result.node.value().get());
-  EXPECT_THAT(set2, UnorderedElementsAre(Pointee(7)));
+    auto insert_result = set2.insert(std::move(node));
+    EXPECT_FALSE(node);
+    EXPECT_FALSE(insert_result.inserted);
+    EXPECT_TRUE(insert_result.node);
+    EXPECT_THAT(insert_result.node.value(), Pointee(7));
+    EXPECT_EQ(**insert_result.position, 7);
+    EXPECT_NE(insert_result.position->get(), insert_result.node.value().get());
+    EXPECT_THAT(set2, UnorderedElementsAre(Pointee(7)));
 
-  node = set1.extract(std::make_unique<int>(17));
-  EXPECT_TRUE(node);
-  EXPECT_THAT(node.value(), Pointee(17));
-  EXPECT_THAT(set1, UnorderedElementsAre(Pointee(19)));
+    node = set1.extract(std::make_unique<int>(17));
+    EXPECT_TRUE(node);
+    EXPECT_THAT(node.value(), Pointee(17));
+    EXPECT_THAT(set1, UnorderedElementsAre(Pointee(19)));
 
-  node.value() = std::make_unique<int>(23);
+    node.value() = std::make_unique<int>(23);
 
-  insert_result = set2.insert(std::move(node));
-  EXPECT_FALSE(node);
-  EXPECT_TRUE(insert_result.inserted);
-  EXPECT_FALSE(insert_result.node);
-  EXPECT_EQ(**insert_result.position, 23);
-  EXPECT_THAT(set2, UnorderedElementsAre(Pointee(7), Pointee(23)));
+    insert_result = set2.insert(std::move(node));
+    EXPECT_FALSE(node);
+    EXPECT_TRUE(insert_result.inserted);
+    EXPECT_FALSE(insert_result.node);
+    EXPECT_EQ(**insert_result.position, 23);
+    EXPECT_THAT(set2, UnorderedElementsAre(Pointee(7), Pointee(23)));
 }
 
-}  // namespace
-}  // namespace priv
-}  // namespace gtl
+} // namespace
+} // namespace priv
+} // namespace gtl

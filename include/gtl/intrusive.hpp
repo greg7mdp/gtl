@@ -1,4 +1,4 @@
-#if !defined(gtl_intrusive_hpp_guard_)
+#ifndef gtl_intrusive_hpp_guard_
 #define gtl_intrusive_hpp_guard_
 
 // ---------------------------------------------------------------------------
@@ -22,15 +22,14 @@
 //          http://www.boost.org/LICENSE_1_0.txt)
 // ---------------------------------------------------------------------------
 
+#include <atomic>
 #include <cassert>
 #include <cstddef>
-#include <atomic>
 #include <iostream>
-       
 
 namespace gtl {
 
-// ---------------------------------------------------------------------------    
+// ---------------------------------------------------------------------------
 //  intrusive_ptr
 //  -------------
 //
@@ -44,7 +43,7 @@ namespace gtl {
 //
 //  The object pointed to is responsible for destroying itself when its
 //  reference counts is 0.
-// ---------------------------------------------------------------------------    
+// ---------------------------------------------------------------------------
 template<class T>
 class intrusive_ptr
 {
@@ -56,41 +55,43 @@ public:
 
     template<class U>
     friend class intrusive_ptr;
- 
-    constexpr intrusive_ptr() noexcept : px(nullptr) {}
 
-    intrusive_ptr(T* p, bool add_ref = true) noexcept :
-        px(p)
+    constexpr intrusive_ptr() noexcept
+        : px(nullptr)
+    {
+    }
+
+    intrusive_ptr(T* p, bool add_ref = true) noexcept
+        : px(p)
     {
         if (px != nullptr && add_ref)
             intrusive_ptr_add_ref(px);
     }
 
-    template<class U>//, typename std::enable_if_t<std::is_convertible_v<U,T>, int> = 0>
-    intrusive_ptr(intrusive_ptr<U> const& rhs) noexcept :
-        px(rhs.get())
+    template<class U> //, typename std::enable_if_t<std::is_convertible_v<U,T>, int> = 0>
+    intrusive_ptr(intrusive_ptr<U> const& rhs) noexcept
+        : px(rhs.get())
     {
         if (px)
             intrusive_ptr_add_ref(px);
     }
 
-
-    template<class U, typename  std::enable_if_t<std::is_convertible_v<U,T>, int> = 0>
-    intrusive_ptr(intrusive_ptr<U>&& rhs) :
-        px(rhs.px)
+    template<class U, typename std::enable_if_t<std::is_convertible_v<U, T>, int> = 0>
+    intrusive_ptr(intrusive_ptr<U>&& rhs)
+        : px(rhs.px)
     {
         rhs.px = nullptr;
     }
 
-    intrusive_ptr(intrusive_ptr const& rhs) noexcept :
-        px(rhs.px)
+    intrusive_ptr(intrusive_ptr const& rhs) noexcept
+        : px(rhs.px)
     {
         if (px)
             intrusive_ptr_add_ref(px);
     }
 
-    intrusive_ptr(intrusive_ptr&& rhs) noexcept :
-        px(rhs.px)
+    intrusive_ptr(intrusive_ptr&& rhs) noexcept
+        : px(rhs.px)
     {
         rhs.px = nullptr;
     }
@@ -137,34 +138,22 @@ public:
         return *this;
     }
 
-    void reset()
-    {
-        this_type().swap(*this);
-    }
+    void reset() { this_type().swap(*this); }
 
-    void reset(T* rhs)
-    {
-        this_type(rhs).swap(*this);
-    }
+    void reset(T* rhs) { this_type(rhs).swap(*this); }
 
-    void reset(T* rhs, bool add_ref)
-    {
-        this_type(rhs, add_ref).swap(*this);
-    }
+    void reset(T* rhs, bool add_ref) { this_type(rhs, add_ref).swap(*this); }
 
-    T* get() const noexcept
-    {
-        return px;
-    }
+    T* get() const noexcept { return px; }
 
     T* detach() noexcept
     {
         T* ret = px;
-        px = nullptr;
+        px     = nullptr;
         return ret;
     }
 
-    T& operator*() const 
+    T& operator*() const
     {
         assert(px);
         return *px;
@@ -176,15 +165,12 @@ public:
         return px;
     }
 
-    explicit operator bool() const noexcept
-    {
-        return px != nullptr;
-    }
-    
+    explicit operator bool() const noexcept { return px != nullptr; }
+
     void swap(intrusive_ptr& rhs) noexcept
     {
         T* tmp = px;
-        px = rhs.px;
+        px     = rhs.px;
         rhs.px = tmp;
     }
 
@@ -193,80 +179,69 @@ private:
 };
 
 // comparison operators
-// --------------------    
+// --------------------
 template<class T, class U>
-inline bool operator==(intrusive_ptr<T> const& a,
-                       intrusive_ptr<U> const& b) noexcept
+inline bool operator==(intrusive_ptr<T> const& a, intrusive_ptr<U> const& b) noexcept
 {
     return a.get() == b.get();
 }
 
 template<class T, class U>
-inline bool operator!=(intrusive_ptr<T> const& a,
-                       intrusive_ptr<U> const& b) noexcept
+inline bool operator!=(intrusive_ptr<T> const& a, intrusive_ptr<U> const& b) noexcept
 {
     return a.get() != b.get();
 }
 
 template<class T, class U>
-inline bool operator==(intrusive_ptr<T> const& a,
-                       U* b) noexcept
+inline bool operator==(intrusive_ptr<T> const& a, U* b) noexcept
 {
     return a.get() == b;
 }
 
 template<class T, class U>
-inline bool operator!=(intrusive_ptr<T> const& a,
-                       U* b) noexcept
+inline bool operator!=(intrusive_ptr<T> const& a, U* b) noexcept
 {
     return a.get() != b;
 }
 
 template<class T, class U>
-inline bool operator==(T* a,
-                       intrusive_ptr<U> const& b) noexcept
+inline bool operator==(T* a, intrusive_ptr<U> const& b) noexcept
 {
     return a == b.get();
 }
 
 template<class T, class U>
-inline bool operator!=(T* a,
-                       intrusive_ptr<U> const& b) noexcept
+inline bool operator!=(T* a, intrusive_ptr<U> const& b) noexcept
 {
     return a != b.get();
 }
 
 template<class T>
-inline bool operator==(intrusive_ptr<T> const& p,
-                       std::nullptr_t) noexcept
+inline bool operator==(intrusive_ptr<T> const& p, std::nullptr_t) noexcept
 {
     return p.get() == nullptr;
 }
 
 template<class T>
-inline bool operator==(std::nullptr_t,
-                       intrusive_ptr<T> const& p) noexcept
+inline bool operator==(std::nullptr_t, intrusive_ptr<T> const& p) noexcept
 {
     return p.get() == nullptr;
 }
 
 template<class T>
-inline bool operator!=(intrusive_ptr<T> const& p,
-                       std::nullptr_t) noexcept
+inline bool operator!=(intrusive_ptr<T> const& p, std::nullptr_t) noexcept
 {
     return p.get() != nullptr;
 }
 
 template<class T>
-inline bool operator!=(std::nullptr_t,
-                       intrusive_ptr<T> const& p) noexcept
+inline bool operator!=(std::nullptr_t, intrusive_ptr<T> const& p) noexcept
 {
     return p.get() != nullptr;
 }
 
 template<class T>
-inline bool operator<(intrusive_ptr<T> const& a,
-                      intrusive_ptr<T> const& b) noexcept
+inline bool operator<(intrusive_ptr<T> const& a, intrusive_ptr<T> const& b) noexcept
 {
     return std::less<T*>()(a.get(), b.get());
 }
@@ -274,8 +249,7 @@ inline bool operator<(intrusive_ptr<T> const& a,
 // swap
 // ----
 template<class T>
-void swap(intrusive_ptr<T>& lhs,
-          intrusive_ptr<T>& rhs) noexcept
+void swap(intrusive_ptr<T>& lhs, intrusive_ptr<T>& rhs) noexcept
 {
     lhs.swap(rhs);
 }
@@ -336,7 +310,7 @@ intrusive_ptr<T> dynamic_pointer_cast(intrusive_ptr<U>&& p) noexcept
 // operator<<
 // ----------
 template<class Y>
-std::ostream& operator<< (std::ostream& os, intrusive_ptr<Y> const& p)
+std::ostream& operator<<(std::ostream& os, intrusive_ptr<Y> const& p)
 {
     os << p.get();
     return os;
@@ -344,9 +318,11 @@ std::ostream& operator<< (std::ostream& os, intrusive_ptr<Y> const& p)
 
 // hash_value
 // ----------
-template<class T> struct hash;
+template<class T>
+struct hash;
 
-template<class T> std::size_t hash_value(intrusive_ptr<T> const& p) noexcept
+template<class T>
+std::size_t hash_value(intrusive_ptr<T> const& p) noexcept
 {
     return std::hash<T*>()(p.get());
 }
@@ -355,21 +331,18 @@ template<class T> std::size_t hash_value(intrusive_ptr<T> const& p) noexcept
 
 // std::hash
 // ---------
-namespace std
+namespace std {
+
+template<class T>
+struct hash<::gtl::intrusive_ptr<T>>
 {
-
-    template<class T> 
-    struct hash<::gtl::intrusive_ptr<T>>
+    std::size_t operator()(::gtl::intrusive_ptr<T> const& p) const noexcept
     {
-        std::size_t operator()(::gtl::intrusive_ptr<T> const& p) const noexcept
-        {
-            return std::hash<T*>()(p.get());
-        }
-    };
-
+        return std::hash<T*>()(p.get());
+    }
+};
 
 } // namespace std
-
 
 namespace gtl {
 
@@ -384,20 +357,11 @@ struct thread_unsafe_counter
 {
     using type = unsigned int;
 
-    static unsigned int load(type const& counter) noexcept
-    {
-        return counter;
-    }
+    static unsigned int load(type const& counter) noexcept { return counter; }
 
-    static void increment(type& counter) noexcept
-    {
-        ++counter;
-    }
+    static void increment(type& counter) noexcept { ++counter; }
 
-    static unsigned int decrement(type& counter) noexcept
-    {
-        return --counter;
-    }
+    static unsigned int decrement(type& counter) noexcept { return --counter; }
 };
 
 // --------------------------------------------------------------------------------
@@ -406,24 +370,15 @@ struct thread_unsafe_counter
 // The policy instructs the \c intrusive_ref_counter base class to implement
 // a thread-safe reference counter, if the target platform supports multithreading.
 // --------------------------------------------------------------------------------
-struct thread_safe_counter 
+struct thread_safe_counter
 {
     using type = std::atomic<unsigned int>;
 
-    static unsigned int load(type const& counter) noexcept
-    {
-        return counter.load();
-    }
+    static unsigned int load(type const& counter) noexcept { return counter.load(); }
 
-    static void increment(type& counter) noexcept
-    {
-        ++counter;
-    }
+    static void increment(type& counter) noexcept { ++counter; }
 
-    static unsigned int decrement(type& counter) noexcept
-    {
-        return --counter;
-    }
+    static unsigned int decrement(type& counter) noexcept { return --counter; }
 };
 
 // --------------------------------------------------------------------------------
@@ -443,18 +398,18 @@ template<typename DerivedT, typename CounterPolicyT>
 class intrusive_ref_counter
 {
 private:
-    using counter_type =  typename CounterPolicyT::type;
-    
+    using counter_type = typename CounterPolicyT::type;
+
     mutable counter_type _refcount;
 
 public:
-    intrusive_ref_counter() noexcept :
-        _refcount(0)
+    intrusive_ref_counter() noexcept
+        : _refcount(0)
     {
     }
 
-    intrusive_ref_counter(intrusive_ref_counter const&) noexcept :
-        _refcount(0)
+    intrusive_ref_counter(intrusive_ref_counter const&) noexcept
+        : _refcount(0)
     {
     }
 
@@ -463,27 +418,23 @@ public:
         return *this; // refcount not modified
     }
 
-    unsigned int use_count() const noexcept
-    {
-        return CounterPolicyT::load(_refcount);
-    }
+    unsigned int use_count() const noexcept { return CounterPolicyT::load(_refcount); }
 
 protected:
     ~intrusive_ref_counter() = default;
 
-    friend void intrusive_ptr_add_ref(const DerivedT *p) noexcept
+    friend void intrusive_ptr_add_ref(const DerivedT* p) noexcept
     {
         CounterPolicyT::increment(p->_refcount);
     }
-    
-    friend void intrusive_ptr_release(const DerivedT *p) noexcept
+
+    friend void intrusive_ptr_release(const DerivedT* p) noexcept
     {
         if (CounterPolicyT::decrement(p->_refcount) == 0)
             delete static_cast<const DerivedT*>(p);
     }
 };
 
-} // namespace gtl    
-
+} // namespace gtl
 
 #endif // gtl_intrusive_hpp_guard_
