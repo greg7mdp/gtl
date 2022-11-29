@@ -5719,7 +5719,7 @@ public:
 //   hashing function and equality operator.
 // * Contains a `capacity()` member function indicating the number of element
 //   slots (open, deleted, and empty) within the hash set.
-// * Returns `void` from the `erase(iterator)` overload.
+// * Returns `void` from the `_erase(iterator)` overload.
 // -----------------------------------------------------------------------------
 template<class T, class Hash, class Eq, class Alloc> // default values in phmap_fwd_decl.hpp
 class node_hash_set
@@ -5783,7 +5783,7 @@ public:
 //   hashing function and equality operator.
 // * Contains a `capacity()` member function indicating the number of element
 //   slots (open, deleted, and empty) within the hash map.
-// * Returns `void` from the `erase(iterator)` overload.
+// * Returns `void` from the `_erase(iterator)` overload.
 // -----------------------------------------------------------------------------
 template<class Key, class Value, class Hash, class Eq, class Alloc> // default values in
                                                                     // phmap_fwd_decl.hpp
