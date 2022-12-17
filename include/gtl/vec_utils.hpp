@@ -56,7 +56,7 @@ auto slice(V&& v, int first = 0, int last = -1, int stride = 1)
     auto last_iter  = (last >= 0 ? std::begin(std::forward<V>(v)) + last
                                  : std::end(std::forward<V>(v)) + (last + 1));
     if (last_iter > first_iter) {
-        size_t cnt = (last_iter - first_iter) / stride;
+        std::size_t cnt = (last_iter - first_iter) / stride;
         res.reserve(cnt);
         for (; cnt-- != 0; first_iter += stride)
             res.push_back(*first_iter);
