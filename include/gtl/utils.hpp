@@ -21,41 +21,42 @@ namespace gtl {
 // ---------------------------------------------------------------------------
 // ---------------------------------------------------------------------------
 template<class Unset>
-class scoped_set_unset
+class scoped_set_unset_if
 {
 public:
     template<class Set>
-    scoped_set_unset(Set&& set, Unset&& unset, bool do_it = true)
+    scoped_set_unset_if(Set&& set, Unset&& unset, bool do_it = true)
         : do_it_(do_it)
+        , unset_(std::move(unset))
     {
-        if (do_it_) {
-            unset = std::move(unset);
+        if (do_it_)
             std::forward<Set>(set)();
-        }
     }
 
-    ~scoped_set_unset()
+    ~scoped_set_unset_if()
     {
         if (do_it_)
             unset_();
     }
 
-    scoped_set_unset(const scoped_set_unset&)             = delete;
-    scoped_set_unset& operator=(const scoped_se1t_unset&) = delete;
+    scoped_set_unset_if(const scoped_set_unset_if&)            = delete;
+    scoped_set_unset_if& operator=(const scoped_set_unset_if&) = delete;
 
 private:
     Unset unset_;
     bool  do_it_;
 };
 
+using scoped_set_unset = scoped_set_unset_if;
+
 // ---------------------------------------------------------------------------
 // ---------------------------------------------------------------------------
 template<class T>
-class scoped_set_value
+class scoped_set_value_if
 {
 public:
     template<class V>
-    scoped_set_value(T& var, V&& val, bool do_it = true)
+    scoped_set_value_if(T& var, V&& val, bool do_it = true)
         : v_(var)
         , do_it_(do_it)
     {
@@ -65,19 +66,21 @@ public:
         }
     }
 
-    ~scoped_set_value()
+    ~scoped_set_value_if()
     {
         if (do_it_)
             v_ = std::move(old_value_);
     }
 
-    scoped_set_value(const scoped_set_value&)            = delete;
-    scoped_set_value& operator=(const scoped_set_value&) = delete;
+    scoped_set_value_if(const scoped_set_value_if&)            = delete;
+    scoped_set_value_if& operator=(const scoped_set_value_if&) = delete;
 
     T&   v_;
     T    old_value_;
     bool do_it_;
 };
+
+using scoped_set_value = scoped_set_value_if;
 
 // ---------------------------------------------------------------------------
 // assigns val to var, and return true if the value changed
@@ -104,11 +107,18 @@ T replace(T& var, V&& val) noexcept
 }
 
 // ---------------------------------------------------------------------------
-// assigns val to var, and return the previous value
+// A baseclass to keep track of modifications.
+// Change member `x_` using `set_with_ts`
 // ---------------------------------------------------------------------------
 class timestamp
 {
+public:
     timestamp() { stamp_ = ++clock_; }
+
+    timestamp(uint64_t stamp)
+        : stamp_(stamp)
+    {
+    }
 
     void touch() { stamp_ = ++clock_; }
     void touch(const timestamp& o) { stamp_ = o.stamp_; }
@@ -121,12 +131,60 @@ class timestamp
 
     bool operator==(const timestamp& o) const { return stamp_ == o.stamp_; }
     bool operator<(const timestamp& o) const { return stamp_ < o.stamp_; }
+    bool operator>(const timestamp& o) const { return stamp_ > o.stamp_; }
+
+    // returns most recent
+    timestamp  operator|(const timestamp& o) const { return stamp_ > o.stamp_ ? stamp_ : o.stamp_; }
+    timestamp& operator|=(const timestamp& o)
+    {
+        *this = *this | o;
+        return *this;
+    }
 
     uint64_t get() const { return stamp_; }
+
+    timestamp get_timestamp() const { return *this; }
+
+    template<class T, class V>
+    bool set_with_ts(T& var, V&& val)
+    {
+        if (gtl::change(var, std::forward<V>(val))) {
+            this->touch();
+            return true;
+        }
+        return false;
+    }
 
 private:
     uint64_t               stamp_;
     static inline uint64_t clock_ = 0;
+};
+
+// ---------------------------------------------------------------------------
+// A baseclass (using CRTP) for classes providing get_timestamp()
+// ---------------------------------------------------------------------------
+template<class T>
+class provides_timestamp
+{
+public:
+    template<class TS>
+    bool is_newer_than(const TS& o) const
+    {
+        return static_cast<const T*>(this)->get_timestamp() > o.get_timestamp();
+    }
+
+    template<class TS>
+    bool is_older_than(const TS& o) const
+    {
+        return static_cast<const T*>(this)->get_timestamp() < o.get_timestamp();
+    }
+
+    // returns most recent
+    template<class TS>
+    timestamp operator|(const TS& o) const
+    {
+        return static_cast<const T*>(this)->get_timestamp() | o.get_timestamp();
+    }
 };
 
 } // namespace gtl

@@ -63,7 +63,8 @@ set(GTL_HEADERS ${CMAKE_CURRENT_SOURCE_DIR}/include/${GTL_DIR}/phmap.hpp
                 ${CMAKE_CURRENT_SOURCE_DIR}/include/${GTL_DIR}/phmap_fwd_decl.hpp 
                 ${CMAKE_CURRENT_SOURCE_DIR}/include/${GTL_DIR}/phmap_utils.hpp 
                 ${CMAKE_CURRENT_SOURCE_DIR}/include/${GTL_DIR}/soa.hpp 
-                ${CMAKE_CURRENT_SOURCE_DIR}/include/${GTL_DIR}/stopwatch.hpp)
+                ${CMAKE_CURRENT_SOURCE_DIR}/include/${GTL_DIR}/stopwatch.hpp 
+                ${CMAKE_CURRENT_SOURCE_DIR}/include/${GTL_DIR}/utils.hpp)
 
 include(helpers)
 
@@ -175,6 +176,7 @@ endif()
     gtl_cc_app(ex_vec_utils SRCS examples/misc/vec_utils.cpp include/gtl/debug_vis/gtl.natvis)
     gtl_cc_app(ex_bit_vector SRCS examples/misc/bit_vector.cpp include/gtl/debug_vis/gtl.natvis)
     gtl_cc_app(ex_intrusive SRCS examples/misc/intrusive.cpp include/gtl/debug_vis/gtl.natvis)
+    gtl_cc_app(ex_utils SRCS "examples/misc/utils.cpp" include/gtl/debug_vis/gtl.natvis)
     
     ## cache/memoize
     gtl_cc_app(ex_memoize_fib SRCS examples/memoize/memoize_fib.cpp include/gtl/debug_vis/gtl.natvis)
