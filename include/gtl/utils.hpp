@@ -13,6 +13,7 @@
 
 #include <utility>
 
+// ---------------***     WARNING     ***-------------------------------------
 // ---------------*** U N T E S T E D ***-------------------------------------
 
 namespace gtl {
@@ -101,6 +102,32 @@ T replace(T& var, V&& val) noexcept
     var   = std::forward<V>(val);
     return old;
 }
+
+// ---------------------------------------------------------------------------
+// assigns val to var, and return the previous value
+// ---------------------------------------------------------------------------
+class timestamp
+{
+    timestamp() { stamp_ = ++clock_; }
+
+    void touch() { stamp_ = ++clock_; }
+    void touch(const timestamp& o) { stamp_ = o.stamp_; }
+
+    void reset() { stamp_ = 0; }
+    bool is_set() const { return !!stamp_; }
+
+    bool is_newer_than(const timestamp& o) const { return stamp_ > o.stamp_; }
+    bool is_older_than(const timestamp& o) const { return stamp_ < o.stamp_; }
+
+    bool operator==(const timestamp& o) const { return stamp_ == o.stamp_; }
+    bool operator<(const timestamp& o) const { return stamp_ < o.stamp_; }
+
+    uint64_t get() const { return stamp_; }
+
+private:
+    uint64_t               stamp_;
+    static inline uint64_t clock_ = 0;
+};
 
 } // namespace gtl
 
