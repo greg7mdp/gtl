@@ -20,6 +20,8 @@
 namespace gtl {
 
 // ---------------------------------------------------------------------------
+// An object which calls a lambda in its constructor, and another one in
+// its destructor
 // ---------------------------------------------------------------------------
 template<class Unset>
 class scoped_set_unset
@@ -49,6 +51,8 @@ private:
 };
 
 // ---------------------------------------------------------------------------
+// An object which assigns a value to a variable in its constructor, and resets
+// the previous its destructor
 // ---------------------------------------------------------------------------
 template<class T>
 class scoped_set_value
@@ -80,7 +84,7 @@ public:
 };
 
 // ---------------------------------------------------------------------------
-// assigns val to var, and return true if the value changed
+// assigns val to var, and returns true if the value changed
 // ---------------------------------------------------------------------------
 template<class T, class V>
 bool change(T& var, V&& val)
@@ -93,7 +97,7 @@ bool change(T& var, V&& val)
 }
 
 // ---------------------------------------------------------------------------
-// assigns val to var, and return the previous value
+// assigns val to var, and returns the previous value
 // ---------------------------------------------------------------------------
 template<class T, class V>
 T replace(T& var, V&& val) noexcept
