@@ -13,6 +13,7 @@
 
 #include <concepts>
 #include <cstdint>
+#include <numeric>
 #include <optional>
 #include <utility>
 
@@ -48,34 +49,36 @@ concept BooleanPredicate = requires(BoolPredFn fn, T val) {
 // returns a pair<T, T> such that pred(first) == false and pred(second) == true
 // in the interval [l, r], pred should switch from false to true exactly once.
 template<class T, class Pred, class Middle>
-std::pair<T, T> binary_search(const Middle& middle, const Pred& pred, T l, T r)
+std::pair<T, T> binary_search(Middle&& middle, Pred&& pred, T l, T r)
     requires MiddlePredicate<T, Middle> && BooleanPredicate<T, Pred>
 {
-    assert(pred(l) == false && pred(r) == true);
-    auto m = middle(l, r);
+    assert(std::forward<Pred>(pred)(l) == false && std::forward<Pred>(pred)(r) == true);
+    auto m = std::forward<Middle>(middle)(l, r);
     if (!m)
         return { l, r };
-    return pred(*m) ? binary_search<T, Pred, Middle>(middle, pred, l, *m)
-                    : binary_search<T, Pred, Middle>(middle, pred, *m, r);
+    return std::forward<Pred>(pred)(*m)
+               ? binary_search<T, Pred, Middle>(
+                     std::forward<Middle>(middle), std::forward<Pred>(pred), l, *m)
+               : binary_search<T, Pred, Middle>(
+                     std::forward<Middle>(middle), std::forward<Pred>(pred), *m, r);
 }
 
 // ---------------------------------------------------------------------------
 // Some middle functions
 // ---------------------------------------------------------------------------
 
-// We stop when l and r are exactly one apart; otherwise we return their midpoint (you should
-// convince yourself that (l+r) / 2 is always strictly in between l and r when r - l > 1).
-// ------------------------------------------------------------------------------------------
+// We stop when l and r are exactly one apart
+// ------------------------------------------
 template<std::integral T>
 std::optional<T> middle(T l, T r)
 {
     if (r - l > 1)
-        return std::optional<T>{ ((l ^ r) >> 1) + (l & r) }; // (l + r) / 2 but overflow safe
+        return std::optional<T>{ std::midpoint(l, r) };
     return std::optional<T>{};
 }
 
 // Compare doubles using the binary representation
-// ------------------------------------------------------------------------------------------
+// -----------------------------------------------
 template<class T>
 std::optional<double> middle_d(double l, double r)
 {
