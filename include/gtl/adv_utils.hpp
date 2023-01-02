@@ -69,7 +69,9 @@ std::pair<T, T> binary_search(const Middle& middle, const Pred& pred, T l, T r)
 template<std::integral T>
 std::optional<T> middle(T l, T r)
 {
-    return r - l > 1 ? std::optional<T>{ (l + r) / 2 } : std::optional<T>{};
+    if (r - l > 1)
+        return std::optional<T>{ ((l ^ r) >> 1) + (l & r) }; // (l + r) / 2 but overflow safe
+    return std::optional<T>{};
 }
 
 // Compare doubles using the binary representation
@@ -79,9 +81,10 @@ std::optional<double> middle_d(double l, double r)
 {
     uint64_t* il = (uint64_t*)&l;
     uint64_t* ir = (uint64_t*)&r;
-    if (*ir - *il > 1) {
-        uint64_t m = (*il + *ir) / 2;
-        return std::optional<double>{ *(double*)&m };
+    auto      m  = middle<uint64_t>(*il, *ir);
+    if (m) {
+        uint64_t med = *m;
+        return std::optional<double>{ *(double*)&med };
     }
     return std::optional<double>{};
 }
