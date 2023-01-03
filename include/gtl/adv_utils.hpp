@@ -16,6 +16,7 @@
 #include <numeric>
 #include <optional>
 #include <utility>
+#include <gtl/utils.hpp>
 
 namespace gtl {
 
@@ -66,31 +67,44 @@ std::pair<T, T> binary_search(Middle&& middle, Pred&& pred, T l, T r)
 // ---------------------------------------------------------------------------
 // Some middle functions
 // ---------------------------------------------------------------------------
+template<class T>
+concept is_double = std::same_as<T, double>;
 
 // We stop when l and r are exactly one apart
 // ------------------------------------------
+template<class T>
+    requires std::integral<T> || is_double<T>
+struct middle
+{};
+
 template<std::integral T>
-std::optional<T> middle(T l, T r)
+struct middle<T>
 {
-    if (r - l > 1)
-        return std::optional<T>{ std::midpoint(l, r) };
-    return std::optional<T>{};
-}
+    std::optional<T> operator()(T l, T r)
+    {
+        if (r - l > 1)
+            return std::optional<T>{ std::midpoint(l, r) };
+        return std::optional<T>{};
+    }
+};
 
 // Compare doubles using the binary representation
 // -----------------------------------------------
-template<class T>
-std::optional<double> middle_d(double l, double r)
+template<is_double T>
+struct middle<T>
 {
-    uint64_t* il = (uint64_t*)&l;
-    uint64_t* ir = (uint64_t*)&r;
-    auto      m  = middle<uint64_t>(*il, *ir);
-    if (m) {
-        uint64_t med = *m;
-        return std::optional<double>{ *(double*)&med };
+    std::optional<T> operator()(T l, T r)
+    {
+        uint64_t* il = (uint64_t*)&l;
+        uint64_t* ir = (uint64_t*)&r;
+        auto      m  = middle<uint64_t>()(*il, *ir);
+        if (m) {
+            uint64_t med = *m;
+            return std::optional<T>{ *(T*)&med };
+        }
+        return std::optional<T>{};
     }
-    return std::optional<double>{};
-}
+};
 
 } // namespace gtl
 
