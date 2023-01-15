@@ -38,7 +38,7 @@ public:
             std::forward<Set>(set)();
     }
 
-    ~scoped_set_unset()
+    ~scoped_set_unset() noexcept(noexcept(this->unset_()))
     {
         if (do_it_)
             unset_();
@@ -74,7 +74,7 @@ public:
     {
     }
 
-    ~scoped_guard()
+    ~scoped_guard() noexcept(noexcept(this->unset_()))
     {
         if (do_it_)
             unset_();
@@ -139,7 +139,8 @@ public:
 // assigns val to var, and returns true if the value changed
 // ---------------------------------------------------------------------------
 template<class T, class V>
-bool change(T& var, V&& val)
+bool change(T& var, V&& val) noexcept(
+    std::is_nothrow_move_assignable_v<T>&& std::is_nothrow_copy_assignable_v<T>)
 {
     if (var != val) {
         var = std::forward<V>(val);
@@ -152,7 +153,8 @@ bool change(T& var, V&& val)
 // assigns val to var, and returns the previous value
 // ---------------------------------------------------------------------------
 template<class T, class V>
-T replace(T& var, V&& val) noexcept
+T replace(T& var, V&& val) noexcept(
+    std::is_nothrow_move_assignable_v<T>&& std::is_nothrow_copy_assignable_v<T>)
 {
     T old = std::move(var);
     var   = std::forward<V>(val);
@@ -173,37 +175,40 @@ struct always_false : std::false_type
 class timestamp
 {
 public:
-    timestamp() { stamp_ = ++clock_; }
+    timestamp() noexcept { stamp_ = ++clock_; }
 
-    timestamp(uint64_t stamp)
+    timestamp(uint64_t stamp) noexcept
         : stamp_(stamp)
     {
     }
 
-    void touch() { stamp_ = ++clock_; }
-    void touch(const timestamp& o) { stamp_ = o.stamp_; }
+    void touch() noexcept { stamp_ = ++clock_; }
+    void touch(const timestamp& o) noexcept { stamp_ = o.stamp_; }
 
-    void reset() { stamp_ = 0; }
-    bool is_set() const { return !!stamp_; }
+    void reset() noexcept { stamp_ = 0; }
+    bool is_set() const noexcept { return !!stamp_; }
 
-    bool is_newer_than(const timestamp& o) const { return stamp_ > o.stamp_; }
-    bool is_older_than(const timestamp& o) const { return stamp_ < o.stamp_; }
+    bool is_newer_than(const timestamp& o) const noexcept { return stamp_ > o.stamp_; }
+    bool is_older_than(const timestamp& o) const noexcept { return stamp_ < o.stamp_; }
 
-    bool operator==(const timestamp& o) const { return stamp_ == o.stamp_; }
-    bool operator<(const timestamp& o) const { return stamp_ < o.stamp_; }
-    bool operator>(const timestamp& o) const { return stamp_ > o.stamp_; }
+    bool operator==(const timestamp& o) const noexcept { return stamp_ == o.stamp_; }
+    bool operator<(const timestamp& o) const noexcept { return stamp_ < o.stamp_; }
+    bool operator>(const timestamp& o) const noexcept { return stamp_ > o.stamp_; }
 
     // returns most recent
-    timestamp  operator|(const timestamp& o) const { return stamp_ > o.stamp_ ? stamp_ : o.stamp_; }
-    timestamp& operator|=(const timestamp& o)
+    timestamp operator|(const timestamp& o) const noexcept
+    {
+        return stamp_ > o.stamp_ ? stamp_ : o.stamp_;
+    }
+    timestamp& operator|=(const timestamp& o) noexcept
     {
         *this = *this | o;
         return *this;
     }
 
-    uint64_t get() const { return stamp_; }
+    uint64_t get() const noexcept { return stamp_; }
 
-    timestamp get_timestamp() const { return *this; }
+    timestamp get_timestamp() const noexcept { return *this; }
 
     template<class T, class V>
     bool set_with_ts(T& var, V&& val)
