@@ -74,6 +74,7 @@
 namespace gtl {
 #if !defined(USE_JEMALLOC)
 inline constexpr bool usingJEMalloc() noexcept { return false; }
+extern size_t (*xallocx)(void*, size_t, size_t, int);
 #else
 inline constexpr bool usingJEMalloc() noexcept { return true; }
 #endif
@@ -498,7 +499,7 @@ private:
     // optimized
     static void S_uninitialized_fill_n(T* dest, size_type n)
     {
-        if constexpr (std::bool_constant < !std::is_class<T>::value >> ::type) {
+        if constexpr (!std::is_class_v<T>) {
             if (LIKELY(n != 0)) {
                 std::memset((void*)dest, 0, sizeof(T) * n);
             }
@@ -1136,7 +1137,7 @@ public:
     const_reference at(size_type n) const
     {
         if (UNLIKELY(n >= size())) {
-            throw_exception<std::out_of_range>("vector: index is greater than size.");
+            throw std::out_of_range("vector: index is greater than size.");
         }
         return (*this)[n];
     }
