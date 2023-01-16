@@ -372,3 +372,18 @@ TEST(vector, erase_if)
     EXPECT_EQ(3u, v[1]);
     EXPECT_EQ(5u, v[2]);
 }
+
+// gtl extension
+TEST(vector, stealing_constructor)
+{
+    using Alloc = std::allocator<int>;
+    Alloc alloc;
+    int*  x = std::allocator_traits<Alloc>::allocate(alloc, 4);
+    for (int i = 0; i < 3; ++i)
+        *(x + i) = i;
+    gtl::vector<int, Alloc> v(std::unique_ptr<int>(x), 3, 4);
+    ASSERT_EQ(3u, v.size());
+    EXPECT_EQ(0u, v[0]);
+    EXPECT_EQ(1u, v[1]);
+    EXPECT_EQ(2u, v[2]);
+}

@@ -111,7 +111,7 @@ private:
         typedef typename A::size_type size_type;
 
         // data
-        pointer b_, e_, z_;
+        pointer b_, e_, z_; // base, end, buffer_end
 
         // constructors
         Impl()
@@ -794,6 +794,13 @@ public:
     vector(std::initializer_list<T> il, const Allocator& a = Allocator())
         : vector(il.begin(), il.end(), a)
     {
+    }
+
+    // gtl extension
+    vector(std::unique_ptr<T> data, size_type sz, size_type cap, const Allocator& a = Allocator())
+        : impl_(a)
+    {
+        impl_.set(data.release(), sz, cap);
     }
 
     ~vector() = default; // the cleanup occurs in impl_
