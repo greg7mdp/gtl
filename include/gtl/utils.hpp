@@ -51,8 +51,8 @@ public:
     void*             operator new(std::size_t)          = delete;
 
 private:
-    Unset unset_;
     bool  do_it_;
+    Unset unset_;
 };
 
 // ---------------------------------------------------------------------------
@@ -87,8 +87,8 @@ public:
     void*         operator new(std::size_t)      = delete;
 
 private:
-    F    unset_;
     bool do_it_;
+    F    unset_;
 };
 
 // ---------------------------------------------------------------------------

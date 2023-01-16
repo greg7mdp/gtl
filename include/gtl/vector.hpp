@@ -1,5 +1,5 @@
 // ---------------------------------------------------------------------------
-// Copyright (c) 2019-2022, Gregory Popovitch - greg7mdp@gmail.com
+// Copyright (c) 2023, Gregory Popovitch - greg7mdp@gmail.com
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -13,42 +13,25 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 //
-// Derived from work by Meta Platforms, Inc. and affiliates in
-// https://github.com/facebook/folly, with modifications by above author.
+// --------------------------------------------------------------------------
+// Derived from Folly open source library (https://github.com/facebook/folly)
+// by Meta Platforms, Inc. and affiliates, with modifications by Gregory Popovitch.
+//
+// Folly license redistributed in the "licenses" directory of this repository
+//
+// original authors:
+//    Nicholas Ormrod      (njormrod)
+//    Andrei Alexandrescu  (aalexandre)
 //
 // ---------------------------------------------------------------------------
 
-/*
- * Copyright (c) Meta Platforms, Inc. and affiliates.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- *
- * Nicholas Ormrod      (njormrod)
- * Andrei Alexandrescu  (aalexandre)
- */
-
-/*
- * drop-in implementation of std::vector. It has special
- * optimizations for use with relocatable types and jemalloc.
- */
-
 #pragma once
 
-//=============================================================================
-// headers
+//========================= headers ========================================
 
 #include <algorithm>
 #include <cassert>
+#include <cstring>
 #include <cstddef>
 #include <iterator>
 #include <memory>
@@ -58,6 +41,7 @@
 
 #include <gtl/utils.hpp>
 
+//=========================== likely ========================================
 #undef LIKELY
 #undef UNLIKELY
 
@@ -69,8 +53,7 @@
     #define UNLIKELY(x) (x)
 #endif
 
-//============================================================================
-// malloc stuff
+//========================= malloc stuff =====================================
 namespace gtl {
 #if !defined(USE_JEMALLOC)
 inline constexpr bool usingJEMalloc() noexcept { return false; }
@@ -92,28 +75,12 @@ inline void* checkedMalloc(size_t size)
 }
 } // namespace gtl
 
-//=============================================================================
-// forward declaration
+//========================= forward declaration ===============================
 
 namespace gtl {
 template<class T, class Allocator = std::allocator<T>>
 class vector;
 } // namespace gtl
-
-//=============================================================================
-// unrolling
-
-#define GTL_FBV_UNROLL_PTR(first, last, OP)                                                        \
-    do {                                                                                           \
-        for (; (last) - (first) >= 4; (first) += 4) {                                              \
-            OP(((first) + 0));                                                                     \
-            OP(((first) + 1));                                                                     \
-            OP(((first) + 2));                                                                     \
-            OP(((first) + 3));                                                                     \
-        }                                                                                          \
-        for (; (first) != (last); ++(first))                                                       \
-            OP((first));                                                                           \
-    } while (0)
 
 //=============================================================================
 ///////////////////////////////////////////////////////////////////////////////
@@ -408,7 +375,7 @@ private:
 
     //===========================================================================
     //---------------------------------------------------------------------------
-    // algorithmic helpers
+    // Algorithmic helpers
 private:
     //---------------------------------------------------------------------------
     // destroy_range
@@ -599,7 +566,7 @@ private:
     static void S_uninitialized_copy_bits(T* dest, const T* first, const T* last)
     {
         if (last != first) {
-            std::memcpy((void*)dest, (void*)first, (last - first) * sizeof(T));
+            std::memcpy((void*)dest, (const void*)first, (last - first) * sizeof(T));
         }
     }
 
@@ -640,7 +607,7 @@ private:
     static const T* S_copy_n(T* dest, const T* first, size_type n)
     {
         if constexpr (std::is_trivially_copyable_v<T>) {
-            std::memcpy((void*)dest, (void*)first, n * sizeof(T));
+            std::memcpy((void*)dest, (const void*)first, n * sizeof(T));
             return first + n;
         } else {
             return S_copy_n<const T*>(dest, first, n);
@@ -837,7 +804,7 @@ public:
             return *this;
         }
 
-        if (!usingStdAllocator && A::propagate_on_container_copy_assignment::value) {
+        if constexpr (!usingStdAllocator && A::propagate_on_container_copy_assignment::value) {
             if (impl_ != other.impl_) {
                 // can't use other's different allocator to clean up self
                 impl_.reset();
@@ -1081,15 +1048,24 @@ public:
                       xallocx(p, newCapacityBytes, 0, 0) == newCapacityBytes) {
             impl_.z_ += newCap - oldCap;
         } else {
-            T* newB = static_cast<T*>(
-                catch_exception([&] { return M_allocate(newCap); }, &detail::thunk_return_nullptr));
-            if (!newB) {
+            T* newB = nullptr;
+
+            try {
+                newB = M_allocate(newCap);
+            } catch (...) {
+            };
+            if (!newB)
                 return;
+
+            try {
+                M_relocate(newB);
+            } catch (...) {
+                M_deallocate(newB, newCap);
+                newB = nullptr;
             }
-            if (!catch_exception([&] { return M_relocate(newB), true; },
-                                 [&] { return M_deallocate(newB, newCap), false; })) {
+            if (!newB)
                 return;
-            }
+
             if (impl_.b_) {
                 M_deallocate(impl_.b_, size_type(impl_.z_ - impl_.b_));
             }
@@ -1102,20 +1078,19 @@ public:
 private:
     bool reserve_in_place(size_type n)
     {
-        if constexpr (!usingStdAllocator || !usingJEMalloc()) {
-            return false;
-        }
+        if constexpr (usingStdAllocator && usingJEMalloc()) {
 
-        // jemalloc can never grow in place blocks smaller than 4096 bytes.
-        if ((impl_.z_ - impl_.b_) * sizeof(T) < gtl::jemallocMinInPlaceExpandable) {
-            return false;
-        }
+            // jemalloc can never grow in place blocks smaller than 4096 bytes.
+            if ((impl_.z_ - impl_.b_) * sizeof(T) < gtl::jemallocMinInPlaceExpandable) {
+                return false;
+            }
 
-        auto const newCapacityBytes = gtl::goodMallocSize(n * sizeof(T));
-        void*      p                = impl_.b_;
-        if (xallocx(p, newCapacityBytes, 0, 0) == newCapacityBytes) {
-            impl_.z_ = impl_.b_ + newCapacityBytes / sizeof(T);
-            return true;
+            auto const newCapacityBytes = gtl::goodMallocSize(n * sizeof(T));
+            void*      p                = impl_.b_;
+            if (xallocx(p, newCapacityBytes, 0, 0) == newCapacityBytes) {
+                impl_.z_ = impl_.b_ + newCapacityBytes / sizeof(T);
+                return true;
+            }
         }
         return false;
     }
@@ -1337,26 +1312,30 @@ public:
         assert(first <= last);
         if (first != last) {
             if (last == end()) {
-                M_destroy_range_e((iterator)first);
+                M_destroy_range_e(const_cast<iterator>(first));
             } else {
                 if constexpr (std::is_trivially_copyable_v<T> && usingStdAllocator) {
-                    D_destroy_range_a((iterator)first, (iterator)last);
+                    D_destroy_range_a(const_cast<iterator>(first), const_cast<iterator>(last));
                     if (last - first >= cend() - last) {
-                        std::memcpy((void*)first, (void*)last, (cend() - last) * sizeof(T));
+                        std::memcpy(static_cast<void*>(const_cast<iterator>(first)),
+                                    (const void*)last,
+                                    (cend() - last) * sizeof(T));
                     } else {
-                        std::memmove((void*)first, (void*)last, (cend() - last) * sizeof(T));
+                        std::memmove(static_cast<void*>(const_cast<iterator>(first)),
+                                     (const void*)last,
+                                     (cend() - last) * sizeof(T));
                     }
                     impl_.e_ -= (last - first);
                 } else {
-                    std::copy(std::make_move_iterator((iterator)last),
+                    std::copy(std::make_move_iterator(const_cast<iterator>(last)),
                               std::make_move_iterator(end()),
-                              (iterator)first);
+                              const_cast<iterator>(first));
                     auto newEnd = impl_.e_ - std::distance(first, last);
                     M_destroy_range_e(newEnd);
                 }
             }
         }
-        return (iterator)first;
+        return const_cast<iterator>(first);
     }
 
     //===========================================================================

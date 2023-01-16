@@ -142,6 +142,7 @@ if (GTL_BUILD_TESTS)
     ## --------------- misc -----------------------------------------------
     gtl_cc_test(NAME lru_cache SRCS "tests/misc/lru_cache_test.cpp" DEPS ${GTL_GTEST_LIBS})
     gtl_cc_test(NAME bit_vector SRCS "tests/misc/bitvector_test.cpp" DEPS ${GTL_GTEST_LIBS})
+    gtl_cc_test(NAME vector SRCS "tests/misc/vector_test.cpp" DEPS ${GTL_GTEST_LIBS})
 endif()
 
 if (GTL_BUILD_EXAMPLES)
