@@ -148,7 +148,6 @@ For more information on the implementation, usage and characteristics of the par
 
 ## Btree containers
 
-
 The four provided btree containers (in `gtl/btree.hpp`)are:
     - `gtl::btree_map`
     - `gtl::btree_set`
@@ -167,10 +166,13 @@ Btree containers will usually be preferable to the default red-black trees of th
 
 When an ordering is not needed, a hash container is typically a better choice than a btree one.
 
+## vector container
+
+[Gtl](https://github.com/greg7mdp/gtl) provides a `gtl::vector` class, which is an alternative to `std::vector`. This class is closely derived from [Folly's](https://github.com/facebook/folly) `fbvector`. 
 
 ## bit_vector (or dynamic bitset)
 
-[Gtl](https://github.com/greg7mdp/gtl) provides `bit_vector`, which is an alternative to `std::vector<bool>` or `std::bitset`, as it provides both dynamic resizing, and a good assortment of bit manipulation primitives.
+[Gtl](https://github.com/greg7mdp/gtl) provides a `gtl::bit_vector` class, which is an alternative to `std::vector<bool>` or `std::bitset`, as it provides both dynamic resizing, and a good assortment of bit manipulation primitives.
 
 I implemented this container because I often needed the functionality it provides, and didn't find an open-source implementation I liked which didn't require pulling in a big library. The `gtl::bit_vector` implementation is self-contained in a single header [file](https://github.com/greg7mdp/gtl/blob/main/gtl/bit_vector.hpp) which can trivially  be added to any project (it currently requires a C++17 compiler). 
 
