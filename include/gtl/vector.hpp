@@ -218,6 +218,8 @@ private:
             b_ = newB;
         }
 
+        pointer data() const { return z_; }
+
         void reset(size_type newCap)
         {
             destroy();
@@ -796,12 +798,22 @@ public:
     {
     }
 
-    // gtl extension
+    // ------------------- gtl extensions -------------------------------------------------------
     vector(std::unique_ptr<T> data, size_type sz, size_type cap, const Allocator& a = Allocator())
         : impl_(a)
     {
         impl_.set(data.release(), sz, cap);
     }
+
+    // return value to be used in accordance with vector's allocator
+    std::unique_ptr<T> steal_data()
+    {
+        std::unique_ptr<T> res(impl_.data());
+        impl_.set(nullptr, nullptr, nullptr); // don't deallocate the buffer!!
+        return res;
+    }
+
+    // ------------------- end of gtl extensions ------------------------------------------------
 
     ~vector() = default; // the cleanup occurs in impl_
 
