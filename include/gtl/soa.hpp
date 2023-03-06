@@ -75,9 +75,9 @@ public:
         insert_impl(std::index_sequence_for<Ts...>{}, std::forward_as_tuple(xs...));
     }
 
-    auto get_row(size_t row) const { return get_row_impl(std::index_sequence_for<Ts...>{}, row); }
+    auto get_row(size_t row) const { return std::apply([=](auto& ...x) { return std::tie(x[row]...); }, data_); }
 
-    auto get_row(size_t row) { return get_row_impl(std::index_sequence_for<Ts...>{}, row); }
+    auto get_row(size_t row) { return std::apply([=](auto& ...x) { return std::tie(x[row]...); }, data_); }
 
     auto operator[](size_t idx) const { return get_row(idx); }
 
@@ -95,11 +95,11 @@ public:
         return get_row_impl(std::integer_sequence<size_t, I...>{}, row);
     }
 
-    void clear() { return clear_impl(std::index_sequence_for<Ts...>{}); }
+    void clear() { std::apply([](auto& ...x) { (x.clear(), ...); }, data_); }
 
-    void resize(size_t size) { return resize_impl(std::index_sequence_for<Ts...>{}, size); }
+    void resize(size_t sz) { std::apply([=](auto& ...x) { (x.resize(sz), ...); }, data_); }
 
-    void reserve(size_t size) { return reserve_impl(std::index_sequence_for<Ts...>{}, size); }
+    void reserve(size_t sz) { std::apply([=](auto& ...x) { (x.reserve(sz), ...); }, data_); }
 
     template<size_t col_idx, typename C>
     void sort_by_field(C&& comp)
