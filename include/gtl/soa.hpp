@@ -183,9 +183,9 @@ private:
     }
 
     template<size_t... I, typename T>
-    void resize_impl(std::integer_sequence<size_t, I...>, T&& data, size_t new_size)
+    void resize_impl(std::integer_sequence<size_t, I...>, size_t new_size)
     {
-        ((std::get<I>(data).resize(new_size)), ...);
+        ((get_column<I>().resize(new_size)), ...);
     }
 
     template<size_t... I>
