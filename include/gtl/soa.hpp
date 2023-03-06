@@ -54,7 +54,7 @@ public:
     using col_type = typename nth_col_type<col_idx>::value_type;
 
     template<size_t col_idx>
-    const nth_col_type<col_idx>& get_column() const
+    const auto& get_column() const
     {
         return std::get<col_idx>(data_);
     }
@@ -75,13 +75,9 @@ public:
         insert_impl(std::index_sequence_for<Ts...>{}, std::forward_as_tuple(xs...));
     }
 
-    auto get_row(size_t row) const { return std::apply([=](auto& ...x) { return std::tie(x[row]...); }, data_); }
+    auto operator[](size_t idx) const { return std::apply([=](auto& ...x) { return std::tie(x[idx]...); }, data_); }
 
-    auto get_row(size_t row) { return std::apply([=](auto& ...x) { return std::tie(x[row]...); }, data_); }
-
-    auto operator[](size_t idx) const { return get_row(idx); }
-
-    auto operator[](size_t idx) { return get_row(idx); }
+    auto operator[](size_t idx) { return std::apply([=](auto& ...x) { return std::tie(x[idx]...); }, data_); }
 
     template<size_t... I>
     auto view(size_t row) const
@@ -131,7 +127,7 @@ public:
         size_t num_elems = size();
         ss << "soa {\n";
         for (size_t i = 0; i < num_elems; ++i) {
-            const auto t = get_row(i);
+           const auto t = (*this)[i];
             ss << "\t";
             print(ss, t, std::make_index_sequence<sizeof...(Ts)>());
             ss << std::endl;
@@ -174,24 +170,6 @@ private:
     auto get_row_impl(std::integer_sequence<size_t, I...>, size_t row)
     {
         return std::tie(get_column<I>()[row]...);
-    }
-
-    template<size_t... I>
-    void clear_impl(std::integer_sequence<size_t, I...>)
-    {
-        ((get_column<I>().clear()), ...);
-    }
-
-    template<size_t... I, typename T>
-    void resize_impl(std::integer_sequence<size_t, I...>, size_t new_size)
-    {
-        ((get_column<I>().resize(new_size)), ...);
-    }
-
-    template<size_t... I>
-    void reserve_impl(std::integer_sequence<size_t, I...>, size_t res_size)
-    {
-        ((get_column<I>().reserve(res_size)), ...);
     }
 
     template<size_t... I>
