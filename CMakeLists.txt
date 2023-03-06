@@ -13,6 +13,7 @@
     FetchContent_MakeAvailable(gtl)
 
     ...
+    set(CMAKE_CXX_STANDARD 20)
     target_link_libraries (my_target PRIVATE gtl)
 
 #]===================================================================]
