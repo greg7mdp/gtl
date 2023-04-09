@@ -100,11 +100,10 @@ struct OnlyLiteralZero
 {
     constexpr OnlyLiteralZero(NullPtrT) noexcept {} // NOLINT
 
-    template<
-        typename T,
-        typename = typename std::enable_if_t<std::is_same_v<T, std::nullptr_t> ||
-                                             (std::is_integral_v<T> && !std::is_same_v<T, int>)>,
-        typename = typename Fail<T>::type>
+    template<typename T,
+             typename = typename std::enable_if_t<std::is_same_v<T, std::nullptr_t> ||
+                                                  (std::is_integral_v<T> && !std::is_same_v<T, int>)>,
+             typename = typename Fail<T>::type>
     OnlyLiteralZero(T); // NOLINT
 };
 
@@ -141,8 +140,8 @@ enum class ncmp : value_type
 
     #define GTL_COMPARE_INLINE_SUBCLASS_DECL(type, name)
 
-    #define GTL_COMPARE_INLINE_INIT(type, name, init)                                              \
-        template<typename T>                                                                       \
+    #define GTL_COMPARE_INLINE_INIT(type, name, init)                                                                  \
+        template<typename T>                                                                                           \
         const T compare_internal::type##_base<T>::name(init)
 
 #endif // __cpp_inline_variables
@@ -251,23 +250,19 @@ public:
         return value_ == 0 ? weak_equality::equivalent : weak_equality::nonequivalent;
     }
     // Comparisons
-    friend constexpr bool operator==(strong_equality v,
-                                     compare_internal::OnlyLiteralZero<>) noexcept
+    friend constexpr bool operator==(strong_equality v, compare_internal::OnlyLiteralZero<>) noexcept
     {
         return v.value_ == 0;
     }
-    friend constexpr bool operator!=(strong_equality v,
-                                     compare_internal::OnlyLiteralZero<>) noexcept
+    friend constexpr bool operator!=(strong_equality v, compare_internal::OnlyLiteralZero<>) noexcept
     {
         return v.value_ != 0;
     }
-    friend constexpr bool operator==(compare_internal::OnlyLiteralZero<>,
-                                     strong_equality v) noexcept
+    friend constexpr bool operator==(compare_internal::OnlyLiteralZero<>, strong_equality v) noexcept
     {
         return 0 == v.value_;
     }
-    friend constexpr bool operator!=(compare_internal::OnlyLiteralZero<>,
-                                     strong_equality v) noexcept
+    friend constexpr bool operator!=(compare_internal::OnlyLiteralZero<>, strong_equality v) noexcept
     {
         return 0 != v.value_;
     }
@@ -314,63 +309,51 @@ public:
         return value_ == 0 ? weak_equality::equivalent : weak_equality::nonequivalent;
     }
     // Comparisons
-    friend constexpr bool operator==(partial_ordering v,
-                                     compare_internal::OnlyLiteralZero<>) noexcept
+    friend constexpr bool operator==(partial_ordering v, compare_internal::OnlyLiteralZero<>) noexcept
     {
         return v.is_ordered() && v.value_ == 0;
     }
-    friend constexpr bool operator!=(partial_ordering v,
-                                     compare_internal::OnlyLiteralZero<>) noexcept
+    friend constexpr bool operator!=(partial_ordering v, compare_internal::OnlyLiteralZero<>) noexcept
     {
         return !v.is_ordered() || v.value_ != 0;
     }
-    friend constexpr bool operator<(partial_ordering v,
-                                    compare_internal::OnlyLiteralZero<>) noexcept
+    friend constexpr bool operator<(partial_ordering v, compare_internal::OnlyLiteralZero<>) noexcept
     {
         return v.is_ordered() && v.value_ < 0;
     }
-    friend constexpr bool operator<=(partial_ordering v,
-                                     compare_internal::OnlyLiteralZero<>) noexcept
+    friend constexpr bool operator<=(partial_ordering v, compare_internal::OnlyLiteralZero<>) noexcept
     {
         return v.is_ordered() && v.value_ <= 0;
     }
-    friend constexpr bool operator>(partial_ordering v,
-                                    compare_internal::OnlyLiteralZero<>) noexcept
+    friend constexpr bool operator>(partial_ordering v, compare_internal::OnlyLiteralZero<>) noexcept
     {
         return v.is_ordered() && v.value_ > 0;
     }
-    friend constexpr bool operator>=(partial_ordering v,
-                                     compare_internal::OnlyLiteralZero<>) noexcept
+    friend constexpr bool operator>=(partial_ordering v, compare_internal::OnlyLiteralZero<>) noexcept
     {
         return v.is_ordered() && v.value_ >= 0;
     }
-    friend constexpr bool operator==(compare_internal::OnlyLiteralZero<>,
-                                     partial_ordering v) noexcept
+    friend constexpr bool operator==(compare_internal::OnlyLiteralZero<>, partial_ordering v) noexcept
     {
         return v.is_ordered() && 0 == v.value_;
     }
-    friend constexpr bool operator!=(compare_internal::OnlyLiteralZero<>,
-                                     partial_ordering v) noexcept
+    friend constexpr bool operator!=(compare_internal::OnlyLiteralZero<>, partial_ordering v) noexcept
     {
         return !v.is_ordered() || 0 != v.value_;
     }
-    friend constexpr bool operator<(compare_internal::OnlyLiteralZero<>,
-                                    partial_ordering v) noexcept
+    friend constexpr bool operator<(compare_internal::OnlyLiteralZero<>, partial_ordering v) noexcept
     {
         return v.is_ordered() && 0 < v.value_;
     }
-    friend constexpr bool operator<=(compare_internal::OnlyLiteralZero<>,
-                                     partial_ordering v) noexcept
+    friend constexpr bool operator<=(compare_internal::OnlyLiteralZero<>, partial_ordering v) noexcept
     {
         return v.is_ordered() && 0 <= v.value_;
     }
-    friend constexpr bool operator>(compare_internal::OnlyLiteralZero<>,
-                                    partial_ordering v) noexcept
+    friend constexpr bool operator>(compare_internal::OnlyLiteralZero<>, partial_ordering v) noexcept
     {
         return v.is_ordered() && 0 > v.value_;
     }
-    friend constexpr bool operator>=(compare_internal::OnlyLiteralZero<>,
-                                     partial_ordering v) noexcept
+    friend constexpr bool operator>=(compare_internal::OnlyLiteralZero<>, partial_ordering v) noexcept
     {
         return v.is_ordered() && 0 >= v.value_;
     }
@@ -503,17 +486,14 @@ public:
     }
     constexpr operator weak_ordering() const noexcept
     { // NOLINT
-        return value_ == 0 ? weak_ordering::equivalent
-                           : (value_ < 0 ? weak_ordering::less : weak_ordering::greater);
+        return value_ == 0 ? weak_ordering::equivalent : (value_ < 0 ? weak_ordering::less : weak_ordering::greater);
     }
     // Comparisons
-    friend constexpr bool operator==(strong_ordering v,
-                                     compare_internal::OnlyLiteralZero<>) noexcept
+    friend constexpr bool operator==(strong_ordering v, compare_internal::OnlyLiteralZero<>) noexcept
     {
         return v.value_ == 0;
     }
-    friend constexpr bool operator!=(strong_ordering v,
-                                     compare_internal::OnlyLiteralZero<>) noexcept
+    friend constexpr bool operator!=(strong_ordering v, compare_internal::OnlyLiteralZero<>) noexcept
     {
         return v.value_ != 0;
     }
@@ -521,8 +501,7 @@ public:
     {
         return v.value_ < 0;
     }
-    friend constexpr bool operator<=(strong_ordering v,
-                                     compare_internal::OnlyLiteralZero<>) noexcept
+    friend constexpr bool operator<=(strong_ordering v, compare_internal::OnlyLiteralZero<>) noexcept
     {
         return v.value_ <= 0;
     }
@@ -530,18 +509,15 @@ public:
     {
         return v.value_ > 0;
     }
-    friend constexpr bool operator>=(strong_ordering v,
-                                     compare_internal::OnlyLiteralZero<>) noexcept
+    friend constexpr bool operator>=(strong_ordering v, compare_internal::OnlyLiteralZero<>) noexcept
     {
         return v.value_ >= 0;
     }
-    friend constexpr bool operator==(compare_internal::OnlyLiteralZero<>,
-                                     strong_ordering v) noexcept
+    friend constexpr bool operator==(compare_internal::OnlyLiteralZero<>, strong_ordering v) noexcept
     {
         return 0 == v.value_;
     }
-    friend constexpr bool operator!=(compare_internal::OnlyLiteralZero<>,
-                                     strong_ordering v) noexcept
+    friend constexpr bool operator!=(compare_internal::OnlyLiteralZero<>, strong_ordering v) noexcept
     {
         return 0 != v.value_;
     }
@@ -549,8 +525,7 @@ public:
     {
         return 0 < v.value_;
     }
-    friend constexpr bool operator<=(compare_internal::OnlyLiteralZero<>,
-                                     strong_ordering v) noexcept
+    friend constexpr bool operator<=(compare_internal::OnlyLiteralZero<>, strong_ordering v) noexcept
     {
         return 0 <= v.value_;
     }
@@ -558,8 +533,7 @@ public:
     {
         return 0 > v.value_;
     }
-    friend constexpr bool operator>=(compare_internal::OnlyLiteralZero<>,
-                                     strong_ordering v) noexcept
+    friend constexpr bool operator>=(compare_internal::OnlyLiteralZero<>, strong_ordering v) noexcept
     {
         return 0 >= v.value_;
     }
@@ -606,9 +580,7 @@ constexpr bool do_less_than_comparison(const Compare& compare, const K& x, const
 template<typename Int, std::enable_if_t<std::is_same_v<int, Int>, int> = 0>
 constexpr gtl::weak_ordering compare_result_as_ordering(const Int c)
 {
-    return c < 0    ? gtl::weak_ordering::less
-           : c == 0 ? gtl::weak_ordering::equivalent
-                    : gtl::weak_ordering::greater;
+    return c < 0 ? gtl::weak_ordering::less : c == 0 ? gtl::weak_ordering::equivalent : gtl::weak_ordering::greater;
 }
 
 constexpr gtl::weak_ordering compare_result_as_ordering(const gtl::weak_ordering c) { return c; }
@@ -616,11 +588,8 @@ constexpr gtl::weak_ordering compare_result_as_ordering(const gtl::weak_ordering
 template<typename Compare,
          typename K,
          typename LK,
-         std::enable_if_t<!std::is_same_v<bool, std::invoke_result_t<Compare, const K&, const LK&>>,
-                          int> = 0>
-constexpr gtl::weak_ordering do_three_way_comparison(const Compare& compare,
-                                                     const K&       x,
-                                                     const LK&      y)
+         std::enable_if_t<!std::is_same_v<bool, std::invoke_result_t<Compare, const K&, const LK&>>, int> = 0>
+constexpr gtl::weak_ordering do_three_way_comparison(const Compare& compare, const K& x, const LK& y)
 {
     return compare_result_as_ordering(compare(x, y));
 }
@@ -628,8 +597,7 @@ constexpr gtl::weak_ordering do_three_way_comparison(const Compare& compare,
 template<typename Compare,
          typename K,
          typename LK,
-         std::enable_if_t<std::is_same_v<bool, std::invoke_result_t<Compare, const K&, const LK&>>,
-                          int> = 0>
+         std::enable_if_t<std::is_same_v<bool, std::invoke_result_t<Compare, const K&, const LK&>>, int> = 0>
 constexpr gtl::weak_ordering do_three_way_comparison(const Compare& cmp, const K& x, const LK& y)
 {
     return cmp(x, y)   ? gtl::weak_ordering::less
@@ -734,12 +702,7 @@ struct key_compare_to_adapter<std::greater<std::string_view>>
     using type = StringBtreeDefaultGreater;
 };
 
-template<typename Key,
-         typename Compare,
-         typename Alloc,
-         int  TargetNodeSize,
-         bool Multi,
-         typename SlotPolicy>
+template<typename Key, typename Compare, typename Alloc, int TargetNodeSize, bool Multi, typename SlotPolicy>
 struct common_params
 {
     // If Compare is a common comparator for a std::string-like type, then we adapt it
@@ -782,10 +745,10 @@ struct common_params
     // This is an integral type large enough to hold as many
     // ValueSize-values as will fit a node of TargetNodeSize bytes.
     // ------------------------------------------------------------
-    using node_count_type = std::conditional_t<(kNodeSlotSpace / sizeof(slot_type) >
-                                                (std::numeric_limits<uint8_t>::max)()),
-                                               uint16_t,
-                                               uint8_t>; // NOLINT
+    using node_count_type =
+        std::conditional_t<(kNodeSlotSpace / sizeof(slot_type) > (std::numeric_limits<uint8_t>::max)()),
+                           uint16_t,
+                           uint8_t>; // NOLINT
 
     // The following methods are necessary for passing this struct as PolicyTraits
     // for node_handle and/or are used within btree.
@@ -807,10 +770,7 @@ struct common_params
         destroy(alloc, old_slot);
     }
     static void swap(Alloc* alloc, slot_type* a, slot_type* b) { slot_policy::swap(alloc, a, b); }
-    static void move(Alloc* alloc, slot_type* src, slot_type* dest)
-    {
-        slot_policy::move(alloc, src, dest);
-    }
+    static void move(Alloc* alloc, slot_type* src, slot_type* dest) { slot_policy::move(alloc, src, dest); }
     static void move(Alloc* alloc, slot_type* first, slot_type* last, slot_type* result)
     {
         slot_policy::move(alloc, first, last, result);
@@ -820,19 +780,8 @@ struct common_params
 // A parameters structure for holding the type parameters for a btree_map.
 // Compare and Alloc should be nothrow copy-constructible.
 // -----------------------------------------------------------------------
-template<typename Key,
-         typename Data,
-         typename Compare,
-         typename Alloc,
-         int  TargetNodeSize,
-         bool Multi>
-struct map_params
-    : common_params<Key,
-                    Compare,
-                    Alloc,
-                    TargetNodeSize,
-                    Multi,
-                    gtl::priv::map_slot_policy<Key, Data>>
+template<typename Key, typename Data, typename Compare, typename Alloc, int TargetNodeSize, bool Multi>
+struct map_params : common_params<Key, Compare, Alloc, TargetNodeSize, Multi, gtl::priv::map_slot_policy<Key, Data>>
 {
     using super_type  = typename map_params::common_params;
     using mapped_type = Data;
@@ -1021,10 +970,9 @@ public:
     // TODO(ezb): Might make sense to add condition(s) based on node-size.
     using use_linear_search =
         std::integral_constant<bool,
-                               std::is_arithmetic_v<key_type> &&
-                                   (std::is_same_v<gtl::Less<key_type>, key_compare> ||
-                                    std::is_same_v<std::less<key_type>, key_compare> ||
-                                    std::is_same_v<std::greater<key_type>, key_compare>)>;
+                               std::is_arithmetic_v<key_type> && (std::is_same_v<gtl::Less<key_type>, key_compare> ||
+                                                                  std::is_same_v<std::less<key_type>, key_compare> ||
+                                                                  std::is_same_v<std::greater<key_type>, key_compare>)>;
 
     ~btree_node()                            = default;
     btree_node(btree_node const&)            = delete;
@@ -1055,10 +1003,7 @@ private:
 
     // A lower bound for the overhead of fields other than values in a leaf node.
     // --------------------------------------------------------------------------
-    constexpr static size_type MinimumOverhead()
-    {
-        return (size_type)(SizeWithNValues(1) - sizeof(value_type));
-    }
+    constexpr static size_type MinimumOverhead() { return (size_type)(SizeWithNValues(1) - sizeof(value_type)); }
 
     // Compute how many values we can fit onto a leaf node taking into account
     // padding.
@@ -1211,8 +1156,7 @@ public:
     // Returns the position of the first value whose key is not less than k.
     // ----------------------------------------------------------------------
     template<typename K>
-    SearchResult<int, is_key_compare_to::value> lower_bound(const K&           k,
-                                                            const key_compare& comp) const
+    SearchResult<int, is_key_compare_to::value> lower_bound(const K& k, const key_compare& comp) const
     {
         return use_linear_search::value ? linear_search(k, comp) : binary_search(k, comp);
     }
@@ -1222,26 +1166,21 @@ public:
     int upper_bound(const K& k, const key_compare& comp) const
     {
         auto upper_compare = upper_bound_adapter<key_compare>(comp);
-        return use_linear_search::value ? linear_search(k, upper_compare).value
-                                        : binary_search(k, upper_compare).value;
+        return use_linear_search::value ? linear_search(k, upper_compare).value : binary_search(k, upper_compare).value;
     }
 
     template<typename K, typename Compare>
-    SearchResult<int, btree_is_key_compare_to<Compare, key_type>::value> linear_search(
-        const K&       k,
-        const Compare& comp) const
+    SearchResult<int, btree_is_key_compare_to<Compare, key_type>::value> linear_search(const K&       k,
+                                                                                       const Compare& comp) const
     {
-        return linear_search_impl(
-            k, 0, count(), comp, btree_is_key_compare_to<Compare, key_type>());
+        return linear_search_impl(k, 0, count(), comp, btree_is_key_compare_to<Compare, key_type>());
     }
 
     template<typename K, typename Compare>
-    SearchResult<int, btree_is_key_compare_to<Compare, key_type>::value> binary_search(
-        const K&       k,
-        const Compare& comp) const
+    SearchResult<int, btree_is_key_compare_to<Compare, key_type>::value> binary_search(const K&       k,
+                                                                                       const Compare& comp) const
     {
-        return binary_search_impl(
-            k, 0, count(), comp, btree_is_key_compare_to<Compare, key_type>());
+        return binary_search_impl(k, 0, count(), comp, btree_is_key_compare_to<Compare, key_type>());
     }
 
     // Returns the position of the first value whose key is not less than k using
@@ -1443,8 +1382,7 @@ private:
                               allocator_type* alloc)
     {
         SanitizerUnpoisonMemoryRegion(x->slot(j), n * sizeof(slot_type));
-        for (slot_type *src = slot(i), *end = src + n, *dest = x->slot(j); src != end;
-             ++src, ++dest) {
+        for (slot_type *src = slot(i), *end = src + n, *dest = x->slot(j); src != end; ++src, ++dest) {
             params_type::construct(alloc, dest, src);
         }
     }
@@ -1563,10 +1501,7 @@ private:
     void decrement_slow();
 
 public:
-    bool operator==(const const_iterator& x) const
-    {
-        return node == x.node && position == x.position;
-    }
+    bool operator==(const const_iterator& x) const { return node == x.node && position == x.position; }
     bool operator!=(const const_iterator& x) const { return !(*this == x); }
 
     bool operator==(const iterator& x) const { return node == x.node && position == x.position; }
@@ -1843,9 +1778,7 @@ public:
     // Requirement: `key` is never referenced after consuming `args`.
     // ---------------------------------------------------------------------------
     template<typename... Args>
-    std::pair<iterator, bool> insert_hint_unique(iterator        position,
-                                                 const key_type& key,
-                                                 Args&&... args);
+    std::pair<iterator, bool> insert_hint_unique(iterator position, const key_type& key, Args&&... args);
 
     // Insert a range of values into the btree.
     // ----------------------------------------
@@ -2070,8 +2003,7 @@ private:
     // -------------------------------------------------------------------
     node_type* allocate(const size_type sz)
     {
-        return reinterpret_cast<node_type*>(
-            Allocate<node_type::Alignment()>(mutable_allocator(), (size_t)sz));
+        return reinterpret_cast<node_type*>(Allocate<node_type::Alignment()>(mutable_allocator(), (size_t)sz));
     }
 
     // Node creation/deletion routines.
@@ -2137,10 +2069,7 @@ private:
     void try_shrink();
 
     iterator       internal_end(iterator iter) { return iter.node != nullptr ? iter : end(); }
-    const_iterator internal_end(const_iterator iter) const
-    {
-        return iter.node != nullptr ? iter : end();
-    }
+    const_iterator internal_end(const_iterator iter) const { return iter.node != nullptr ? iter : end(); }
 
     // Emplaces a value into the btree immediately before iter. Requires that
     // key(v) <= iter.key() and (--iter).key() <= key(v).
@@ -2170,12 +2099,10 @@ private:
     SearchResult<iterator, is_key_compare_to::value> internal_locate(const K& key) const;
 
     template<typename K>
-    SearchResult<iterator, false> internal_locate_impl(const K& key,
-                                                       std::false_type /* IsCompareTo */) const;
+    SearchResult<iterator, false> internal_locate_impl(const K& key, std::false_type /* IsCompareTo */) const;
 
     template<typename K>
-    SearchResult<iterator, true> internal_locate_impl(const K& key,
-                                                      std::true_type /* IsCompareTo */) const;
+    SearchResult<iterator, true> internal_locate_impl(const K& key, std::true_type /* IsCompareTo */) const;
 
     // Internal routine which implements lower_bound()
     // -----------------------------------------------.
@@ -2220,10 +2147,7 @@ private:
 public:
     // Exposed only for tests.
     // -----------------------
-    static bool testonly_uses_linear_node_search()
-    {
-        return node_type::testonly_uses_linear_node_search();
-    }
+    static bool testonly_uses_linear_node_search() { return node_type::testonly_uses_linear_node_search(); }
 
 private:
     // We use compressed tuple in order to save space because key_compare and
@@ -2284,9 +2208,7 @@ inline void btree_node<P>::remove_value(const int i, allocator_type* alloc)
 }
 
 template<typename P>
-inline void btree_node<P>::remove_values_ignore_children(int             i,
-                                                         size_type       to_erase,
-                                                         allocator_type* alloc)
+inline void btree_node<P>::remove_values_ignore_children(int i, size_type to_erase, allocator_type* alloc)
 {
     params_type::move(alloc, slot(i + to_erase), slot(count()), slot(i));
     value_destroy_n(count() - to_erase, to_erase, alloc);
@@ -2294,9 +2216,7 @@ inline void btree_node<P>::remove_values_ignore_children(int             i,
 }
 
 template<typename P>
-void btree_node<P>::rebalance_right_to_left(const int       to_move,
-                                            btree_node*     right,
-                                            allocator_type* alloc)
+void btree_node<P>::rebalance_right_to_left(const int to_move, btree_node* right, allocator_type* alloc)
 {
     assert(parent() == right->parent());
     assert(position() + 1 == right->position());
@@ -2337,9 +2257,7 @@ void btree_node<P>::rebalance_right_to_left(const int       to_move,
 }
 
 template<typename P>
-void btree_node<P>::rebalance_left_to_right(const int       to_move,
-                                            btree_node*     right,
-                                            allocator_type* alloc)
+void btree_node<P>::rebalance_left_to_right(const int to_move, btree_node* right, allocator_type* alloc)
 {
     assert(parent() == right->parent());
     assert(position() + 1 == right->position());
@@ -2360,8 +2278,7 @@ void btree_node<P>::rebalance_left_to_right(const int       to_move,
 
         // 1) Shift existing values in the right node to their correct positions.
         // ----------------------------------------------------------------------
-        right->uninitialized_move_n(
-            to_move, right->count() - to_move, right->count(), right, alloc);
+        right->uninitialized_move_n(to_move, right->count() - to_move, right->count(), right, alloc);
         if (right->count() > to_move) {
             for (slot_type *src  = right->slot(right->count() - to_move - 1),
                            *dest = right->slot(right->count() - 1),
@@ -2394,15 +2311,9 @@ void btree_node<P>::rebalance_left_to_right(const int       to_move,
         // 3) Move the (to_move - 1) values from the left node to the right node.
         // ----------------------------------------------------------------------
         const size_type uninitialized_remaining = to_move - right->count() - 1;
-        uninitialized_move_n(uninitialized_remaining,
-                             count() - uninitialized_remaining,
-                             right->count(),
-                             right,
-                             alloc);
-        params_type::move(alloc,
-                          slot(count() - (to_move - 1)),
-                          slot(count() - uninitialized_remaining),
-                          right->slot(0));
+        uninitialized_move_n(uninitialized_remaining, count() - uninitialized_remaining, right->count(), right, alloc);
+        params_type::move(
+            alloc, slot(count() - (to_move - 1)), slot(count() - uninitialized_remaining), right->slot(0));
     }
 
     // 4) Move the new delimiting value to the parent from the left node.
@@ -2529,9 +2440,7 @@ void btree_node<P>::swap(btree_node* x, allocator_type* alloc)
 
     // Swap the values.
     // ----------------
-    for (slot_type *a = smaller->slot(0), *b = larger->slot(0), *end = a + smaller->count();
-         a != end;
-         ++a, ++b) {
+    for (slot_type *a = smaller->slot(0), *b = larger->slot(0), *end = a + smaller->count(); a != end; ++a, ++b) {
         params_type::swap(alloc, a, b);
     }
 
@@ -2544,9 +2453,8 @@ void btree_node<P>::swap(btree_node* x, allocator_type* alloc)
     if (!leaf()) {
         // Swap the child pointers.
         // ------------------------
-        std::swap_ranges(&smaller->mutable_child(0),
-                         &smaller->mutable_child(smaller->count() + 1),
-                         &larger->mutable_child(0));
+        std::swap_ranges(
+            &smaller->mutable_child(0), &smaller->mutable_child(smaller->count() + 1), &larger->mutable_child(0));
 
         // Update swapped children's parent pointers.
         // ------------------------------------------
@@ -2652,15 +2560,13 @@ constexpr bool btree<P>::static_assert_validation()
 {
     static_assert(std::is_nothrow_copy_constructible_v<key_compare>,
                   "Key comparison must be nothrow copy constructible");
-    static_assert(std::is_nothrow_copy_constructible_v<allocator_type>,
-                  "Allocator must be nothrow copy constructible");
+    static_assert(std::is_nothrow_copy_constructible_v<allocator_type>, "Allocator must be nothrow copy constructible");
     static_assert(std::is_trivially_copyable<iterator>::value, "iterator not trivially copyable.");
 
     // Note: We assert that kTargetValues, which is computed from
     // Params::kTargetNodeSize, must fit the node_type::field_type.
     // ------------------------------------------------------------
-    static_assert(kNodeValues < (1 << (8 * sizeof(typename node_type::field_type))),
-                  "target node size too large");
+    static_assert(kNodeValues < (1 << (8 * sizeof(typename node_type::field_type))), "target node size too large");
 
     // Verify that key_compare returns an std::{weak,strong}_ordering or bool.
     // -----------------------------------------------------------------------
@@ -2671,8 +2577,7 @@ constexpr bool btree<P>::static_assert_validation()
 
     // Test the assumption made in setting kNodeSlotSpace.
     // ----------------------------------------------------
-    static_assert(node_type::MinimumOverhead() >= sizeof(void*) + 4,
-                  "node space assumption incorrect");
+    static_assert(node_type::MinimumOverhead() >= sizeof(void*) + 4, "node space assumption incorrect");
 
     return true;
 }
@@ -2868,9 +2773,8 @@ auto btree<P>::erase(iterator iter) -> iterator
         iterator internal_iter(iter);
         --iter;
         assert(iter.node->leaf());
-        params_type::move(mutable_allocator(),
-                          iter.node->slot(iter.position),
-                          internal_iter.node->slot(internal_iter.position));
+        params_type::move(
+            mutable_allocator(), iter.node->slot(iter.position), internal_iter.node->slot(internal_iter.position));
         internal_delete = true;
     }
 
@@ -2964,8 +2868,7 @@ auto btree<P>::erase(iterator _begin, iterator _end) -> std::pair<size_type, ite
         if (_begin.node->leaf()) {
             const size_type remaining_to_erase = size_ - target_size;
             const size_type remaining_in_node  = _begin.node->count() - _begin.position;
-            _begin =
-                erase_from_leaf_node(_begin, (std::min)(remaining_to_erase, remaining_in_node));
+            _begin = erase_from_leaf_node(_begin, (std::min)(remaining_to_erase, remaining_in_node));
         } else {
             _begin = erase(_begin);
         }
@@ -3118,8 +3021,7 @@ void btree<P>::rebalance_or_split(iterator* iter)
                 int to_move = (kNodeValues - left->count()) / (1 + (insert_position < kNodeValues));
                 to_move     = (std::max)(1, to_move);
 
-                if (((insert_position - to_move) >= 0) ||
-                    ((left->count() + to_move) < kNodeValues)) {
+                if (((insert_position - to_move) >= 0) || ((left->count() + to_move) < kNodeValues)) {
                     left->rebalance_right_to_left(to_move, node, mutable_allocator());
 
                     assert(node->max_count() - node->count() == to_move);
@@ -3148,8 +3050,7 @@ void btree<P>::rebalance_or_split(iterator* iter)
                 int to_move = (kNodeValues - right->count()) / (1 + (insert_position > 0));
                 to_move     = (std::max)(1, to_move);
 
-                if ((insert_position <= (node->count() - to_move)) ||
-                    ((right->count() + to_move) < kNodeValues)) {
+                if ((insert_position <= (node->count() - to_move)) || ((right->count() + to_move) < kNodeValues)) {
                     node->rebalance_left_to_right(to_move, right, mutable_allocator());
 
                     if (insert_position > node->count()) {
@@ -3246,8 +3147,7 @@ bool btree<P>::try_merge_or_rebalance(iterator* iter)
         // empty. This is a small optimization for the common pattern of deleting
         // from the front of the tree.
         // -----------------------------------------------------------------------
-        if ((right->count() > kMinNodeValues) &&
-            ((iter->node->count() == 0) || (iter->position > 0))) {
+        if ((right->count() > kMinNodeValues) && ((iter->node->count() == 0) || (iter->position > 0))) {
             int to_move = (right->count() - iter->node->count()) / 2;
             to_move     = (std::min)(to_move, right->count() - 1);
             iter->node->rebalance_right_to_left(to_move, right, mutable_allocator());
@@ -3345,8 +3245,7 @@ inline auto btree<P>::internal_emplace(iterator iter, Args&&... args) -> iterato
 
 template<typename P>
 template<typename K>
-inline auto btree<P>::internal_locate(const K& key) const
-    -> SearchResult<iterator, is_key_compare_to::value>
+inline auto btree<P>::internal_locate(const K& key) const -> SearchResult<iterator, is_key_compare_to::value>
 {
     return internal_locate_impl(key, is_key_compare_to());
 }
@@ -3475,9 +3374,8 @@ typename btree<P>::size_type btree<P>::internal_verify(const node_type* node,
             assert(node->child(i) != nullptr);
             assert(node->child(i)->parent() == node);
             assert(node->child(i)->position() == i);
-            count += internal_verify(node->child(i),
-                                     (i == 0) ? lo : &node->key(i - 1),
-                                     (i == node->count()) ? hi : &node->key(i));
+            count += internal_verify(
+                node->child(i), (i == 0) ? lo : &node->key(i - 1), (i == node->count()) ? hi : &node->key(i));
         }
     }
     return count;
@@ -3497,8 +3395,8 @@ protected:
     // transparent case.
     // ---------------------------------------------------------------------------
     template<class K>
-    using key_arg = typename KeyArg<IsTransparent<typename Tree::key_compare>::value>::
-        template type<K, typename Tree::key_type>;
+    using key_arg =
+        typename KeyArg<IsTransparent<typename Tree::key_compare>::value>::template type<K, typename Tree::key_type>;
 
 public:
     using key_type               = typename Tree::key_type;
@@ -3523,16 +3421,14 @@ public:
         : tree_(key_compare(), allocator_type())
     {
     }
-    explicit btree_container(const key_compare&    comp,
-                             const allocator_type& alloc = allocator_type())
+    explicit btree_container(const key_compare& comp, const allocator_type& alloc = allocator_type())
         : tree_(comp, alloc)
     {
     }
-    btree_container(const btree_container& x)            = default;
-    btree_container(btree_container&& x) noexcept        = default;
-    btree_container& operator=(const btree_container& x) = default;
-    btree_container& operator=(btree_container&& x) noexcept(
-        std::is_nothrow_move_assignable_v<Tree>) = default;
+    btree_container(const btree_container& x)                                                         = default;
+    btree_container(btree_container&& x) noexcept                                                     = default;
+    btree_container& operator=(const btree_container& x)                                              = default;
+    btree_container& operator=(btree_container&& x) noexcept(std::is_nothrow_move_assignable_v<Tree>) = default;
 
     // Iterator routines.
     iterator               begin() { return tree_.begin(); }
@@ -3742,10 +3638,7 @@ public:
 
     // Insertion routines.
     // -------------------
-    std::pair<iterator, bool> insert(const value_type& x)
-    {
-        return this->tree_.insert_unique(params_type::key(x), x);
-    }
+    std::pair<iterator, bool> insert(const value_type& x) { return this->tree_.insert_unique(params_type::key(x), x); }
     std::pair<iterator, bool> insert(value_type&& x)
     {
         return this->tree_.insert_unique(params_type::key(x), std::move(x));
@@ -3762,16 +3655,14 @@ public:
     }
     iterator insert(const_iterator hint, value_type&& x)
     {
-        return this->tree_.insert_hint_unique(iterator(hint), params_type::key(x), std::move(x))
-            .first;
+        return this->tree_.insert_hint_unique(iterator(hint), params_type::key(x), std::move(x)).first;
     }
 
     template<typename... Args>
     iterator emplace_hint(const_iterator hint, Args&&... args)
     {
         init_type v(std::forward<Args>(args)...);
-        return this->tree_.insert_hint_unique(iterator(hint), params_type::key(v), std::move(v))
-            .first;
+        return this->tree_.insert_hint_unique(iterator(hint), params_type::key(v), std::move(v)).first;
     }
 
     template<typename InputIterator>
@@ -3780,17 +3671,14 @@ public:
         this->tree_.insert_iterator_unique(b, e);
     }
 
-    void insert(std::initializer_list<init_type> init)
-    {
-        this->tree_.insert_iterator_unique(init.begin(), init.end());
-    }
+    void insert(std::initializer_list<init_type> init) { this->tree_.insert_iterator_unique(init.begin(), init.end()); }
 
     insert_return_type insert(node_type&& node)
     {
         if (!node)
             return { this->end(), false, node_type() };
-        std::pair<iterator, bool> res = this->tree_.insert_unique(
-            params_type::key(CommonAccess::GetSlot(node)), CommonAccess::GetSlot(node));
+        std::pair<iterator, bool> res =
+            this->tree_.insert_unique(params_type::key(CommonAccess::GetSlot(node)), CommonAccess::GetSlot(node));
         if (res.second) {
             CommonAccess::Destroy(&node);
             return { res.first, true, node_type() };
@@ -3803,10 +3691,8 @@ public:
     {
         if (!node)
             return this->end();
-        std::pair<iterator, bool> res =
-            this->tree_.insert_hint_unique(iterator(hint),
-                                           params_type::key(CommonAccess::GetSlot(node)),
-                                           CommonAccess::GetSlot(node));
+        std::pair<iterator, bool> res = this->tree_.insert_hint_unique(
+            iterator(hint), params_type::key(CommonAccess::GetSlot(node)), CommonAccess::GetSlot(node));
         if (res.second)
             CommonAccess::Destroy(&node);
         return res.first;
@@ -3833,12 +3719,11 @@ public:
     // `this`, it is left unmodified in `src`.
     // -----------------------------------------------------------------------
     template<typename T,
-             typename std::enable_if_t<
-                 std::conjunction_v<std::is_same<value_type, typename T::value_type>,
-                                    std::is_same<allocator_type, typename T::allocator_type>,
-                                    std::is_same<typename params_type::is_map_container,
-                                                 typename T::params_type::is_map_container>>,
-                 int> = 0>
+             typename std::enable_if_t<std::conjunction_v<std::is_same<value_type, typename T::value_type>,
+                                                          std::is_same<allocator_type, typename T::allocator_type>,
+                                                          std::is_same<typename params_type::is_map_container,
+                                                                       typename T::params_type::is_map_container>>,
+                                       int> = 0>
     void merge(btree_container<T>& src)
     { // NOLINT
         for (auto src_it = src.begin(); src_it != src.end();) {
@@ -3851,12 +3736,11 @@ public:
     }
 
     template<typename T,
-             typename std::enable_if_t<
-                 std::conjunction_v<std::is_same<value_type, typename T::value_type>,
-                                    std::is_same<allocator_type, typename T::allocator_type>,
-                                    std::is_same<typename params_type::is_map_container,
-                                                 typename T::params_type::is_map_container>>,
-                 int> = 0>
+             typename std::enable_if_t<std::conjunction_v<std::is_same<value_type, typename T::value_type>,
+                                                          std::is_same<allocator_type, typename T::allocator_type>,
+                                                          std::is_same<typename params_type::is_map_container,
+                                                                       typename T::params_type::is_map_container>>,
+                                       int> = 0>
     void merge(btree_container<T>&& src)
     {
         merge(src);
@@ -3894,10 +3778,8 @@ public:
     template<typename... Args>
     std::pair<iterator, bool> try_emplace(const key_type& k, Args&&... args)
     {
-        return this->tree_.insert_unique(k,
-                                         std::piecewise_construct,
-                                         std::forward_as_tuple(k),
-                                         std::forward_as_tuple(std::forward<Args>(args)...));
+        return this->tree_.insert_unique(
+            k, std::piecewise_construct, std::forward_as_tuple(k), std::forward_as_tuple(std::forward<Args>(args)...));
     }
     template<typename... Args>
     std::pair<iterator, bool> try_emplace(key_type&& k, Args&&... args)
@@ -4036,10 +3918,7 @@ public:
     {
         this->tree_.insert_iterator_multi(b, e);
     }
-    void insert(std::initializer_list<init_type> init)
-    {
-        this->tree_.insert_iterator_multi(init.begin(), init.end());
-    }
+    void insert(std::initializer_list<init_type> init) { this->tree_.insert_iterator_multi(init.begin(), init.end()); }
     template<typename... Args>
     iterator emplace(Args&&... args)
     {
@@ -4048,15 +3927,14 @@ public:
     template<typename... Args>
     iterator emplace_hint(const_iterator hint, Args&&... args)
     {
-        return this->tree_.insert_hint_multi(iterator(hint),
-                                             init_type(std::forward<Args>(args)...));
+        return this->tree_.insert_hint_multi(iterator(hint), init_type(std::forward<Args>(args)...));
     }
     iterator insert(node_type&& node)
     {
         if (!node)
             return this->end();
-        iterator res = this->tree_.insert_multi(params_type::key(CommonAccess::GetSlot(node)),
-                                                CommonAccess::GetSlot(node));
+        iterator res =
+            this->tree_.insert_multi(params_type::key(CommonAccess::GetSlot(node)), CommonAccess::GetSlot(node));
         CommonAccess::Destroy(&node);
         return res;
     }
@@ -4064,8 +3942,8 @@ public:
     {
         if (!node)
             return this->end();
-        iterator res = this->tree_.insert_hint_multi(
-            iterator(hint), std::move(params_type::element(CommonAccess::GetSlot(node))));
+        iterator res =
+            this->tree_.insert_hint_multi(iterator(hint), std::move(params_type::element(CommonAccess::GetSlot(node))));
         CommonAccess::Destroy(&node);
         return res;
     }
@@ -4092,12 +3970,11 @@ public:
     // Moves all elements from `src` into `this`.
     // ------------------------------------------
     template<typename T,
-             typename std::enable_if_t<
-                 std::conjunction_v<std::is_same<value_type, typename T::value_type>,
-                                    std::is_same<allocator_type, typename T::allocator_type>,
-                                    std::is_same<typename params_type::is_map_container,
-                                                 typename T::params_type::is_map_container>>,
-                 int> = 0>
+             typename std::enable_if_t<std::conjunction_v<std::is_same<value_type, typename T::value_type>,
+                                                          std::is_same<allocator_type, typename T::allocator_type>,
+                                                          std::is_same<typename params_type::is_map_container,
+                                                                       typename T::params_type::is_map_container>>,
+                                       int> = 0>
     void merge(btree_container<T>& src)
     { // NOLINT
         insert(std::make_move_iterator(src.begin()), std::make_move_iterator(src.end()));
@@ -4105,12 +3982,11 @@ public:
     }
 
     template<typename T,
-             typename std::enable_if_t<
-                 std::conjunction_v<std::is_same<value_type, typename T::value_type>,
-                                    std::is_same<allocator_type, typename T::allocator_type>,
-                                    std::is_same<typename params_type::is_map_container,
-                                                 typename T::params_type::is_map_container>>,
-                 int> = 0>
+             typename std::enable_if_t<std::conjunction_v<std::is_same<value_type, typename T::value_type>,
+                                                          std::is_same<allocator_type, typename T::allocator_type>,
+                                                          std::is_same<typename params_type::is_map_container,
+                                                                       typename T::params_type::is_map_container>>,
+                                       int> = 0>
     void merge(btree_container<T>&& src)
     {
         merge(src);
@@ -4140,8 +4016,8 @@ public:
 // ----------------------------------------------------------------------
 template<typename Key, typename Compare, typename Alloc>
 class btree_set
-    : public priv::btree_set_container<priv::btree<
-          priv::set_params<Key, Compare, Alloc, /*TargetNodeSize=*/256, /*Multi=*/false>>>
+    : public priv::btree_set_container<
+          priv::btree<priv::set_params<Key, Compare, Alloc, /*TargetNodeSize=*/256, /*Multi=*/false>>>
 {
     using Base = typename btree_set::btree_set_container;
 
@@ -4201,8 +4077,8 @@ void erase_if(btree_set<K, C, A>& set, Pred pred)
 // ----------------------------------------------------------------------
 template<typename Key, typename Compare, typename Alloc>
 class btree_multiset
-    : public priv::btree_multiset_container<priv::btree<
-          priv::set_params<Key, Compare, Alloc, /*TargetNodeSize=*/256, /*Multi=*/true>>>
+    : public priv::btree_multiset_container<
+          priv::btree<priv::set_params<Key, Compare, Alloc, /*TargetNodeSize=*/256, /*Multi=*/true>>>
 {
     using Base = typename btree_multiset::btree_multiset_container;
 
@@ -4262,8 +4138,8 @@ void erase_if(btree_multiset<K, C, A>& set, Pred pred)
 // ----------------------------------------------------------------------
 template<typename Key, typename Value, typename Compare, typename Alloc>
 class btree_map
-    : public priv::btree_map_container<priv::btree<
-          priv::map_params<Key, Value, Compare, Alloc, /*TargetNodeSize=*/256, /*Multi=*/false>>>
+    : public priv::btree_map_container<
+          priv::btree<priv::map_params<Key, Value, Compare, Alloc, /*TargetNodeSize=*/256, /*Multi=*/false>>>
 {
     using Base = typename btree_map::btree_map_container;
 
@@ -4325,8 +4201,8 @@ void erase_if(btree_map<K, V, C, A>& map, Pred pred)
 // ----------------------------------------------------------------------
 template<typename Key, typename Value, typename Compare, typename Alloc>
 class btree_multimap
-    : public priv::btree_multimap_container<priv::btree<
-          priv::map_params<Key, Value, Compare, Alloc, /*TargetNodeSize=*/256, /*Multi=*/true>>>
+    : public priv::btree_multimap_container<
+          priv::btree<priv::map_params<Key, Value, Compare, Alloc, /*TargetNodeSize=*/256, /*Multi=*/true>>>
 {
     using Base = typename btree_multimap::btree_multimap_container;
 

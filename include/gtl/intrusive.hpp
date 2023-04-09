@@ -336,10 +336,7 @@ namespace std {
 template<class T>
 struct hash<::gtl::intrusive_ptr<T>>
 {
-    std::size_t operator()(::gtl::intrusive_ptr<T> const& p) const noexcept
-    {
-        return std::hash<T*>()(p.get());
-    }
+    std::size_t operator()(::gtl::intrusive_ptr<T> const& p) const noexcept { return std::hash<T*>()(p.get()); }
 };
 
 } // namespace std
@@ -423,10 +420,7 @@ public:
 protected:
     ~intrusive_ref_counter() = default;
 
-    friend void intrusive_ptr_add_ref(const DerivedT* p) noexcept
-    {
-        CounterPolicyT::increment(p->_refcount);
-    }
+    friend void intrusive_ptr_add_ref(const DerivedT* p) noexcept { CounterPolicyT::increment(p->_refcount); }
 
     friend void intrusive_ptr_release(const DerivedT* p) noexcept
     {

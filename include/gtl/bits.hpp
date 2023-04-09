@@ -152,9 +152,9 @@ inline void UnalignedStore64(void* p, uint64_t v) { memcpy(p, &v, sizeof v); }
 // -----------------------------------------------------------------------------
 
 #if defined(__pnacl__)
-    #define GTL_BLOCK_TAIL_CALL_OPTIMIZATION()                                                     \
-        if (volatile int x = 0) {                                                                  \
-            (void)x;                                                                               \
+    #define GTL_BLOCK_TAIL_CALL_OPTIMIZATION()                                                                         \
+        if (volatile int x = 0) {                                                                                      \
+            (void)x;                                                                                                   \
         }
 #elif defined(__clang__)
   // Clang will not tail call given inline volatile assembly.
@@ -167,9 +167,9 @@ inline void UnalignedStore64(void* p, uint64_t v) { memcpy(p, &v, sizeof v); }
     // The __nop() intrinsic blocks the optimisation.
     #define GTL_BLOCK_TAIL_CALL_OPTIMIZATION() __nop()
 #else
-    #define GTL_BLOCK_TAIL_CALL_OPTIMIZATION()                                                     \
-        if (volatile int x = 0) {                                                                  \
-            (void)x;                                                                               \
+    #define GTL_BLOCK_TAIL_CALL_OPTIMIZATION()                                                                         \
+        if (volatile int x = 0) {                                                                                      \
+            (void)x;                                                                                                   \
         }
 #endif
 
@@ -435,8 +435,7 @@ namespace gtl {
 // and 64-bit versions are available in Clang and GCC as of GCC 4.3.0.
 // The 16-bit version is available in Clang and GCC only as of GCC 4.8.0.
 // For simplicity, we enable them all only for GCC 4.8.0 or later.
-#if defined(__clang__) ||                                                                          \
-    (defined(__GNUC__) && ((__GNUC__ == 4 && __GNUC_MINOR__ >= 8) || __GNUC__ >= 5))
+#if defined(__clang__) || (defined(__GNUC__) && ((__GNUC__ == 4 && __GNUC_MINOR__ >= 8) || __GNUC__ >= 5))
 
 inline uint64_t gbswap_64(uint64_t host_int) { return __builtin_bswap64(host_int); }
 inline uint32_t gbswap_32(uint32_t host_int) { return __builtin_bswap32(host_int); }
@@ -470,12 +469,10 @@ inline uint64_t gbswap_64(uint64_t host_int)
     #elif defined(__GLIBC__)
     return bswap_64(host_int);
     #else
-    return (((host_int & uint64_t{ 0xFF }) << 56) | ((host_int & uint64_t{ 0xFF00 }) << 40) |
-            ((host_int & uint64_t{ 0xFF0000 }) << 24) | ((host_int & uint64_t{ 0xFF000000 }) << 8) |
-            ((host_int & uint64_t{ 0xFF00000000 }) >> 8) |
-            ((host_int & uint64_t{ 0xFF0000000000 }) >> 24) |
-            ((host_int & uint64_t{ 0xFF000000000000 }) >> 40) |
-            ((host_int & uint64_t{ 0xFF00000000000000 }) >> 56));
+    return (((host_int& uint64_t{ 0xFF }) << 56) | ((host_int& uint64_t{ 0xFF00 }) << 40) |
+            ((host_int& uint64_t{ 0xFF0000 }) << 24) | ((host_int& uint64_t{ 0xFF000000 }) << 8) |
+            ((host_int& uint64_t{ 0xFF00000000 }) >> 8) | ((host_int& uint64_t{ 0xFF0000000000 }) >> 24) |
+            ((host_int& uint64_t{ 0xFF000000000000 }) >> 40) | ((host_int& uint64_t{ 0xFF00000000000000 }) >> 56));
     #endif // bswap_64
 }
 
@@ -484,8 +481,8 @@ inline uint32_t gbswap_32(uint32_t host_int)
     #if defined(__GLIBC__)
     return bswap_32(host_int);
     #else
-    return (((host_int & uint32_t{ 0xFF }) << 24) | ((host_int & uint32_t{ 0xFF00 }) << 8) |
-            ((host_int & uint32_t{ 0xFF0000 }) >> 8) | ((host_int & uint32_t{ 0xFF000000 }) >> 24));
+    return (((host_int& uint32_t{ 0xFF }) << 24) | ((host_int& uint32_t{ 0xFF00 }) << 8) |
+            ((host_int& uint32_t{ 0xFF0000 }) >> 8) | ((host_int& uint32_t{ 0xFF000000 }) >> 24));
     #endif
 }
 
@@ -494,7 +491,7 @@ inline uint16_t gbswap_16(uint16_t host_int)
     #if defined(__GLIBC__)
     return bswap_16(host_int);
     #else
-    return (((host_int & uint16_t{ 0xFF }) << 8) | ((host_int & uint16_t{ 0xFF00 }) >> 8));
+    return (((host_int& uint16_t{ 0xFF }) << 8) | ((host_int& uint16_t{ 0xFF00 }) >> 8));
     #endif
 }
 

@@ -23,8 +23,7 @@
 namespace gtl {
 
 template<class T>
-concept VectorLike = requires(T v)
-{
+concept VectorLike = requires(T v) {
     /* v.reserve(1); */
     v.begin();
     v.end();
@@ -39,8 +38,7 @@ auto cat(Vs&&... vs)
 {
     std::common_type_t<Vs...> res;
     res.reserve((0 + ... + vs.size()));
-    (...,
-     (res.insert(res.end(), std::begin(std::forward<Vs>(vs)), std::end(std::forward<Vs>(vs)))));
+    (..., (res.insert(res.end(), std::begin(std::forward<Vs>(vs)), std::end(std::forward<Vs>(vs)))));
     return res;
 }
 
@@ -51,10 +49,9 @@ template<VectorLike V>
 auto slice(V&& v, int first = 0, int last = -1, int stride = 1)
 {
     std::remove_const_t<std::remove_reference_t<V>> res;
-    auto first_iter = (first >= 0 ? std::begin(std::forward<V>(v)) + first
-                                  : std::end(std::forward<V>(v)) + (first + 1));
-    auto last_iter  = (last >= 0 ? std::begin(std::forward<V>(v)) + last
-                                 : std::end(std::forward<V>(v)) + (last + 1));
+    auto                                            first_iter =
+        (first >= 0 ? std::begin(std::forward<V>(v)) + first : std::end(std::forward<V>(v)) + (first + 1));
+    auto last_iter = (last >= 0 ? std::begin(std::forward<V>(v)) + last : std::end(std::forward<V>(v)) + (last + 1));
     if (last_iter > first_iter) {
         std::size_t cnt = (last_iter - first_iter) / stride;
         res.reserve(cnt);
@@ -69,7 +66,7 @@ auto slice(V&& v, int first = 0, int last = -1, int stride = 1)
 // ---------------------------------------------------------------------------------------
 template<class F, class T, class A, template<class, class> class V>
 #ifndef _LIBCPP_VERSION // until this is available
-requires std::invocable<F&, T>
+    requires std::invocable<F&, T>
 #endif
 auto map(F&& f, const V<T, A>& v)
 {

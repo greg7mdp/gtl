@@ -48,7 +48,7 @@ public:
 
     scoped_set_unset(const scoped_set_unset&)            = delete;
     scoped_set_unset& operator=(const scoped_set_unset&) = delete;
-    void*             operator new(std::size_t)          = delete;
+    void* operator new(std::size_t)                      = delete;
 
 private:
     bool  do_it_;
@@ -84,7 +84,7 @@ public:
 
     scoped_guard(const scoped_guard&)            = delete;
     scoped_guard& operator=(const scoped_guard&) = delete;
-    void*         operator new(std::size_t)      = delete;
+    void* operator new(std::size_t)              = delete;
 
 private:
     bool do_it_;
@@ -106,9 +106,10 @@ class scoped_set_value
 {
 public:
     template<class V>
-    scoped_set_value(T& var, V&& val, bool do_it = true) noexcept(
-        std::is_nothrow_copy_constructible_v<T>&& std::is_nothrow_move_assignable_v<T>&&
-            std::is_nothrow_move_assignable_v<V>&& std::is_nothrow_copy_assignable_v<V>)
+    scoped_set_value(T& var, V&& val, bool do_it = true) noexcept(std::is_nothrow_copy_constructible_v<T> &&
+                                                                  std::is_nothrow_move_assignable_v<T> &&
+                                                                  std::is_nothrow_move_assignable_v<V> &&
+                                                                  std::is_nothrow_copy_assignable_v<V>)
         : v_(var)
         , do_it_(do_it)
     {
@@ -128,7 +129,7 @@ public:
 
     scoped_set_value(const scoped_set_value&)            = delete;
     scoped_set_value& operator=(const scoped_set_value&) = delete;
-    void*             operator new(std::size_t)          = delete;
+    void* operator new(std::size_t)                      = delete;
 
     T&   v_;
     T    old_value_;
@@ -139,8 +140,7 @@ public:
 // assigns val to var, and returns true if the value changed
 // ---------------------------------------------------------------------------
 template<class T, class V>
-bool change(T& var, V&& val) noexcept(
-    std::is_nothrow_move_assignable_v<T>&& std::is_nothrow_copy_assignable_v<T>)
+bool change(T& var, V&& val) noexcept(std::is_nothrow_move_assignable_v<T> && std::is_nothrow_copy_assignable_v<T>)
 {
     if (var != val) {
         var = std::forward<V>(val);
@@ -153,8 +153,7 @@ bool change(T& var, V&& val) noexcept(
 // assigns val to var, and returns the previous value
 // ---------------------------------------------------------------------------
 template<class T, class V>
-T replace(T& var, V&& val) noexcept(
-    std::is_nothrow_move_assignable_v<T>&& std::is_nothrow_copy_assignable_v<T>)
+T replace(T& var, V&& val) noexcept(std::is_nothrow_move_assignable_v<T> && std::is_nothrow_copy_assignable_v<T>)
 {
     T old = std::move(var);
     var   = std::forward<V>(val);
@@ -196,10 +195,7 @@ public:
     bool operator>(const timestamp& o) const noexcept { return stamp_ > o.stamp_; }
 
     // returns most recent
-    timestamp operator|(const timestamp& o) const noexcept
-    {
-        return stamp_ > o.stamp_ ? stamp_ : o.stamp_;
-    }
+    timestamp  operator|(const timestamp& o) const noexcept { return stamp_ > o.stamp_ ? stamp_ : o.stamp_; }
     timestamp& operator|=(const timestamp& o) noexcept
     {
         *this = *this | o;

@@ -74,11 +74,7 @@ using this_pack_helper = typename pack_helper<F>::args;
 //
 // see example: examples/memoize/mt_memoize.cpp
 // ------------------------------------------------------------------------------
-template<class F,
-         bool   recursive = true,
-         size_t N         = 6,
-         class Mutex      = std::mutex,
-         class            = this_pack_helper<F>>
+template<class F, bool recursive = true, size_t N = 6, class Mutex = std::mutex, class = this_pack_helper<F>>
 class mt_memoize;
 
 template<class F, bool recursive, size_t N, class Mutex, class... Args>
@@ -87,14 +83,13 @@ class mt_memoize<F, recursive, N, Mutex, pack<Args...>>
 public:
     using key_type    = std::tuple<Args...>;
     using result_type = decltype(std::declval<F>()(std::declval<Args>()...));
-    using map_type =
-        gtl::parallel_flat_hash_map<key_type,
-                                    result_type,
-                                    gtl::Hash<key_type>,
-                                    std::equal_to<key_type>,
-                                    std::allocator<std::pair<const key_type, result_type>>,
-                                    N,
-                                    Mutex>;
+    using map_type    = gtl::parallel_flat_hash_map<key_type,
+                                                 result_type,
+                                                 gtl::Hash<key_type>,
+                                                 std::equal_to<key_type>,
+                                                 std::allocator<std::pair<const key_type, result_type>>,
+                                                 N,
+                                                 Mutex>;
 
     mt_memoize(F&& f)
         : _f(std::move(f))
@@ -203,15 +198,14 @@ public:
     using list_type = std::list<value_type>;
     using list_iter = typename list_type::iterator;
 
-    using map_type =
-        gtl::parallel_flat_hash_map<key_type,
-                                    list_iter,
-                                    gtl::Hash<key_type>,
-                                    std::equal_to<key_type>,
-                                    std::allocator<std::pair<const key_type, list_iter>>,
-                                    N,
-                                    Mutex,
-                                    list_type>;
+    using map_type = gtl::parallel_flat_hash_map<key_type,
+                                                 list_iter,
+                                                 gtl::Hash<key_type>,
+                                                 std::equal_to<key_type>,
+                                                 std::allocator<std::pair<const key_type, list_iter>>,
+                                                 N,
+                                                 Mutex,
+                                                 list_type>;
 
     static constexpr size_t num_submaps = map_type::subcnt();
 
@@ -234,8 +228,7 @@ public:
     std::optional<result_type> contains(Args... args)
     {
         key_type key(args...);
-        if (result_type res;
-            _cache.if_contains(key, [&](const auto& v, list_type&) { res = v.second->second; }))
+        if (result_type res; _cache.if_contains(key, [&](const auto& v, list_type&) { res = v.second->second; }))
             return { res };
         return {};
     }

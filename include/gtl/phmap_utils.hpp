@@ -86,7 +86,7 @@ struct phmap_mix<8>
 {
     inline size_t operator()(size_t a) const
     {
-        a = (~a) + (a << 21); // a = (a << 21) - a - 1;
+        a = (~a) + (a << 21);          // a = (a << 21) - a - 1;
         a = a ^ (a >> 24);
         a = (a + (a << 3)) + (a << 8); // a * 265
         a = a ^ (a >> 14);
@@ -237,10 +237,7 @@ struct Hash<int64_t> : public gtl_unary_function<int64_t, size_t>
 template<>
 struct Hash<uint64_t> : public gtl_unary_function<uint64_t, size_t>
 {
-    inline size_t operator()(uint64_t val) const noexcept
-    {
-        return fold_if_needed<sizeof(size_t)>()(val);
-    }
+    inline size_t operator()(uint64_t val) const noexcept { return fold_if_needed<sizeof(size_t)>()(val); }
 };
 
 template<>
@@ -379,22 +376,19 @@ struct Hash<std::tuple<T...>>
 
 private:
     template<size_t I = 0, class TUP>
-    typename std::enable_if<I == std::tuple_size<TUP>::value, size_t>::type _hash_helper(
-        size_t seed,
-        const TUP&) const noexcept
+    typename std::enable_if<I == std::tuple_size<TUP>::value, size_t>::type _hash_helper(size_t seed,
+                                                                                         const TUP&) const noexcept
     {
         return seed;
     }
 
     template<size_t I = 0, class TUP>
         typename std::enable_if <
-        I<std::tuple_size<TUP>::value, size_t>::type _hash_helper(size_t     seed,
-                                                                  const TUP& t) const noexcept
+        I<std::tuple_size<TUP>::value, size_t>::type _hash_helper(size_t seed, const TUP& t) const noexcept
     {
         const auto& el = std::get<I>(t);
-        using el_type =
-            typename std::remove_cv<typename std::remove_reference<decltype(el)>::type>::type;
-        seed = Combiner<size_t, sizeof(size_t)>()(seed, gtl::Hash<el_type>()(el));
+        using el_type  = typename std::remove_cv<typename std::remove_reference<decltype(el)>::type>::type;
+        seed           = Combiner<size_t, sizeof(size_t)>()(seed, gtl::Hash<el_type>()(el));
         return _hash_helper<I + 1>(seed, t);
     }
 };

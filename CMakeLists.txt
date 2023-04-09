@@ -153,6 +153,7 @@ if (GTL_BUILD_EXAMPLES)
     gtl_cc_app(ex_btree SRCS examples/btree/btree.cpp include/gtl/debug_vis/gtl.natvis)
 
     gtl_cc_app(ex_insert_bench SRCS examples/phmap/insert_bench.cpp include/gtl/debug_vis/gtl.natvis)
+    gtl_cc_app(ex_mt_word_counter SRCS examples/phmap/mt_word_counter.cpp include/gtl/debug_vis/gtl.natvis)
 
 if(MSVC)
     gtl_cc_app(ex_lazy_emplace_l SRCS examples/phmap/lazy_emplace_l.cpp include/gtl/debug_vis/gtl.natvis)

@@ -130,8 +130,7 @@ uint64_t GetProcessMemoryUsed()
 {
 #ifdef GTL_WIN
     PROCESS_MEMORY_COUNTERS_EX pmc;
-    GetProcessMemoryInfo(
-        GetCurrentProcess(), reinterpret_cast<PPROCESS_MEMORY_COUNTERS>(&pmc), sizeof(pmc));
+    GetProcessMemoryInfo(GetCurrentProcess(), reinterpret_cast<PPROCESS_MEMORY_COUNTERS>(&pmc), sizeof(pmc));
     return static_cast<uint64_t>(pmc.PrivateUsage);
 #elif defined(__linux__)
     auto parseLine = [](char* line) -> int {

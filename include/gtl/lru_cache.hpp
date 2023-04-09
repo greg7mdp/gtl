@@ -37,15 +37,14 @@ public:
     using list_type = std::list<value_type>;
     using list_iter = typename list_type::iterator;
 
-    using map_type =
-        gtl::parallel_flat_hash_map<K,
-                                    list_iter,
-                                    Hash,
-                                    Eq,
-                                    std::allocator<std::pair<const key_type, list_iter>>,
-                                    N,
-                                    Mutex,
-                                    list_type>;
+    using map_type = gtl::parallel_flat_hash_map<K,
+                                                 list_iter,
+                                                 Hash,
+                                                 Eq,
+                                                 std::allocator<std::pair<const key_type, list_iter>>,
+                                                 N,
+                                                 Mutex,
+                                                 list_type>;
 
     static constexpr size_t num_submaps = map_type::subcnt();
 

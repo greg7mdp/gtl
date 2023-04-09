@@ -100,17 +100,15 @@ private:
     template<class P>
     static constexpr bool LayoutCompatible()
     {
-        return std::is_standard_layout<P>() && sizeof(P) == sizeof(Pair) &&
-               alignof(P) == alignof(Pair) && OffsetOf<P>::kFirst == OffsetOf<Pair>::kFirst &&
-               OffsetOf<P>::kSecond == OffsetOf<Pair>::kSecond;
+        return std::is_standard_layout<P>() && sizeof(P) == sizeof(Pair) && alignof(P) == alignof(Pair) &&
+               OffsetOf<P>::kFirst == OffsetOf<Pair>::kFirst && OffsetOf<P>::kSecond == OffsetOf<Pair>::kSecond;
     }
 
 public:
     // Whether pair<const K, V> and pair<K, V> are layout-compatible. If they are,
     // then it is safe to store them in a union and read from either.
     static constexpr bool value = std::is_standard_layout<K>() && std::is_standard_layout<Pair>() &&
-                                  OffsetOf<Pair>::kFirst == 0 &&
-                                  LayoutCompatible<std::pair<K, V>>() &&
+                                  OffsetOf<Pair>::kFirst == 0 && LayoutCompatible<std::pair<K, V>>() &&
                                   LayoutCompatible<std::pair<const K, V>>();
 };
 
@@ -181,21 +179,16 @@ public:
     static value_type&       element(slot_type* slot) { return slot->value; }
     static const value_type& element(const slot_type* slot) { return slot->value; }
 
-    static const K& key(const slot_type* slot)
-    {
-        return kMutableKeys::value ? slot->key : slot->value.first;
-    }
+    static const K& key(const slot_type* slot) { return kMutableKeys::value ? slot->key : slot->value.first; }
 
     template<class Allocator, class... Args>
     static void construct(Allocator* alloc, slot_type* slot, Args&&... args)
     {
         emplace(slot);
         if (kMutableKeys::value) {
-            std::allocator_traits<Allocator>::construct(
-                *alloc, &slot->mutable_value, std::forward<Args>(args)...);
+            std::allocator_traits<Allocator>::construct(*alloc, &slot->mutable_value, std::forward<Args>(args)...);
         } else {
-            std::allocator_traits<Allocator>::construct(
-                *alloc, &slot->value, std::forward<Args>(args)...);
+            std::allocator_traits<Allocator>::construct(*alloc, &slot->value, std::forward<Args>(args)...);
         }
     }
 
@@ -205,11 +198,9 @@ public:
     {
         emplace(slot);
         if (kMutableKeys::value) {
-            std::allocator_traits<Allocator>::construct(
-                *alloc, &slot->mutable_value, std::move(other->mutable_value));
+            std::allocator_traits<Allocator>::construct(*alloc, &slot->mutable_value, std::move(other->mutable_value));
         } else {
-            std::allocator_traits<Allocator>::construct(
-                *alloc, &slot->value, std::move(other->value));
+            std::allocator_traits<Allocator>::construct(*alloc, &slot->value, std::move(other->value));
         }
     }
 
@@ -231,8 +222,7 @@ public:
             std::allocator_traits<Allocator>::construct(
                 *alloc, &new_slot->mutable_value, std::move(old_slot->mutable_value));
         } else {
-            std::allocator_traits<Allocator>::construct(
-                *alloc, &new_slot->value, std::move(old_slot->value));
+            std::allocator_traits<Allocator>::construct(*alloc, &new_slot->value, std::move(old_slot->value));
         }
         destroy(alloc, old_slot);
     }
@@ -259,8 +249,7 @@ public:
             dest->mutable_value = std::move(src->mutable_value);
         } else {
             std::allocator_traits<Allocator>::destroy(*alloc, &dest->value);
-            std::allocator_traits<Allocator>::construct(
-                *alloc, &dest->value, std::move(src->value));
+            std::allocator_traits<Allocator>::construct(*alloc, &dest->value, std::move(src->value));
         }
     }
 
@@ -394,8 +383,7 @@ using IsLegalElementType =
     std::integral_constant<bool,
                            !std::is_reference_v<T> && !std::is_volatile_v<T> &&
                                !std::is_reference_v<typename Type<T>::type> &&
-                               !std::is_volatile_v<typename Type<T>::type> &&
-                               adl_barrier::IsPow2(AlignOf<T>::value)>;
+                               !std::is_volatile_v<typename Type<T>::type> && adl_barrier::IsPow2(AlignOf<T>::value)>;
 
 template<class Elements, class SizeSeq, class OffsetSeq>
 class LayoutImpl;
@@ -414,14 +402,11 @@ class LayoutImpl;
 // can compute offsets).
 // ---------------------------------------------------------------------------
 template<class... Elements, size_t... SizeSeq, size_t... OffsetSeq>
-class LayoutImpl<std::tuple<Elements...>,
-                 std::index_sequence<SizeSeq...>,
-                 std::index_sequence<OffsetSeq...>>
+class LayoutImpl<std::tuple<Elements...>, std::index_sequence<SizeSeq...>, std::index_sequence<OffsetSeq...>>
 {
 private:
     static_assert(sizeof...(Elements) > 0, "At least one field is required");
-    static_assert(std::conjunction_v<IsLegalElementType<Elements>...>,
-                  "Invalid element type (see IsLegalElementType)");
+    static_assert(std::conjunction_v<IsLegalElementType<Elements>...>, "Invalid element type (see IsLegalElementType)");
 
     enum
     {
@@ -439,8 +424,7 @@ private:
     template<class T>
     static constexpr size_t ElementIndex()
     {
-        static_assert(Contains<Type<T>, Type<typename Type<Elements>::type>...>(),
-                      "Type not found");
+        static_assert(Contains<Type<T>, Type<typename Type<Elements>::type>...>(), "Type not found");
         return adl_barrier::Find(Type<T>(), Type<typename Type<Elements>::type>()...);
     }
 
@@ -483,8 +467,7 @@ public:
     constexpr size_t Offset() const
     {
         static_assert(N < NumOffsets, "Index out of bounds");
-        return adl_barrier::Align(Offset<N - 1>() +
-                                      SizeOf<ElementType<N - 1>>::value * size_[N - 1],
+        return adl_barrier::Align(Offset<N - 1>() + SizeOf<ElementType<N - 1>>::value * size_[N - 1],
                                   ElementAlignment<N>::value);
     }
 
@@ -504,10 +487,7 @@ public:
     }
 
     // Offsets in bytes of all arrays for which the offsets are known.
-    constexpr std::array<size_t, NumOffsets> Offsets() const
-    {
-        return { { Offset<OffsetSeq>()... } };
-    }
+    constexpr std::array<size_t, NumOffsets> Offsets() const { return { { Offset<OffsetSeq>()... } }; }
 
     // The number of elements in the Nth array. This is the Nth argument of
     // `Layout::Partial()` or `Layout::Layout()` (zero-based).
@@ -561,8 +541,7 @@ public:
     CopyConst<Char, ElementType<N>>* Pointer(Char* p) const
     {
         using C = typename std::remove_const_t<Char>;
-        static_assert(std::is_same<C, char>() || std::is_same<C, unsigned char>() ||
-                          std::is_same<C, signed char>(),
+        static_assert(std::is_same<C, char>() || std::is_same<C, unsigned char>() || std::is_same<C, signed char>(),
                       "The argument must be a pointer to [const] [signed|unsigned] char");
         constexpr size_t alignment = Alignment();
         (void)alignment;
@@ -608,8 +587,7 @@ public:
     // under MSVC.
     // ----------------------------------------------------------------------------
     template<class Char>
-    std::tuple<CopyConst<Char, typename std::tuple_element<OffsetSeq, ElementTypes>::type>*...>
-    Pointers(Char* p) const
+    std::tuple<CopyConst<Char, typename std::tuple_element<OffsetSeq, ElementTypes>::type>*...> Pointers(Char* p) const
     {
         return std::tuple<CopyConst<Char, ElementType<OffsetSeq>>*...>(Pointer<OffsetSeq>(p)...);
     }
@@ -625,8 +603,7 @@ public:
     constexpr size_t AllocSize() const
     {
         static_assert(NumTypes == NumSizes, "You must specify sizes of all fields");
-        return Offset<NumTypes - 1>() +
-               SizeOf<ElementType<NumTypes - 1>>::value * size_[NumTypes - 1];
+        return Offset<NumTypes - 1>() + SizeOf<ElementType<NumTypes - 1>>::value * size_[NumTypes - 1];
     }
 
     // If built with --config=asan, poisons padding bytes (if any) in the
@@ -666,10 +643,9 @@ private:
 // ----------------------------------------------------------------------------
 // ----------------------------------------------------------------------------
 template<size_t NumSizes, class... Ts>
-using LayoutType =
-    LayoutImpl<std::tuple<Ts...>,
-               std::make_index_sequence<NumSizes>,
-               std::make_index_sequence<adl_barrier::Min(sizeof...(Ts), NumSizes + 1)>>;
+using LayoutType = LayoutImpl<std::tuple<Ts...>,
+                              std::make_index_sequence<NumSizes>,
+                              std::make_index_sequence<adl_barrier::Min(sizeof...(Ts), NumSizes + 1)>>;
 
 } // namespace internal_layout
 
@@ -721,7 +697,7 @@ public:
     // We need to mark these classes with this declspec to ensure that
     // CompressedTuple happens.
     #define GTL_INTERNAL_COMPRESSED_TUPLE_DECLSPEC __declspec(empty_bases)
-#else // _MSC_VER
+#else  // _MSC_VER
     #define GTL_INTERNAL_COMPRESSED_TUPLE_DECLSPEC
 #endif // _MSC_VER
 
@@ -791,8 +767,7 @@ template<typename D, typename I>
 struct GTL_INTERNAL_COMPRESSED_TUPLE_DECLSPEC CompressedTupleImpl;
 
 template<typename... Ts, size_t... I>
-struct GTL_INTERNAL_COMPRESSED_TUPLE_DECLSPEC
-    CompressedTupleImpl<CompressedTuple<Ts...>, std::index_sequence<I...>>
+struct GTL_INTERNAL_COMPRESSED_TUPLE_DECLSPEC CompressedTupleImpl<CompressedTuple<Ts...>, std::index_sequence<I...>>
     // We use the dummy identity function through std::integral_constant to
     // convince MSVC of accepting and expanding I in that context. Without it
     // you would get:
@@ -828,8 +803,7 @@ struct GTL_INTERNAL_COMPRESSED_TUPLE_DECLSPEC
 // ---------------------------------------------------------------------------
 template<typename... Ts>
 class GTL_INTERNAL_COMPRESSED_TUPLE_DECLSPEC CompressedTuple
-    : private internal_compressed_tuple::CompressedTupleImpl<CompressedTuple<Ts...>,
-                                                             std::index_sequence_for<Ts...>>
+    : private internal_compressed_tuple::CompressedTupleImpl<CompressedTuple<Ts...>, std::index_sequence_for<Ts...>>
 {
 private:
     template<int I>
@@ -857,15 +831,13 @@ public:
     template<int I>
     ElemT<I>&& get() &&
     {
-        return std::move(*this)
-            .internal_compressed_tuple::template Storage<CompressedTuple, I>::get();
+        return std::move(*this).internal_compressed_tuple::template Storage<CompressedTuple, I>::get();
     }
 
     template<int I>
     constexpr const ElemT<I>&& get() const&&
     {
-        return std::move(*this)
-            .internal_compressed_tuple::template Storage<CompressedTuple, I>::get();
+        return std::move(*this).internal_compressed_tuple::template Storage<CompressedTuple, I>::get();
     }
 };
 
@@ -967,8 +939,8 @@ public:
         return *this;
     }
 
-    bool           empty() const noexcept { return !alloc_; }
-    explicit       operator bool() const noexcept { return !empty(); }
+    bool empty() const noexcept { return !alloc_; }
+    explicit operator bool() const noexcept { return !empty(); }
     allocator_type get_allocator() const { return *alloc_; }
 
 protected:
@@ -1062,15 +1034,9 @@ public:
 
     constexpr node_handle() {}
 
-    auto key() const -> decltype(PolicyTraits::key(this->slot()))
-    {
-        return PolicyTraits::key(this->slot());
-    }
+    auto key() const -> decltype(PolicyTraits::key(this->slot())) { return PolicyTraits::key(this->slot()); }
 
-    mapped_type& mapped() const
-    {
-        return PolicyTraits::value(&PolicyTraits::element(this->slot()));
-    }
+    mapped_type& mapped() const { return PolicyTraits::value(&PolicyTraits::element(this->slot())); }
 
 private:
     friend struct CommonAccess;
@@ -1179,8 +1145,7 @@ void* Allocate(Alloc* alloc, size_t n)
     using AT = typename std::allocator_traits<Alloc>::template rebind_traits<M>;
     A     mem_alloc(*alloc);
     void* p = AT::allocate(mem_alloc, (n + sizeof(M) - 1) / sizeof(M));
-    assert(reinterpret_cast<uintptr_t>(p) % Alignment == 0 &&
-           "allocator does not respect alignment");
+    assert(reinterpret_cast<uintptr_t>(p) % Alignment == 0 && "allocator does not respect alignment");
     return p;
 }
 
@@ -1255,10 +1220,7 @@ template<typename T>
 }
 } // namespace
 
-static inline void ThrowStdOutOfRange(const std::string& what_arg)
-{
-    Throw(std::out_of_range(what_arg));
-}
+static inline void ThrowStdOutOfRange(const std::string& what_arg) { Throw(std::out_of_range(what_arg)); }
 static inline void ThrowStdOutOfRange(const char* what_arg) { Throw(std::out_of_range(what_arg)); }
 
 } // gtl

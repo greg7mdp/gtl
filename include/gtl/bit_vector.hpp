@@ -16,7 +16,7 @@
 #include <string>
 #include <type_traits>
 #include <vector>
-//#include <bit>
+// #include <bit>
 #include <cassert>
 #include <iostream>
 #include <limits>
@@ -96,8 +96,7 @@ public:
         size_t num_slots = slot_cnt(num_bits);
         _s.resize(num_slots, val ? ones : 0);
         if (mod(num_bits))
-            _s[num_slots - 1] &=
-                ~himask(num_bits); // make sure to zero the remainder bits in last slot
+            _s[num_slots - 1] &= ~himask(num_bits); // make sure to zero the remainder bits in last slot
         _check_extra_bits();
     }
 
@@ -229,10 +228,9 @@ public:
         const size_t shift      = mod(first);
 
         if (first_slot == last_slot) {
-            const uint64_t s = _s[first_slot];
-            const uint64_t m =
-                ~(lowmask(first) ^ lowmask(last)); // m has ones on the bits we don't want to change
-            const auto fs = f(oor_bits<flags>(s, m), (int)shift);
+            const uint64_t s  = _s[first_slot];
+            const uint64_t m  = ~(lowmask(first) ^ lowmask(last)); // m has ones on the bits we don't want to change
+            const auto     fs = f(oor_bits<flags>(s, m), (int)shift);
             if constexpr (!(flags & vt::view)) {
                 if (s != fs) {
                     uint64_t& d = _s[first_slot];
@@ -245,8 +243,8 @@ public:
             // first slot
             // ----------
             if (shift) {
-                const uint64_t s = _s[first_slot];
-                const uint64_t m = lowmask(first); // m has ones on the bits we don't want to change
+                const uint64_t s  = _s[first_slot];
+                const uint64_t m  = lowmask(first); // m has ones on the bits we don't want to change
                 const auto     fs = f(oor_bits<flags>(s, m), (int)shift);
                 if constexpr (!(flags & vt::view)) {
                     if (s != fs) {
@@ -363,9 +361,7 @@ public:
                 } else if (fs)
                     return;
             }
-            const uint64_t m = mod(_sz)
-                                   ? himask(_sz)
-                                   : (uint64_t)0; // m has ones on the bits we don't want to change
+            const uint64_t m = mod(_sz) ? himask(_sz) : (uint64_t)0; // m has ones on the bits we don't want to change
             const uint64_t s = _s[slot];
 
             [[maybe_unused]] const auto fs = f(oor_bits<flags>(s, m));
@@ -404,9 +400,8 @@ template<class S, template<class> class BV>
 class _view
 {
 public:
-    static constexpr size_t npos =
-        static_cast<size_t>(-1); // typename std::numeric_limits<size_t>::max();
-    using vec_type = BV<S>;
+    static constexpr size_t npos = static_cast<size_t>(-1); // typename std::numeric_limits<size_t>::max();
+    using vec_type               = BV<S>;
 
     explicit _view(vec_type& bv, size_t first = 0, size_t last = npos)
         : _bv(bv)
@@ -454,8 +449,7 @@ public:
 
     _view& reset()
     {
-        _bv.storage().template visit<vt::none>(
-            _first, _last, [](uint64_t, int) { return (uint64_t)0; });
+        _bv.storage().template visit<vt::none>(_first, _last, [](uint64_t, int) { return (uint64_t)0; });
         return *this;
     }
 
@@ -515,20 +509,18 @@ public:
         else if (cnt) {
             if (cnt == stride) {
                 uint64_t carry = 0;
-                _bv.storage().template visit<vt::none | vt::backward>(
-                    _first, _last, [&](uint64_t v, int) {
-                        uint64_t res = carry;
-                        carry        = v;
-                        return res;
-                    });
+                _bv.storage().template visit<vt::none | vt::backward>(_first, _last, [&](uint64_t v, int) {
+                    uint64_t res = carry;
+                    carry        = v;
+                    return res;
+                });
             } else if (cnt <= stride) {
                 uint64_t carry = 0;
-                _bv.storage().template visit<vt::none | vt::backward>(
-                    _first, _last, [&](uint64_t v, int) {
-                        uint64_t res = (v >> cnt) | carry; // yes we have to shift the opposite way!
-                        carry        = (v << (stride - cnt));
-                        return res;
-                    });
+                _bv.storage().template visit<vt::none | vt::backward>(_first, _last, [&](uint64_t v, int) {
+                    uint64_t res = (v >> cnt) | carry; // yes we have to shift the opposite way!
+                    carry        = (v << (stride - cnt));
+                    return res;
+                });
             } else {
                 while (cnt) {
                     size_t shift = std::min(cnt, stride);
@@ -599,13 +591,11 @@ public:
         assert(size() == o.size());
         if ((&_bv != &o._bv) || (_first < o._first) || (_first <= o._last)) {
             typename S::bit_sequence seq(o._bv.storage(), o._first, o._last, _first);
-            _bv.storage().template visit<vt::none>(
-                _first, _last, [&](uint64_t, int) { return seq(); });
+            _bv.storage().template visit<vt::none>(_first, _last, [&](uint64_t, int) { return seq(); });
         } else if (_first > o._first) {
             // both views are on same bitmap, and we are copying backward with an overlap
             typename S::bit_sequence seq(_bv.storage(), _first, _last, o._first);
-            o._bv.storage().template visit<vt::none>(
-                o._first, o._last, [&](uint64_t, int) { return seq(); });
+            o._bv.storage().template visit<vt::none>(o._first, o._last, [&](uint64_t, int) { return seq(); });
         }
         return *this;
     }
@@ -764,17 +754,14 @@ public:
     // print
     // -----
     template<class CharT = char, class Traits = std::char_traits<CharT>>
-    friend std::basic_ostream<CharT, Traits>& operator<<(std::basic_ostream<CharT, Traits>& s,
-                                                         const _view&                       v)
+    friend std::basic_ostream<CharT, Traits>& operator<<(std::basic_ostream<CharT, Traits>& s, const _view& v)
     {
         return s << static_cast<std::string>(v);
     }
 
     // conversion to std::string
     // -------------------------
-    template<class CharT  = char,
-             class Traits = std::char_traits<CharT>,
-             class A      = std::allocator<CharT>>
+    template<class CharT = char, class Traits = std::char_traits<CharT>, class A = std::allocator<CharT>>
     void append_to_string(std::basic_string<CharT, Traits, A>& res) const
     {
         size_t num_bytes = (size() + 7) >> 3;
@@ -782,7 +769,7 @@ public:
         size_t cur       = start + num_bytes * 2;
         res.resize(cur); // resize string as we display bits right to left, lsb is the rightmost
 
-        auto to_hex = [](unsigned char b) -> char { return (b > 9) ? 'a' + b - 10 : '0' + b; };
+        auto                     to_hex = [](unsigned char b) -> char { return (b > 9) ? 'a' + b - 10 : '0' + b; };
         typename S::bit_sequence seq(_bv.storage(), _first, _last, 0);
 
         while (cur > start) {
@@ -801,9 +788,7 @@ public:
     }
 
     // make bit_vector convertible to std::string
-    template<class CharT  = char,
-             class Traits = std::char_traits<CharT>,
-             class A      = std::allocator<CharT>>
+    template<class CharT = char, class Traits = std::char_traits<CharT>, class A = std::allocator<CharT>>
     operator std::basic_string<CharT, Traits, A>() const
     {
         if (size() == 0)
@@ -1093,11 +1078,8 @@ public:
 
     // standard bitset conversions
     // ---------------------------
-    template<class CharT  = char,
-             class Traits = std::char_traits<CharT>,
-             class A      = std::allocator<CharT>>
-    std::basic_string<CharT, Traits, A> to_string(CharT zero = CharT('0'),
-                                                  CharT one  = CharT('1')) const
+    template<class CharT = char, class Traits = std::char_traits<CharT>, class A = std::allocator<CharT>>
+    std::basic_string<CharT, Traits, A> to_string(CharT zero = CharT('0'), CharT one = CharT('1')) const
     {
         std::basic_string<CharT, Traits, A> res(_sz, zero);
         for (size_t i = 0; i < _sz; ++i)
@@ -1113,24 +1095,19 @@ public:
     // print
     // -----
     template<class CharT = char, class Traits = std::char_traits<CharT>>
-    friend std::basic_ostream<CharT, Traits>& operator<<(std::basic_ostream<CharT, Traits>& s,
-                                                         const vec&                         v)
+    friend std::basic_ostream<CharT, Traits>& operator<<(std::basic_ostream<CharT, Traits>& s, const vec& v)
     {
         return s << (std::string)v;
     }
 
-    template<class CharT  = char,
-             class Traits = std::char_traits<CharT>,
-             class A      = std::allocator<CharT>>
+    template<class CharT = char, class Traits = std::char_traits<CharT>, class A = std::allocator<CharT>>
     void append_to_string(std::basic_string<CharT, Traits, A>& res) const
     {
         view().append_to_string(res);
     }
 
     // make bit_vector convertible to std::string
-    template<class CharT  = char,
-             class Traits = std::char_traits<CharT>,
-             class A      = std::allocator<CharT>>
+    template<class CharT = char, class Traits = std::char_traits<CharT>, class A = std::allocator<CharT>>
     operator std::basic_string<CharT, Traits, A>() const
     {
         return static_cast<std::basic_string<CharT, Traits, A>>(view());
@@ -1172,8 +1149,7 @@ struct hash<gtl::bit_vector>
             h = h ^ (bv.block(i) + 0xc6a4a7935bd1e995ull + (h << 6) + (h >> 2));
         if constexpr (sizeof(size_t) < sizeof(uint64_t))
             return static_cast<size_t>(h) +
-                   static_cast<size_t>(
-                       h >> 32); // on 32 bit platforms, make sure we use all the bits of h
+                   static_cast<size_t>(h >> 32); // on 32 bit platforms, make sure we use all the bits of h
         else
             return static_cast<size_t>(h);
     }

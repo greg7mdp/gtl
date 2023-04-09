@@ -262,15 +262,12 @@ public:
 
 private:
     static constexpr bool should_pass_by_value =
-        std::is_trivially_copyable<T>::value &&
-        sizeof(T) <= 16; // don't force large structures to be passed by value
+        std::is_trivially_copyable<T>::value && sizeof(T) <= 16; // don't force large structures to be passed by value
     typedef typename std::conditional<should_pass_by_value, T, const T&>::type VT;
     typedef typename std::conditional<should_pass_by_value, T, T&&>::type      MT;
 
     static constexpr bool usingStdAllocator = std::is_same_v<Allocator, std::allocator<T>>;
-    typedef std::bool_constant<usingStdAllocator ||
-                               A::propagate_on_container_move_assignment::value>
-        moveIsSwap;
+    typedef std::bool_constant<usingStdAllocator || A::propagate_on_container_move_assignment::value> moveIsSwap;
 
     //===========================================================================
     //---------------------------------------------------------------------------
@@ -572,9 +569,7 @@ private:
         }
     }
 
-    static void S_uninitialized_copy_bits(T*                     dest,
-                                          std::move_iterator<T*> first,
-                                          std::move_iterator<T*> last)
+    static void S_uninitialized_copy_bits(T* dest, std::move_iterator<T*> first, std::move_iterator<T*> last)
     {
         T* bFirst = first.base();
         T* bLast  = last.base();
@@ -674,11 +669,9 @@ private:
     }
 
     // dispatch type trait
-    typedef std::bool_constant<std::is_trivially_copyable_v<T> && usingStdAllocator>
-        relocate_use_memcpy;
+    typedef std::bool_constant<std::is_trivially_copyable_v<T> && usingStdAllocator> relocate_use_memcpy;
 
-    typedef std::bool_constant<(std::is_nothrow_move_constructible<T>::value &&
-                                usingStdAllocator) ||
+    typedef std::bool_constant<(std::is_nothrow_move_constructible<T>::value && usingStdAllocator) ||
                                !std::is_copy_constructible<T>::value>
         relocate_use_move;
 
@@ -886,10 +879,7 @@ public:
 private:
     // contract dispatch for iterator types vector(It first, It last)
     template<class ForwardIterator>
-    vector(ForwardIterator  first,
-           ForwardIterator  last,
-           const Allocator& a,
-           std::forward_iterator_tag)
+    vector(ForwardIterator first, ForwardIterator last, const Allocator& a, std::forward_iterator_tag)
         : impl_(size_type(std::distance(first, last)), a)
     {
         M_uninitialized_copy_e(first, last);
@@ -957,10 +947,7 @@ private:
         }
         return dataIsInternal(t);
     }
-    bool dataIsInternal(const T& t)
-    {
-        return UNLIKELY(impl_.b_ <= std::addressof(t) && std::addressof(t) < impl_.e_);
-    }
+    bool dataIsInternal(const T& t) { return UNLIKELY(impl_.b_ <= std::addressof(t) && std::addressof(t) < impl_.e_); }
 
     //===========================================================================
     //---------------------------------------------------------------------------
@@ -1062,8 +1049,7 @@ public:
         void* p = impl_.b_;
         // xallocx() will shrink to precisely newCapacityBytes (which was generated
         // by goodMallocSize()) if it successfully shrinks in place.
-        if constexpr ((usingJEMalloc() && usingStdAllocator) &&
-                      newCapacityBytes >= gtl::jemallocMinInPlaceExpandable &&
+        if constexpr ((usingJEMalloc() && usingStdAllocator) && newCapacityBytes >= gtl::jemallocMinInPlaceExpandable &&
                       xallocx(p, newCapacityBytes, 0, 0) == newCapacityBytes) {
             impl_.z_ += newCap - oldCap;
         } else {
@@ -1443,9 +1429,8 @@ private: // we have the private section first because it defines some macros
                         D_destroy_range_a(impl_.e_ - n, impl_.e_ + n);
                         impl_.e_ -= n;
                     });
-                    std::copy_backward(std::make_move_iterator(position),
-                                       std::make_move_iterator(impl_.e_ - n),
-                                       impl_.e_);
+                    std::copy_backward(
+                        std::make_move_iterator(position), std::make_move_iterator(impl_.e_ - n), impl_.e_);
                     rollback.dismiss();
                 }
                 impl_.e_ += n;
@@ -1505,10 +1490,7 @@ private: // we have the private section first because it defines some macros
     //---------------------------------------------------------------------------
     // interface
 
-    template<typename IsInternalFunc,
-             typename InsertInternalFunc,
-             typename ConstructFunc,
-             typename DestroyFunc>
+    template<typename IsInternalFunc, typename InsertInternalFunc, typename ConstructFunc, typename DestroyFunc>
     iterator do_real_insert(const_iterator       cpos,
                             size_type            n,
                             IsInternalFunc&&     isInternalFunc,
@@ -1635,10 +1617,7 @@ public:
         return insert(cpos, first, last, Category());
     }
 
-    iterator insert(const_iterator cpos, std::initializer_list<T> il)
-    {
-        return insert(cpos, il.begin(), il.end());
-    }
+    iterator insert(const_iterator cpos, std::initializer_list<T> il) { return insert(cpos, il.begin(), il.end()); }
 
     //---------------------------------------------------------------------------
     // insert dispatch for iterator types
@@ -1670,9 +1649,7 @@ private:
         for (; first != last; ++first) {
             emplace_back(*first);
         }
-        insert(cend(),
-               std::make_move_iterator(storage.begin()),
-               std::make_move_iterator(storage.end()));
+        insert(cend(), std::make_move_iterator(storage.begin()), std::make_move_iterator(storage.end()));
         return impl_.b_ + idx;
     }
 
@@ -1772,8 +1749,7 @@ void attach(vector<T, A>& v, T* data, size_t sz, size_t cap)
 }
 
 #if __cpp_deduction_guides >= 201703
-template<class InputIt,
-         class Allocator = std::allocator<typename std::iterator_traits<InputIt>::value_type>>
+template<class InputIt, class Allocator = std::allocator<typename std::iterator_traits<InputIt>::value_type>>
 vector(InputIt, InputIt, Allocator = Allocator())
     -> vector<typename std::iterator_traits<InputIt>::value_type, Allocator>;
 #endif

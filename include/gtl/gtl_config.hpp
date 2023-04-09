@@ -118,8 +118,8 @@
 #ifdef GTL_HAVE_INTRINSIC_INT128
     #error GTL_HAVE_INTRINSIC_INT128 cannot be directly set
 #elif defined(__SIZEOF_INT128__)
-    #if (defined(__clang__) && !defined(_WIN32) && !defined(__aarch64__)) ||                       \
-        (defined(__CUDACC__) && __CUDACC_VER_MAJOR__ >= 9) ||                                      \
+    #if (defined(__clang__) && !defined(_WIN32) && !defined(__aarch64__)) ||                                           \
+        (defined(__CUDACC__) && __CUDACC_VER_MAJOR__ >= 9) ||                                                          \
         (defined(__GNUC__) && !defined(__clang__) && !defined(__CUDACC__))
         #define GTL_HAVE_INTRINSIC_INT128 1
     #elif defined(__CUDACC__)
@@ -140,11 +140,9 @@
     #error "GTL_IS_LITTLE_ENDIAN cannot be directly set."
 #endif
 
-#if (defined(__BYTE_ORDER__) && defined(__ORDER_LITTLE_ENDIAN__) &&                                \
-     __BYTE_ORDER__ == __ORDER_LITTLE_ENDIAN__)
+#if (defined(__BYTE_ORDER__) && defined(__ORDER_LITTLE_ENDIAN__) && __BYTE_ORDER__ == __ORDER_LITTLE_ENDIAN__)
     #define GTL_IS_LITTLE_ENDIAN 1
-#elif defined(__BYTE_ORDER__) && defined(__ORDER_BIG_ENDIAN__) &&                                  \
-    __BYTE_ORDER__ == __ORDER_BIG_ENDIAN__
+#elif defined(__BYTE_ORDER__) && defined(__ORDER_BIG_ENDIAN__) && __BYTE_ORDER__ == __ORDER_BIG_ENDIAN__
     #define GTL_IS_BIG_ENDIAN 1
 #elif defined(_WIN32)
     #define GTL_IS_LITTLE_ENDIAN 1
@@ -195,8 +193,7 @@
     #define GTL_ATTRIBUTE_ALWAYS_INLINE
 #endif
 
-#if !defined(__INTEL_COMPILER) &&                                                                  \
-    (GTL_HAVE_ATTRIBUTE(noinline) || (defined(__GNUC__) && !defined(__clang__)))
+#if !defined(__INTEL_COMPILER) && (GTL_HAVE_ATTRIBUTE(noinline) || (defined(__GNUC__) && !defined(__clang__)))
     #define GTL_ATTRIBUTE_NOINLINE __attribute__((noinline))
     #define GTL_HAVE_ATTRIBUTE_NOINLINE 1
 #else
@@ -223,8 +220,7 @@
 // Figure out SSE support
 // ----------------------------------------------------------------------
 #ifndef GTL_HAVE_SSE2
-    #if defined(__SSE2__) ||                                                                       \
-        (defined(_MSC_VER) && (defined(_M_X64) || (defined(_M_IX86) && _M_IX86_FP >= 2)))
+    #if defined(__SSE2__) || (defined(_MSC_VER) && (defined(_M_X64) || (defined(_M_IX86) && _M_IX86_FP >= 2)))
         #define GTL_HAVE_SSE2 1
     #else
         #define GTL_HAVE_SSE2 0
