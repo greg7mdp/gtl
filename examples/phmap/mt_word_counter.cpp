@@ -75,11 +75,11 @@ int main()
     // print one word used at each frequency
     // -------------------------------------
     gtl::btree_map<int, std::string> result;
-    for (const auto& pair : word_counts)
-        result[pair.second] = pair.first;
+    for (const auto& [word, freq] : word_counts)
+        result[freq] = word;
 
-    for (const auto& p : result)
-        std::cout << p.first << ": " << p.second << std::endl;
+    for (const auto& [freq, word] : result)
+        std::cout << freq << ": " << word << std::endl;
 
     return 0;
 }
