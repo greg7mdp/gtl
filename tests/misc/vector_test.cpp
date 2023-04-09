@@ -67,8 +67,6 @@ std::list<char> RandomList(unsigned int maxSize)
     return lst;
 }
 
-std::list<char> RandomList(unsigned int maxSize);
-
 template<class T>
 T randomObject();
 

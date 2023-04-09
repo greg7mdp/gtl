@@ -1517,7 +1517,7 @@ private: // we have the private section first because it defines some macros
                             DestroyFunc&&        destroyFunc)
     {
         if (n == 0) {
-            return iterator(cpos);
+            return const_cast<iterator>(cpos);
         }
         bool at_end = cpos == cend();
         bool fresh  = insert_use_fresh(at_end, n);
