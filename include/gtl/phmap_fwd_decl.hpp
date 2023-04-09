@@ -20,6 +20,7 @@
 
 #include <memory>
 #include <utility>
+#include <mutex>
 
 #if defined(GTL_USE_ABSL_HASH) && !defined(ABSL_HASH_HASH_H_)
 namespace absl {
