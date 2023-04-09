@@ -155,20 +155,6 @@ public:
 namespace priv {
 
 // --------------------------------------------------------------------------
-template<typename AllocType>
-void SwapAlloc(AllocType& lhs, AllocType& rhs, std::true_type /* propagate_on_container_swap */)
-{
-    using std::swap;
-    swap(lhs, rhs);
-}
-template<typename AllocType>
-void SwapAlloc(AllocType& /*lhs*/,
-               AllocType& /*rhs*/,
-               std::false_type /* propagate_on_container_swap */)
-{
-}
-
-// --------------------------------------------------------------------------
 template<size_t Width>
 class probe_seq
 {
@@ -2052,7 +2038,7 @@ public:
     }
 
     void swap(raw_hash_set& that) noexcept(
-        std::is_nothrow_swappable_v<hasher>&& std::is_nothrow_swappable_v<key_equal> &&
+        std::is_nothrow_swappable_v<hasher> && std::is_nothrow_swappable_v<key_equal> &&
         (!AllocTraits::propagate_on_container_swap::value ||
          std::is_nothrow_swappable_v<allocator_type>))
     {
@@ -2064,7 +2050,7 @@ public:
         swap(growth_left(), that.growth_left());
         swap(hash_ref(), that.hash_ref());
         swap(eq_ref(), that.eq_ref());
-        if (AllocTraits::propagate_on_container_swap::value) {
+        if constexpr (AllocTraits::propagate_on_container_swap::value) {
             swap(alloc_ref(), that.alloc_ref());
         } else {
             // If the allocators do not compare equal it is officially undefined
