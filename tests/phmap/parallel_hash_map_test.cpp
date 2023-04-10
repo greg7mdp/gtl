@@ -35,8 +35,8 @@ TEST(THIS_TEST_NAME, IfContains)
 
     using Map = ThisMap<int, int>;
     Map m     = {
-            {1,  7},
-            { 2, 9}
+        {1,  7},
+        { 2, 9}
     };
     const Map& const_m(m);
 
@@ -55,8 +55,8 @@ TEST(THIS_TEST_NAME, ModifyIf)
     // --------------
     using Map = ThisMap<int, int>;
     Map m     = {
-            {1,  7},
-            { 2, 9}
+        {1,  7},
+        { 2, 9}
     };
 
     auto set_value = [](Map::value_type& v) { v.second = 11; };
@@ -73,8 +73,8 @@ TEST(THIS_TEST_NAME, TryEmplaceL)
     // ------------------
     using Map = ThisMap<int, int>;
     Map m     = {
-            {1,  7},
-            { 2, 9}
+        {1,  7},
+        { 2, 9}
     };
 
     // overwrite an existing value
@@ -83,8 +83,7 @@ TEST(THIS_TEST_NAME, TryEmplaceL)
 
     // insert a value that is not already present. Will be default initialised to 0 and lambda not
     // called
-    m.try_emplace_l(
-        3, [](Map::value_type& v) { v.second = 6; }); // called only when key was already present
+    m.try_emplace_l(3, [](Map::value_type& v) { v.second = 6; }); // called only when key was already present
     EXPECT_EQ(m[3], 0);
 
     // insert a value that is not already present, provide argument to value-construct it
@@ -103,27 +102,23 @@ TEST(THIS_TEST_NAME, LazyEmplaceL)
     // --------------------
     using Map = ThisMap<int, int>;
     Map m     = {
-            {1,  7},
-            { 2, 9}
+        {1,  7},
+        { 2, 9}
     };
 
     // insert a value that is not already present.
     // right now m[5] does not exist
     m.lazy_emplace_l(
         5,
-        [](Map::value_type& v) { v.second = 6; }, // called only when key was already present
-        [](const Map::constructor& ctor) {
-            ctor(5, 13);
-        }); // construct value_type in place when key not present
+        [](Map::value_type& v) { v.second = 6; },           // called only when key was already present
+        [](const Map::constructor& ctor) { ctor(5, 13); }); // construct value_type in place when key not present
     EXPECT_EQ(m[5], 13);
 
     // change a value that is present. Currently m[5] == 13
     m.lazy_emplace_l(
         5,
-        [](Map::value_type& v) { v.second = 6; }, // called only when key was already present
-        [](const Map::constructor& ctor) {
-            ctor(5, 13);
-        }); // construct value_type in place when key not present
+        [](Map::value_type& v) { v.second = 6; },           // called only when key was already present
+        [](const Map::constructor& ctor) { ctor(5, 13); }); // construct value_type in place when key not present
     EXPECT_EQ(m[5], 6);
 }
 
@@ -134,9 +129,9 @@ TEST(THIS_TEST_NAME, EraseIf)
     // -------------
     using Map = ThisMap<int, int>;
     Map m     = {
-            {1,  7},
-            { 2, 9},
-            { 5, 6}
+        {1,  7},
+        { 2, 9},
+        { 5, 6}
     };
 
     EXPECT_EQ(m.erase_if(9,
@@ -160,9 +155,9 @@ TEST(THIS_TEST_NAME, ForEach)
     // -------------
     using Map = ThisMap<int, int>;
     Map m     = {
-            {1,  7 },
-            { 2, 8 },
-            { 5, 11}
+        {1,  7 },
+        { 2, 8 },
+        { 5, 11}
     };
 
     // increment all values by 1
@@ -197,8 +192,8 @@ TEST(THIS_TEST_NAME, EmplaceSingle)
     // --------------------
     using Map = ThisMap<int, int>;
     Map m     = {
-            {1,   4},
-            { 11, 4}
+        {1,   4},
+        { 11, 4}
     };
 
     // emplace_single insert a value if not already present, else removes it
