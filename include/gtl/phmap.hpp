@@ -213,7 +213,7 @@ struct IsDecomposable<
 
 // --------------------------------------------------------------------------
 template<typename T>
-int TrailingZeros(T x)
+uint32_t TrailingZeros(T x)
 {
     if constexpr (sizeof(T) == 8)
         return gtl::CountTrailingZerosNonZero64(static_cast<uint64_t>(x));
@@ -223,7 +223,7 @@ int TrailingZeros(T x)
 
 // --------------------------------------------------------------------------
 template<typename T>
-int LeadingZeros(T x)
+uint32_t LeadingZeros(T x)
 {
     if constexpr (sizeof(T) == 8)
         return gtl::CountLeadingZeros64(static_cast<uint64_t>(x));
@@ -366,7 +366,7 @@ inline size_t H1(size_t hashval, const ctrl_t*)
 
 inline h2_t H2(size_t hashval)
 {
-    return (ctrl_t)(hashval & 0x7F);
+   return (h2_t)(ctrl_t)(hashval & 0x7F);
 }
 
 inline bool IsEmpty(ctrl_t c)
@@ -1238,7 +1238,7 @@ public:
             return tmp;
         }
 
-    #if GTL_BIDIRECTIONAL
+  #if 0 //GTL_BIDIRECTIONAL
         // PRECONDITION: not a begin() iterator.
         iterator& operator--()
         {
@@ -1596,7 +1596,7 @@ public:
     }
     iterator end()
     {
-    #if GTL_BIDIRECTIONAL
+    #if 0 // GTL_BIDIRECTIONAL
         return iterator_at(capacity_);
     #else
         return { ctrl_ + capacity_ };
