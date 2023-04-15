@@ -2981,7 +2981,7 @@ public:
         {
         }
         DoNothing& operator=(const DoNothing&) { return *this; }
-        DoNothing& operator=(DoNothing&&) { return *this; }
+        DoNothing& operator=(DoNothing&&) noexcept { return *this; }
         void       swap(DoNothing&) {}
         bool       owns_lock() const noexcept { return true; }
     };
@@ -3024,7 +3024,7 @@ public:
             m_->try_lock();
         }
 
-        WriteLock(WriteLock&& o)
+        WriteLock(WriteLock&& o) noexcept 
             : m_(std::move(o.m_))
             , locked_(std::move(o.locked_))
         {
@@ -3032,7 +3032,7 @@ public:
             o.m_      = nullptr;
         }
 
-        WriteLock& operator=(WriteLock&& other)
+        WriteLock& operator=(WriteLock&& other) noexcept 
         {
             WriteLock temp(std::move(other));
             swap(temp);
@@ -3122,7 +3122,7 @@ public:
             m_->try_lock_shared();
         }
 
-        ReadLock(ReadLock&& o)
+        ReadLock(ReadLock&& o) noexcept 
             : m_(std::move(o.m_))
             , locked_(std::move(o.locked_))
         {
@@ -3130,7 +3130,7 @@ public:
             o.m_      = nullptr;
         }
 
-        ReadLock& operator=(ReadLock&& other)
+        ReadLock& operator=(ReadLock&& other) noexcept 
         {
             ReadLock temp(std::move(other));
             swap(temp);

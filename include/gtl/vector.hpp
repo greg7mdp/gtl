@@ -828,7 +828,7 @@ public:
         return *this;
     }
 
-    vector& operator=(vector&& other)
+    vector& operator=(vector&& other) noexcept
     {
         if (UNLIKELY(this == &other)) {
             return *this;

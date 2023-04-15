@@ -828,7 +828,7 @@ public:
     explicit vec(std::initializer_list<uint64_t> vals)
         : vec(vals.size() * stride)
     {
-        *this = std::move(vals);
+       *this = vals;
     }
 
     void resize(size_t sz, bool val = false)
