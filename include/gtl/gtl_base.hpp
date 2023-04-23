@@ -1214,15 +1214,16 @@ inline void SanitizerUnpoisonObject(const T* object)
 }
 
 namespace {
-template<typename T>
-[[noreturn]] void Throw(const T& error)
-{
-    throw error;
-}
+#ifdef GTL_HAVE_EXCEPTIONS
+    #define GTL_THROW_IMPL(e) throw e
+#else
+    #define GTL_THROW_IMPL(e) std::abort()
+#endif
 } // namespace
 
-static inline void ThrowStdOutOfRange(const std::string& what_arg) { Throw(std::out_of_range(what_arg)); }
-static inline void ThrowStdOutOfRange(const char* what_arg) { Throw(std::out_of_range(what_arg)); }
+
+static inline void ThrowStdOutOfRange(const std::string& what_arg) { GTL_THROW_IMPL(std::out_of_range(what_arg)); }
+static inline void ThrowStdOutOfRange(const char* what_arg) { GTL_THROW_IMPL(std::out_of_range(what_arg)); }
 
 } // gtl
 

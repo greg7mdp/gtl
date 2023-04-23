@@ -150,6 +150,21 @@
     #error "gtl endian detection needs to be set up for your compiler"
 #endif
 
+// ------------------------------------------------------------------
+// Checks whether the compiler both supports and enables exceptions. 
+// ------------------------------------------------------------------
+#ifdef GTL_HAVE_EXCEPTIONS
+    #error GTL_HAVE_EXCEPTIONS cannot be directly set.
+#elif defined(__clang__)
+    #if defined(__EXCEPTIONS) && __has_feature(cxx_exceptions)
+        #define GTL_HAVE_EXCEPTIONS 1
+    #endif  // defined(__EXCEPTIONS) && __has_feature(cxx_exceptions)
+#elif !(defined(__GNUC__) && (__GNUC__ < 5) && !defined(__EXCEPTIONS)) &&    \
+    !(defined(__GNUC__) && (__GNUC__ >= 5) && !defined(__cpp_exceptions)) && \
+    !(defined(_MSC_VER) && !defined(_CPPUNWIND))
+    #define GTL_HAVE_EXCEPTIONS 1
+#endif
+
 // ---------------------------------------------------------------------------
 // Checks whether wchar_t is treated as a native type
 // (MSVC: /Zc:wchar_t- treats wchar_t as unsigned short)
