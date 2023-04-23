@@ -36,7 +36,7 @@
 
 #define GTL_VERSION_MAJOR 1
 #define GTL_VERSION_MINOR 1
-#define GTL_VERSION_PATCH 5
+#define GTL_VERSION_PATCH 6
 
 // Included for the __GLIBC__ macro (or similar macros on other systems).
 #include <limits.h>
@@ -151,16 +151,16 @@
 #endif
 
 // ------------------------------------------------------------------
-// Checks whether the compiler both supports and enables exceptions. 
+// Checks whether the compiler both supports and enables exceptions.
 // ------------------------------------------------------------------
 #ifdef GTL_HAVE_EXCEPTIONS
     #error GTL_HAVE_EXCEPTIONS cannot be directly set.
 #elif defined(__clang__)
     #if defined(__EXCEPTIONS) && __has_feature(cxx_exceptions)
         #define GTL_HAVE_EXCEPTIONS 1
-    #endif  // defined(__EXCEPTIONS) && __has_feature(cxx_exceptions)
-#elif !(defined(__GNUC__) && (__GNUC__ < 5) && !defined(__EXCEPTIONS)) &&    \
-    !(defined(__GNUC__) && (__GNUC__ >= 5) && !defined(__cpp_exceptions)) && \
+    #endif // defined(__EXCEPTIONS) && __has_feature(cxx_exceptions)
+#elif !(defined(__GNUC__) && (__GNUC__ < 5) && !defined(__EXCEPTIONS)) &&                                              \
+    !(defined(__GNUC__) && (__GNUC__ >= 5) && !defined(__cpp_exceptions)) &&                                           \
     !(defined(_MSC_VER) && !defined(_CPPUNWIND))
     #define GTL_HAVE_EXCEPTIONS 1
 #endif
