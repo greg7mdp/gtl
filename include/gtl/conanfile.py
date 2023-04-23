@@ -6,7 +6,7 @@ import os
 
 class GtlConan(ConanFile):
     name = "gtl"
-    version = "1.00"
+    version = "1.1.7"
     description = "Greg's Template Library of useful classes"
     
     # Indicates License type of the packaged library
