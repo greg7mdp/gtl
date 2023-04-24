@@ -23,11 +23,9 @@ int main()
 {
     {
         gtl::intrusive_ptr<A> a = new A;
-        ;
 
         {
-            auto                  a2 = a;
-            gtl::intrusive_ptr<D> d  = new D;
+            gtl::intrusive_ptr<D> d = new D;
             {
                 gtl::intrusive_ptr<A> d2 = d;
             }

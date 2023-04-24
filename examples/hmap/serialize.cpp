@@ -48,15 +48,12 @@ public:
         m_intermediateOffset = permuteQPR(permuteQPR(seedOffset) + 0x46790905);
     }
 
-    unsigned int next()
-    {
-        return permuteQPR((permuteQPR(m_index++) + m_intermediateOffset) ^ 0x5bf03635);
-    }
+    unsigned int next() { return permuteQPR((permuteQPR(m_index++) + m_intermediateOffset) ^ 0x5bf03635); }
 };
 
 // --------------------------------------------------------------------------
 // --------------------------------------------------------------------------
-void showtime(const char* name, std::function<void()> doit)
+void showtime(const char* name, const std::function<void()>& doit)
 {
     auto t1 = std::chrono::high_resolution_clock::now();
     doit();

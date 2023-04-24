@@ -14,7 +14,7 @@
 class Timer
 {
 public:
-    Timer(std::string name)
+    Timer(const std::string& name)
         : _name(name)
         , _start(std::chrono::high_resolution_clock::now())
     {
@@ -22,8 +22,7 @@ public:
 
     ~Timer()
     {
-        std::chrono::duration<float> elapsed_seconds =
-            std::chrono::high_resolution_clock::now() - _start;
+        std::chrono::duration<float> elapsed_seconds = std::chrono::high_resolution_clock::now() - _start;
         printf("%s: %.3fs\n", _name.c_str(), elapsed_seconds.count());
     }
 
@@ -57,10 +56,7 @@ public:
         m_intermediateOffset = permuteQPR(permuteQPR(seedOffset) + 0x46790905);
     }
 
-    uint32_t next()
-    {
-        return permuteQPR((permuteQPR(m_index++) + m_intermediateOffset) ^ 0x5bf03635);
-    }
+    uint32_t next() { return permuteQPR((permuteQPR(m_index++) + m_intermediateOffset) ^ 0x5bf03635); }
 };
 
 using Perturb = std::function<void(std::vector<uint64_t>&)>;
@@ -68,7 +64,7 @@ using Perturb = std::function<void(std::vector<uint64_t>&)>;
 // --------------------------------------------------------------------------
 // --------------------------------------------------------------------------
 template<class Set, size_t N>
-void test(const char* name, Perturb perturb1, Perturb /* perturb2 */)
+void test(const char* name, const Perturb& perturb1, const Perturb& /* perturb2 */)
 {
     // gtl::btree_set<uint64_t> s;
     Set s;
@@ -79,11 +75,11 @@ void test(const char* name, Perturb perturb1, Perturb /* perturb2 */)
     for (uint32_t i = 0; i < N; ++i)
         s.insert(rsu.next());
 
-    std::vector<uint64_t> order(
-        s.begin(), s.end()); // contains sorted, randomly generated keys (when using gtl::btree_set)
-                             // or keys in the final order of a Set (when using Set).
+    std::vector<uint64_t> order(s.begin(),
+                                s.end()); // contains sorted, randomly generated keys (when using gtl::btree_set)
+                                          // or keys in the final order of a Set (when using Set).
 
-    perturb1(order); // either keep them in same order, or shuffle them
+    perturb1(order);                      // either keep them in same order, or shuffle them
 
 #if 0
     order.resize(N/4);

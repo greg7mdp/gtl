@@ -48,8 +48,10 @@ int main()
     double                           sum = 0;
     std::vector<std::future<double>> threads;
     gtl::stopwatch<std::milli>       sw;
+    constexpr size_t                 num_threads = 100;
 
-    for (int i = 0; i < 100; i++) {
+    threads.reserve(num_threads);
+    for (int i = 0; i < num_threads; i++) {
         threads.emplace_back(std::async(simulate)); // new thread
     }
 
@@ -57,9 +59,7 @@ int main()
         sum += t.get(); // sum results from all threads
     }
 
-    printf("Computed sum = %.3f (expected 24999981374.176) in  %10.3f seconds\n",
-           sum,
-           sw.since_start() / 1000);
+    printf("Computed sum = %.3f (expected 24999981374.176) in  %10.3f seconds\n", sum, sw.since_start() / 1000);
 
     return 0;
 }

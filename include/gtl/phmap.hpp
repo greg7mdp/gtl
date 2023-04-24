@@ -1454,7 +1454,7 @@ public:
         // `that` must be left valid. If Hash is std::function<Key>, moving it
         // would create a nullptr functor that cannot be called.
         // -------------------------------------------------------------------
-        settings_(that.settings_)
+        settings_(std::move(that.settings_))
     {
         // growth_left was copied above, reset the one from `that`.
         that.growth_left() = 0;
