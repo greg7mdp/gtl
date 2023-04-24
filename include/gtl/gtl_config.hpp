@@ -36,7 +36,7 @@
 
 #define GTL_VERSION_MAJOR 1
 #define GTL_VERSION_MINOR 1
-#define GTL_VERSION_PATCH 6
+#define GTL_VERSION_PATCH 8
 
 // Included for the __GLIBC__ macro (or similar macros on other systems).
 #include <limits.h>
