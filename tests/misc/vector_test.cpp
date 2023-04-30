@@ -375,11 +375,18 @@ TEST(vector, erase_if)
 TEST(vector, stealing_constructor)
 {
     using Alloc = std::allocator<int>;
+    using vec_t = gtl::vector<int, Alloc>;
     Alloc alloc;
-    int*  x = (int *)gtl::checkedMalloc(4 * sizeof(int));
+
+    int *x;
+    if constexpr (std::is_same_v<Alloc, std::allocator<vec_t::value_type>>) // always the case here, but left as an example of what should be done
+       x = (int *)gtl::checkedMalloc(4 * sizeof(vec_t::value_type));
+    else
+       x = std::allocator_traits<Alloc>::allocate(alloc, 4);
+    
     for (int i = 0; i < 3; ++i)
         *(x + i) = i;
-    gtl::vector<int, Alloc> v(std::unique_ptr<int>(x), 3, 4);
+    vec_t v(std::unique_ptr<int>(x), 3, 4);
     ASSERT_EQ(3u, v.size());
     EXPECT_EQ(0u, v[0]);
     EXPECT_EQ(1u, v[1]);
