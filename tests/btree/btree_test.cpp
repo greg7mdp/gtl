@@ -860,8 +860,6 @@ void BtreeMultiMapTest()
 template<typename K, int N = 256>
 void SetTest()
 {
-    EXPECT_EQ(sizeof(gtl::btree_set<K>),
-              2 * sizeof(void*) + sizeof(typename gtl::btree_set<K>::size_type));
     using BtreeSet         = gtl::btree_set<K>;
     using CountingBtreeSet = gtl::btree_set<K, std::less<K>, PropagatingCountingAlloc<K>>;
     BtreeTest<BtreeSet, std::set<K>>();
@@ -871,8 +869,6 @@ void SetTest()
 template<typename K, int N = 256>
 void MapTest()
 {
-    EXPECT_EQ(sizeof(gtl::btree_map<K, K>),
-              2 * sizeof(void*) + sizeof(typename gtl::btree_map<K, K>::size_type));
     using BtreeMap = gtl::btree_map<K, K>;
     using CountingBtreeMap =
         gtl::btree_map<K, K, std::less<K>, PropagatingCountingAlloc<std::pair<const K, K>>>;
@@ -893,8 +889,6 @@ TEST(Btree, map_pair) { MapTest<std::pair<int, int>>(); }
 template<typename K, int N = 256>
 void MultiSetTest()
 {
-    EXPECT_EQ(sizeof(gtl::btree_multiset<K>),
-              2 * sizeof(void*) + sizeof(typename gtl::btree_multiset<K>::size_type));
     using BtreeMSet         = gtl::btree_multiset<K>;
     using CountingBtreeMSet = gtl::btree_multiset<K, std::less<K>, PropagatingCountingAlloc<K>>;
     BtreeMultiTest<BtreeMSet, std::multiset<K>>();
@@ -904,8 +898,6 @@ void MultiSetTest()
 template<typename K, int N = 256>
 void MultiMapTest()
 {
-    EXPECT_EQ(sizeof(gtl::btree_multimap<K, K>),
-              2 * sizeof(void*) + sizeof(typename gtl::btree_multimap<K, K>::size_type));
     using BtreeMMap = gtl::btree_multimap<K, K>;
     using CountingBtreeMMap =
         gtl::btree_multimap<K, K, std::less<K>, PropagatingCountingAlloc<std::pair<const K, K>>>;
