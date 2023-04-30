@@ -376,7 +376,7 @@ TEST(vector, stealing_constructor)
 {
     using Alloc = std::allocator<int>;
     Alloc alloc;
-    int*  x = std::allocator_traits<Alloc>::allocate(alloc, 4);
+    int*  x = (int *)gtl::checkedMalloc(4 * sizeof(int));
     for (int i = 0; i < 3; ++i)
         *(x + i) = i;
     gtl::vector<int, Alloc> v(std::unique_ptr<int>(x), 3, 4);

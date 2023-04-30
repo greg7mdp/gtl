@@ -115,7 +115,6 @@ if (GTL_BUILD_TESTS)
     enable_testing()
 
     ## ---------------- base hash components ----------------------------
-    gtl_cc_test(NAME compressed_tuple SRCS "tests/phmap/compressed_tuple_test.cpp" DEPS ${GTL_GTEST_LIBS})
     gtl_cc_test(NAME container_memory SRCS "tests/phmap/container_memory_test.cpp" DEPS ${GTL_GTEST_LIBS})
     gtl_cc_test(NAME hash_policy_testing SRCS "tests/phmap/hash_policy_testing_test.cpp" DEPS ${GTL_GTEST_LIBS})
     gtl_cc_test(NAME node_hash_policy SRCS "tests/phmap/node_hash_policy_test.cpp" DEPS ${GTL_GTEST_LIBS})

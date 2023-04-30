@@ -2611,7 +2611,7 @@ private:
 
     void reset_growth_left(size_t capacity) { growth_left() = CapacityToGrowth(capacity) - size_; }
 
-    size_t& growth_left() { return settings_.template get<0>(); }
+    size_t& growth_left() { return std::get<0>(settings_); }
 
     template<size_t N,
              template<class, class, class, class>
@@ -2652,12 +2652,12 @@ private:
     // -------------------------------------------------------------------------
     bool is_small() const { return capacity_ < Group::kWidth - 1; }
 
-    hasher&               hash_ref() { return settings_.template get<1>(); }
-    const hasher&         hash_ref() const { return settings_.template get<1>(); }
-    key_equal&            eq_ref() { return settings_.template get<2>(); }
-    const key_equal&      eq_ref() const { return settings_.template get<2>(); }
-    allocator_type&       alloc_ref() { return settings_.template get<3>(); }
-    const allocator_type& alloc_ref() const { return settings_.template get<3>(); }
+    hasher&               hash_ref() { return std::get<1>(settings_); }
+    const hasher&         hash_ref() const { return std::get<1>(settings_); }
+    key_equal&            eq_ref() { return std::get<2>(settings_); }
+    const key_equal&      eq_ref() const { return std::get<2>(settings_); }
+    allocator_type&       alloc_ref() { return std::get<3>(settings_); }
+    const allocator_type& alloc_ref() const { return std::get<3>(settings_); }
 
     // TODO(alkis): Investigate removing some of these fields:
     // - ctrl/slots can be derived from each other
@@ -2667,7 +2667,7 @@ private:
     slot_type* slots_    = nullptr;      // [capacity * slot_type]
     size_t     size_     = 0;            // number of full slots
     size_t     capacity_ = 0;            // total number of slots
-    gtl::priv::CompressedTuple<size_t /* growth_left */, hasher, key_equal, allocator_type>
+   std::tuple<size_t /* growth_left */, hasher, key_equal, allocator_type>
         settings_{ 0, hasher{}, key_equal{}, allocator_type{} };
 };
 

@@ -73,6 +73,7 @@ inline void* checkedMalloc(size_t size)
     }
     return p;
 }
+
 } // namespace gtl
 
 //========================= forward declaration ===============================
@@ -1420,7 +1421,10 @@ private: // we have the private section first because it defines some macros
             impl_.e_ += n;
         } else {
             if constexpr (std::is_trivially_copyable_v<T> && usingStdAllocator) {
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wnonnull" // disable erroneous warning 
                 std::memmove((void*)(position + n), (void*)position, tail * sizeof(T));
+#pragma GCC diagnostic pop
                 impl_.e_ += n;
             } else {
                 D_uninitialized_move_a(impl_.e_, impl_.e_ - n, impl_.e_);
