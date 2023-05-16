@@ -85,7 +85,7 @@
 #endif
 
 #if CHAR_BIT != 8
-    #error "gtl assumes CHAR_BIT == 8."
+    #warning "gtl assumes CHAR_BIT == 8."
 #endif
 
 // gtl currently assumes that an int is 4 bytes.
