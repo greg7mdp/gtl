@@ -131,9 +131,9 @@ public:
            const auto t = (*this)[i];
             ss << "\t";
             print(ss, t, std::make_index_sequence<sizeof...(Ts)>());
-            ss << std::endl;
+            ss << '\n';
         }
-        ss << "}" << std::endl;
+        ss << "}" << '\n';
     }
 
 private:
