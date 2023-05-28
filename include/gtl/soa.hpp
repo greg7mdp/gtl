@@ -38,6 +38,7 @@
 #include <ostream>
 #include <tuple>
 #include <vector>
+#include <gtl/bit_vector.hpp>
 
 namespace gtl {
 
@@ -139,7 +140,7 @@ private:
     struct sort_data
     {
         std::vector<size_t> o;    // sort order
-        std::vector<bool>   done; // [greg todo] should use bit vector
+        bit_vector          done; 
         void                resize(size_t sz)
         {
             o.resize(sz);
@@ -182,12 +183,11 @@ private:
     // so if o[0] = 5, it means that c[5] should go to c[0].
     // c contains the values to be reordered according to o.
     template<class C>
-    void reorder(C& c, const std::vector<size_t>& o, std::vector<bool>& done)
+    void reorder(C& c, const std::vector<size_t>& o, bit_vector& done)
     {
         size_t num_elems = o.size();
 
-        for (size_t i = 0; i < num_elems; ++i)
-            done[i] = false;
+        done.reset();
 
         for (size_t i = 0; i < num_elems; ++i) {
             if (!done[i]) {
@@ -196,7 +196,7 @@ private:
 
                 do {
                     assert(!done[curidx]);
-                    done[curidx] = 1;
+                    done.set(curidx);
                     if (o[curidx] == i) {
                         c[curidx] = std::move(ci);
                         break;

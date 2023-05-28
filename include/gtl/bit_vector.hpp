@@ -819,7 +819,7 @@ public:
     using bv_type                = _view<S, vec>;
     static constexpr size_t npos = bv_type::npos;
 
-    explicit vec(size_t sz, bool val = false)
+    explicit vec(size_t sz = 0, bool val = false)
         : _sz(sz)
         , _s(sz, val)
     {
