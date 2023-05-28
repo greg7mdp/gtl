@@ -109,7 +109,7 @@ public:
 
         auto& col = get_column<col_idx>();
 
-        auto comp_wrapper = [=](size_t a, size_t b) { return comp(col[a], col[b]); };
+        auto comp_wrapper = [&](size_t a, size_t b) { return comp(col[a], col[b]); };
 
         std::stable_sort(sort_tmp.o.begin(), sort_tmp.o.end(), comp_wrapper);
 
