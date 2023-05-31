@@ -2613,6 +2613,8 @@ private:
 
     size_t& growth_left() { return std::get<0>(settings_); }
 
+    const size_t& growth_left() const { return std::get<0>(settings_); }
+
     template<size_t N,
              template<class, class, class, class>
              class RefSet,
