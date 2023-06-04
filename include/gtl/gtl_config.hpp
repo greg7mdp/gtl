@@ -225,7 +225,9 @@
     #define GTL_ATTRIBUTE_REINITIALIZES
 #endif
 
-#if GTL_HAVE_ATTRIBUTE(no_unique_address) || GTL_HAVE_CPP_ATTRIBUTE(no_unique_address)
+#if defined(_MSC_VER) && _MSC_VER >= 1929
+    #define GTL_ATTRIBUTE_NO_UNIQUE_ADDRESS [[msvc::no_unique_address]]
+#elif GTL_HAVE_ATTRIBUTE(no_unique_address) || GTL_HAVE_CPP_ATTRIBUTE(no_unique_address)
     #define GTL_ATTRIBUTE_NO_UNIQUE_ADDRESS [[no_unique_address]]
 #else
     #define GTL_ATTRIBUTE_NO_UNIQUE_ADDRESS
