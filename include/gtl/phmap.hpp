@@ -3229,12 +3229,12 @@ public:
 
 struct AbslMutex : protected absl::Mutex
 {
-    void lock() { this->Lock(); }
-    void unlock() { this->Unlock(); }
-    void try_lock() { this->TryLock(); }
-    void lock_shared() { this->ReaderLock(); }
-    void unlock_shared() { this->ReaderUnlock(); }
-    void try_lock_shared() { this->ReaderTryLock(); }
+    void lock()            ABSL_EXCLUSIVE_LOCK_FUNCTION()        { this->Lock(); }
+    void unlock()          ABSL_UNLOCK_FUNCTION()                { this->Unlock(); }
+    void try_lock()        ABSL_EXCLUSIVE_TRYLOCK_FUNCTION(true) { this->TryLock(); }
+    void lock_shared()     ABSL_SHARED_LOCK_FUNCTION()           { this->ReaderLock(); }
+    void unlock_shared()   ABSL_UNLOCK_FUNCTION()                { this->ReaderUnlock(); }
+    void try_lock_shared() ABSL_SHARED_TRYLOCK_FUNCTION(true)    { this->ReaderTryLock(); }
 };
 
 template<>
