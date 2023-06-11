@@ -237,7 +237,7 @@
     #define GTL_ASSUME(expr) [[assume(expr)]]
 #elif defined(__clang__)
     #define GTL_ASSUME(expr) __builtin_assume(expr)
-#elif defined(_MSC_VER) || defined(__ICC))
+#elif defined(_MSC_VER) || defined(__ICC)
     #define GTL_ASSUME(expr) __assume(expr)
 #else
     #define GTL_ASSUME(expr)
