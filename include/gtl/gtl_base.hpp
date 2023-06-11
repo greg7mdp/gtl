@@ -1057,7 +1057,7 @@ namespace {
 #ifdef GTL_HAVE_EXCEPTIONS
     #define GTL_THROW_IMPL(e) throw e
 #else
-    #define GTL_THROW_IMPL(e) std::abort()
+    #define GTL_THROW_IMPL(...) std::abort()
 #endif
 } // namespace
 
