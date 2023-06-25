@@ -100,11 +100,14 @@ option(GTL_BUILD_TESTS      "Whether or not to build the tests"      ${GTL_MASTE
 option(GTL_BUILD_EXAMPLES   "Whether or not to build the examples"   ${GTL_MASTER_PROJECT})
 option(GTL_BUILD_BENCHMARKS "Whether or not to build the benchmarks" ${GTL_MASTER_PROJECT})
 
+if (GTL_BUILD_TESTS OR GTL_BUILD_EXAMPLES)
+    include_directories(${PROJECT_SOURCE_DIR})
+endif()
+
 if (GTL_BUILD_TESTS)
 
     if (NOT GTL_GTEST_LIBS)
         include(cmake/DownloadGTest.cmake)
-        include_directories(${PROJECT_SOURCE_DIR})
 
         gtl_check_target(gtest)
         gtl_check_target(gtest_main)
