@@ -32,7 +32,7 @@ int main()
         // populate 4 vectors with lines from the book
         std::ifstream file(filename);
         if (!file.is_open()) {
-            std::cout << "Error: could not open file " << filename << std::endl;
+            std::cout << "Error: could not open file " << filename << '\n';
             return 1;
         }
         int         line_idx = 0;
@@ -80,7 +80,7 @@ int main()
         result[freq] = word;
 
     for (const auto& [freq, word] : result)
-        std::cout << freq << ": " << word << std::endl;
+        std::cout << freq << ": " << word << '\n';
 
     return 0;
 }

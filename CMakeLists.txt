@@ -194,4 +194,5 @@ endif()
 
 if (GTL_BUILD_BENCHMARKS)
     gtl_cc_app(bench_bit_vector SRCS benchmarks/bitvector_bench.cpp include/gtl/debug_vis/gtl.natvis)
+    gtl_cc_app(bench_hash SRCS benchmarks/hash_bench.cpp include/gtl/debug_vis/gtl.natvis)
 endif()
