@@ -25,10 +25,6 @@
 #ifndef POLYMUR_HASH_H
 #define POLYMUR_HASH_H
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 #include <stdint.h>
 #include <string.h>
 #include <stdlib.h>
@@ -287,9 +283,5 @@ static inline uint64_t polymur_hash(const uint8_t* buf, size_t len, const Polymu
     uint64_t h = polymur_hash_poly611(buf, len, p, tweak);
     return polymur_mix(h) + p->s;
 }
-
-#ifdef __cplusplus
-}
-#endif
 
 #endif

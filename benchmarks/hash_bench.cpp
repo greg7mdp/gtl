@@ -96,10 +96,11 @@ static inline std::string to_str(uint64_t x) {
 }
 
 struct PMHash {
-    std::size_t operator()(std::string const& s) const
+    template<class T>
+    std::size_t operator()(T const& s) const
     {
         constexpr uint64_t tweak = 0xabcdef0123456789ULL;
-        return polymur_hash((const uint8_t*) s.data(), s.size(), &p, tweak);
+        return polymur_hash((const uint8_t*) s.data(), s.size() * sizeof(typename T::value_type), &p, tweak);
     }
     
     static void init() {
