@@ -40,6 +40,7 @@
 
 // Included for the __GLIBC__ macro (or similar macros on other systems).
 #include <limits.h>
+#include <new>
 
 #ifdef __cplusplus
     // Included for __GLIBCXX__, _LIBCPP_VERSION
@@ -272,6 +273,15 @@
 
 #if GTL_HAVE_SSSE3
     #include <tmmintrin.h>
+#endif
+
+// ----------------------------------------------------------------------
+// define gtl_hardware_destructive_interference_size
+// ----------------------------------------------------------------------
+#ifdef __cpp_lib_hardware_interference_size
+    #define gtl_hardware_destructive_interference_size std::hardware_destructive_interference_size
+#else
+    #define gtl_hardware_destructive_interference_size 64
 #endif
 
 #endif // gtl_config_hpp_guard_
