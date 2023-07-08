@@ -26,7 +26,7 @@ template<class K,
          size_t N    = 4,
          class Hash  = gtl::Hash<K>,
          class Eq    = std::equal_to<K>,
-         class Mutex = std::mutex>
+         class Mutex = std::shared_mutex>
 class lru_cache_impl
 {
 public:
@@ -114,7 +114,7 @@ private:
 // of items remaining in (or expunged from) cache.
 //
 // but it is fine to use a larger N for real-life applications, although it is
-// mostly useful in multi threaded contexts (when using std::mutex).
+// mostly useful in multi threaded contexts (when using std::shared_mutex).
 // ------------------------------------------------------------------------------
 template<class K, class V, class Hash = gtl::Hash<K>, class Eq = std::equal_to<K>>
 using lru_cache = lru_cache_impl<K, V, 0, Hash, Eq, gtl::NullMutex>;
@@ -123,7 +123,7 @@ using lru_cache = lru_cache_impl<K, V, 0, Hash, Eq, gtl::NullMutex>;
 // uses std::mutex by default
 // ------------------------------------------------------------------------------
 template<class K, class V, class Hash = gtl::Hash<K>, class Eq = std::equal_to<K>>
-using mt_lru_cache = lru_cache_impl<K, V, 6, Hash, Eq, std::mutex>;
+using mt_lru_cache = lru_cache_impl<K, V, 6, Hash, Eq, std::shared_mutex>;
 
 } // namespace gtl
 
