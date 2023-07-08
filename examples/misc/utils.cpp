@@ -4,13 +4,13 @@
 struct A : public gtl::timestamp
 {
     bool set_x(int v) { return set_with_ts(x_, v); }
-    int  x_;
+    int  x_{ 0 };
 };
 
 struct B : public gtl::timestamp
 {
     bool set_y(int v) { return set_with_ts(y_, v); }
-    int  y_;
+    int  y_{ 0 };
 };
 
 struct C : public gtl::provides_timestamp<C>

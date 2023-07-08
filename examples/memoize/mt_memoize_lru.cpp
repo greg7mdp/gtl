@@ -51,7 +51,7 @@ int main()
     constexpr size_t                 num_threads = 100;
 
     threads.reserve(num_threads);
-    for (int i = 0; i < num_threads; i++) {
+    for (size_t i = 0; i < num_threads; i++) {
         threads.emplace_back(std::async(simulate)); // new thread
     }
 
