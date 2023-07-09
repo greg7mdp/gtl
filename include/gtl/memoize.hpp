@@ -59,7 +59,7 @@ using this_pack_helper = typename pack_helper<F>::args;
 // or returns the cached returned value if the arguments match a previous call.
 // Of course this should be used only for pure functions without side effects.
 //
-// if a mutex (such as std::shared_mutex) is provided, this callable object can be
+// if a mutex (such as std::mutex) is provided, this callable object can be
 // used safely from multiple threads without any additional locking.
 //
 // This version keeps all unique results in the hash map.
@@ -74,7 +74,7 @@ using this_pack_helper = typename pack_helper<F>::args;
 //
 // see example: examples/memoize/mt_memoize.cpp
 // ------------------------------------------------------------------------------
-template<class F, bool recursive = true, size_t N = 6, class Mutex = std::shared_mutex, class = this_pack_helper<F>>
+template<class F, bool recursive = true, size_t N = 6, class Mutex = std::mutex, class = this_pack_helper<F>>
 class mt_memoize;
 
 template<class F, bool recursive, size_t N, class Mutex, class... Args>

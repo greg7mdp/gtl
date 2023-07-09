@@ -3175,7 +3175,7 @@ public:
 };
 
 // ------------------------ holds a mutex ------------------------------------
-// Default implementation for Lockable, should work fine for std::mutex or std::shared_mutex
+// Default implementation for Lockable, should work fine for std::mutex
 // -----------------------------------
 // use as:
 //    using Lockable = gtl::LockableImpl<mutex_type>;
