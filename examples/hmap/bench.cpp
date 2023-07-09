@@ -15,7 +15,7 @@
         #include <mutex>
         #define MTX std::mutex
     #elif 0
-        // Abseil's mutexes are very efficient (at least on windows)
+    // Abseil's mutexes are very efficient (at least on windows)
         #include "absl/synchronization/mutex.h"
         #define MTX absl::Mutex
     #elif 1
@@ -40,7 +40,7 @@ public:
 };
         #define MTX srwlock
     #else
-        // spinlocks - slow!
+    // spinlocks - slow!
         #include <atomic>
 class spinlock
 {
@@ -63,20 +63,20 @@ public:
 
     #define MT_SUPPORT 1
     #if MT_SUPPORT == 1
-        // create the parallel_flat_hash_map without internal mutexes, for when
-        // we programatically ensure that each thread uses different internal submaps
-        // --------------------------------------------------------------------------
-        #define EXTRAARGS                                                                          \
-            , NMSP::priv::hash_default_hash<K>, NMSP::priv::hash_default_eq<K>,                    \
-                std::allocator<std::pair<const K, V>>, 4, NMSP::NullMutex
+    // create the parallel_flat_hash_map without internal mutexes, for when
+    // we programatically ensure that each thread uses different internal submaps
+    // --------------------------------------------------------------------------
+        #define EXTRAARGS                                                                                              \
+            , NMSP::priv::hash_default_hash<K>, NMSP::priv::hash_default_eq<K>, std::allocator<std::pair<const K, V>>, \
+                4, NMSP::NullMutex
     #elif MT_SUPPORT == 2
-        // create the parallel_flat_hash_map with internal mutexes, for when
-        // we read/write the same parallel_flat_hash_map from multiple threads,
-        // without any special precautions.
-        // --------------------------------------------------------------------------
-        #define EXTRAARGS                                                                          \
-            , NMSP::priv::hash_default_hash<K>, NMSP::priv::hash_default_eq<K>,                    \
-                std::allocator<std::pair<const K, V>>, 4, MTX
+    // create the parallel_flat_hash_map with internal mutexes, for when
+    // we read/write the same parallel_flat_hash_map from multiple threads,
+    // without any special precautions.
+    // --------------------------------------------------------------------------
+        #define EXTRAARGS                                                                                              \
+            , NMSP::priv::hash_default_hash<K>, NMSP::priv::hash_default_eq<K>, std::allocator<std::pair<const K, V>>, \
+                4, MTX
     #else
         #define EXTRAARGS
     #endif
@@ -160,10 +160,7 @@ public:
         m_intermediateOffset = permuteQPR(permuteQPR(seedOffset) + 0x46790905);
     }
 
-    unsigned int next()
-    {
-        return permuteQPR((permuteQPR(m_index++) + m_intermediateOffset) ^ 0x5bf03635);
-    }
+    unsigned int next() { return permuteQPR((permuteQPR(m_index++) + m_intermediateOffset) ^ 0x5bf03635); }
 };
 
 // --------------------------------------------------------------------------
@@ -200,11 +197,7 @@ Timer _fill_random(vector<T>& v, HT& hash)
 // --------------------------------------------------------------------------
 void out(const char* test, uint64_t cnt, const Timer& t, bool = false)
 {
-    printf("%s,time,%" PRIu64 ",%s,%f\n",
-           test,
-           cnt,
-           program_slug,
-           ((double)t.elapsed().count() / 1000));
+    printf("%s,time,%" PRIu64 ",%s,%f\n", test, cnt, program_slug, ((double)t.elapsed().count() / 1000));
 }
 
 // --------------------------------------------------------------------------
@@ -213,9 +206,7 @@ void outmem(const char*, uint64_t cnt, uint64_t mem, bool final = false)
     static uint64_t max_mem  = 0;
     static uint64_t max_keys = 0;
     if (final)
-        printf("peak memory usage for %" PRIu64 " values: %.2f GB\n",
-               max_keys,
-               max_mem / ((double)1000 * 1000 * 1000));
+        printf("peak memory usage for %" PRIu64 " values: %.2f GB\n", max_keys, max_mem / ((double)1000 * 1000 * 1000));
     else {
         if (mem > max_mem)
             max_mem = mem;
@@ -404,8 +395,7 @@ int main(int argc, char** argv)
     Timer timer(true);
 
 #if MT_SUPPORT
-    if (!strcmp(program_slug, "absl::parallel_flat_hash_map") ||
-        !strcmp(program_slug, "gtl::parallel_flat_hash_map"))
+    if (!strcmp(program_slug, "absl::parallel_flat_hash_map") || !strcmp(program_slug, "gtl::parallel_flat_hash_map"))
         program_slug = phmap_xstr(MAPNAME) "_mt";
 #endif
 
