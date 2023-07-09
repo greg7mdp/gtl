@@ -17,9 +17,9 @@ class custom_type
 {
     std::string   one   = "one";
     std::string   two   = "two";
-    std::uint32_t three = 3;
-    std::uint64_t four  = 4;
-    std::uint64_t five  = 5;
+    [[maybe_unused]] std::uint32_t three = 3;
+    [[maybe_unused]] std::uint64_t four  = 4;
+    [[maybe_unused]] std::uint64_t five  = 5;
 
 public:
     custom_type() = default;
@@ -38,10 +38,10 @@ public:
 // -----------------------------------------------------------
 class custom_type_2
 {
-    std::uint32_t three = 3;
-    std::uint64_t four  = 4;
-    std::uint64_t five  = 5;
-    std::uint64_t six   = 6;
+    [[maybe_unused]] std::uint32_t three = 3;
+    [[maybe_unused]] std::uint64_t four  = 4;
+    [[maybe_unused]] std::uint64_t five  = 5;
+    [[maybe_unused]] std::uint64_t six   = 6;
 
 public:
     custom_type_2() = default;

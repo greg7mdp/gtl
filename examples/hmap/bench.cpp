@@ -239,6 +239,7 @@ void _fill_random_inner_mt(int64_t cnt, HT& hash, RSU& rsu)
     std::unique_ptr<std::thread> threads[num_threads];
 
     auto thread_fn = [&hash, cnt, num_threads](size_t thread_idx, RSU rsu_) {
+        (void)num_threads;
 #if MT_SUPPORT
         size_t modulo = hash.subcnt() / num_threads; // subcnt() returns the number of submaps
 
