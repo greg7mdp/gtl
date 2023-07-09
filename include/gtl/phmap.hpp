@@ -4385,7 +4385,7 @@ public:
     template<class K = key_type>
     size_t count(const key_arg<K>& key) const
     {
-        return find(key) == end() ? 0 : 1;
+        return this->contains(key) ? 1 : 0;
     }
 
     // Issues CPU prefetch instructions for the memory needed to find or insert
@@ -4426,7 +4426,7 @@ public:
     template<class K = key_type>
     iterator find(const key_arg<K>& key)
     {
-        return find(key, this->hash(key));
+        return this->find(key, this->hash(key));
     }
 
     template<class K = key_type>
@@ -4444,13 +4444,22 @@ public:
     template<class K = key_type>
     bool contains(const key_arg<K>& key) const
     {
-        return find(key) != end();
+        return this->contains(key, this->hash(key));
     }
 
     template<class K = key_type>
     bool contains(const key_arg<K>& key, size_t hashval) const
     {
-        return find(key, hashval) != end();
+        return const_cast<parallel_hash_set*>(this)->contains_impl(key, hashval);
+    }
+    
+    template<class K = key_type>
+    bool contains_impl(const key_arg<K>& key, size_t hashval)
+    {
+        Inner& inner = sets_[subidx(hashval)];
+        auto&  set   = inner.set_;
+        SharedLock lock(inner);
+        return set.find(key, hashval) != set.end();
     }
 
     template<class K = key_type>
