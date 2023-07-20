@@ -181,6 +181,62 @@ template<class K,
          class AuxCont = gtl::priv::empty>
 using parallel_node_hash_map_m = parallel_node_hash_map<K, V, Hash, Eq, Alloc, N, std::mutex, AuxCont>;
 
+// -----------------------------------------------------------------------------
+// phmap::parallel_*_hash_* using default Hash/Eq/Alloc
+// -----------------------------------------------------------------------------
+template<class T,
+         size_t N    = 4,
+         class Mutex = gtl::NullMutex // use std::mutex to enable internal locks
+         >
+using parallel_flat_hash_set_d = parallel_flat_hash_set<T,
+                                                        gtl::priv::hash_default_hash<T>,
+                                                        gtl::priv::hash_default_eq<T>,
+                                                        gtl::priv::Allocator<T>,
+                                                        N,
+                                                        Mutex,
+                                                        gtl::priv::empty>;
+
+template<class K,
+         class V,
+         size_t N    = 4,
+         class Mutex = gtl::NullMutex // use std::mutex to enable internal locks
+         >
+using parallel_flat_hash_map_d = parallel_flat_hash_map<K,
+                                                        V,
+                                                        gtl::priv::hash_default_hash<K>,
+                                                        gtl::priv::hash_default_eq<K>,
+                                                        gtl::priv::Allocator<gtl::priv::Pair<const K, V>>,
+                                                        N,
+                                                        Mutex,
+                                                        gtl::priv::empty>;
+
+template<class T,
+         size_t N    = 4,
+         class Mutex = gtl::NullMutex // use std::mutex to enable internal locks
+         >
+using parallel_node_hash_set_d = parallel_node_hash_set<T,
+                                                        gtl::priv::hash_default_hash<T>,
+                                                        gtl::priv::hash_default_eq<T>,
+                                                        gtl::priv::Allocator<T>,
+                                                        N,
+                                                        Mutex,
+                                                        gtl::priv::empty>;
+
+template<class K,
+         class V,
+         size_t N    = 4,
+         class Mutex = gtl::NullMutex // use std::mutex to enable internal locks
+         >
+using parallel_node_hash_map_d = parallel_node_hash_map<K,
+                                                        V,
+                                                        gtl::priv::hash_default_hash<K>,
+                                                        gtl::priv::hash_default_eq<K>,
+                                                        gtl::priv::Allocator<gtl::priv::Pair<const K, V>>,
+                                                        N,
+                                                        Mutex,
+                                                        gtl::priv::empty>;
+;
+
 // ------------- forward declarations for btree containers ----------------------------------
 template<typename Key, typename Compare = gtl::Less<Key>, typename Alloc = gtl::Allocator<Key>>
 class btree_set;
