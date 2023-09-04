@@ -276,6 +276,7 @@ struct IntPolicy
     using slot_type = int64_t;
     using key_type  = int64_t;
     using init_type = int64_t;
+    using is_flat = std::false_type;
 
     static void construct(void*, int64_t* slot, int64_t v) { *slot = v; }
     static void destroy(void*, int64_t*) {}
@@ -325,6 +326,7 @@ public:
 
     using key_type  = std::string;
     using init_type = std::pair<std::string, std::string>;
+    using is_flat = std::false_type;
 
     template<class allocator_type, class... Args>
     static void construct(allocator_type* alloc, slot_type* slot, Args... args)
@@ -653,6 +655,7 @@ struct DecomposePolicy
     using slot_type = DecomposeType;
     using key_type  = DecomposeType;
     using init_type = DecomposeType;
+    using is_flat = std::false_type;
 
     template<typename T>
     static void construct(void*, DecomposeType* slot, T&& v)
