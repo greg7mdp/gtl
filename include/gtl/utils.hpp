@@ -38,14 +38,11 @@ public:
             std::forward<Set>(set)();
     }
 
-    ~scoped_set_unset() noexcept(noexcept(this->unset_()))
-    {
-        if (do_it_)
-            unset_();
-    }
+    ~scoped_set_unset() { if (do_it_) unset_(); }
 
     void dismiss() noexcept { do_it_ = false; }
 
+    scoped_set_unset(scoped_set_unset&&)                 = delete;
     scoped_set_unset(const scoped_set_unset&)            = delete;
     scoped_set_unset& operator=(const scoped_set_unset&) = delete;
     void* operator new(std::size_t)                      = delete;
@@ -74,14 +71,11 @@ public:
     {
     }
 
-    ~scoped_guard() noexcept(noexcept(this->unset_()))
-    {
-        if (do_it_)
-            unset_();
-    }
+    ~scoped_guard() { if (do_it_) unset_(); }
 
     void dismiss() noexcept { do_it_ = false; }
 
+    scoped_guard(scoped_guard&&)                 = delete;
     scoped_guard(const scoped_guard&)            = delete;
     scoped_guard& operator=(const scoped_guard&) = delete;
     void* operator new(std::size_t)              = delete;
@@ -119,11 +113,7 @@ public:
         }
     }
 
-    ~scoped_set_value() noexcept(std::is_nothrow_move_assignable_v<T>)
-    {
-        if (do_it_)
-            v_ = std::move(old_value_);
-    }
+    ~scoped_set_value() { if (do_it_) v_ = std::move(old_value_); }
 
     void dismiss() noexcept { do_it_ = false; }
 
