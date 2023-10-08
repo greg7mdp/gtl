@@ -25,28 +25,22 @@ namespace gtl {
 // see https://stackoverflow.com/questions/71630906 for alternate method
 // ------------------------------------------------------------------------------
 template<typename... Ts>
-struct pack
-{
-};
+struct pack {};
 
 template<class>
 struct pack_helper;
 
 template<class R, class... Args>
-struct pack_helper<R (*)(Args...)>
-{
+struct pack_helper<R (*)(Args...)> {
     using args = pack<Args...>;
 };
 
 // ---- for lambdas
 template<class T>
-struct pack_helper : public pack_helper<decltype(&T::operator())>
-{
-};
+struct pack_helper : public pack_helper<decltype(&T::operator())> {};
 
 template<class LambdaClass, class R, class... Args>
-struct pack_helper<R (LambdaClass::*)(Args...) const>
-{
+struct pack_helper<R (LambdaClass::*)(Args...) const> {
     using args = pack<Args...>;
 };
 
@@ -78,8 +72,7 @@ template<class F, bool recursive = true, size_t N = 6, class Mutex = std::mutex,
 class mt_memoize;
 
 template<class F, bool recursive, size_t N, class Mutex, class... Args>
-class mt_memoize<F, recursive, N, Mutex, pack<Args...>>
-{
+class mt_memoize<F, recursive, N, Mutex, pack<Args...>> {
 public:
     using key_type    = std::tuple<Args...>;
     using result_type = decltype(std::declval<F>()(std::declval<Args>()...));
@@ -92,25 +85,19 @@ public:
                                                  Mutex>;
 
     mt_memoize(F&& f)
-        : _f(std::move(f))
-    {
-    }
+        : _f(std::move(f)) {}
 
     mt_memoize(F& f)
-        : _f(f)
-    {
-    }
+        : _f(f) {}
 
-    std::optional<result_type> contains(Args... args)
-    {
+    std::optional<result_type> contains(Args... args) {
         key_type key(args...);
         if (result_type res; _cache.if_contains(key, [&](const auto& v) { res = v.second; }))
             return { res };
         return {};
     }
 
-    result_type operator()(Args... args)
-    {
+    result_type operator()(Args... args) {
         key_type key(args...);
         if constexpr (!std::is_same_v<Mutex, gtl::NullMutex> && !recursive) {
             // because we are using a mutex, we must be in a multithreaded context,
@@ -188,8 +175,7 @@ template<class F, size_t N = 6, class Mutex = std::mutex, class = this_pack_help
 class mt_memoize_lru;
 
 template<class F, size_t N, class Mutex, class... Args>
-class mt_memoize_lru<F, N, Mutex, pack<Args...>>
-{
+class mt_memoize_lru<F, N, Mutex, pack<Args...>> {
 public:
     using key_type    = std::tuple<Args...>;
     using result_type = decltype(std::declval<F>()(std::declval<Args>()...));
@@ -210,31 +196,27 @@ public:
     static constexpr size_t num_submaps = map_type::subcnt();
 
     mt_memoize_lru(F&& f, size_t max_size = 65536)
-        : _f(std::move(f))
-    {
+        : _f(std::move(f)) {
         reserve(max_size);
         set_cache_size(max_size);
         assert(_max_size > 2);
     }
 
     mt_memoize_lru(F& f, size_t max_size = 65536)
-        : _f(f)
-    {
+        : _f(f) {
         reserve(max_size);
         set_cache_size(max_size);
         assert(_max_size > 2);
     }
 
-    std::optional<result_type> contains(Args... args)
-    {
+    std::optional<result_type> contains(Args... args) {
         key_type key(args...);
         if (result_type res; _cache.if_contains(key, [&](const auto& v, list_type&) { res = v.second->second; }))
             return { res };
         return {};
     }
 
-    result_type operator()(Args... args)
-    {
+    result_type operator()(Args... args) {
         key_type    key(args...);
         result_type res;
         _cache.lazy_emplace_l(
@@ -284,27 +266,22 @@ using memoize_lru = mt_memoize_lru<F, N, gtl::NullMutex>;
 // Attempting to create a lazy list... not ready for prime time :-)
 // ------------------------------------------------------------------------------
 template<class T, class F>
-class lazy_list
-{
+class lazy_list {
 public:
     lazy_list(T first, F next)
         : _first(std::move(first))
-        , _next(std::move(next))
-    {
-    }
+        , _next(std::move(next)) {}
 
 #if 1
     // wrong implementation, because it calls _next instead of the memoized version
-    const T& operator[](size_t idx) const
-    {
+    const T& operator[](size_t idx) const {
         if (idx == 0)
             return _first;
         return _next(this, idx);
     }
 #else
     // can't get this to build unfortunately
-    const T& operator[](size_t idx) const
-    {
+    const T& operator[](size_t idx) const {
         auto _memoized_next{ gtl::memoize<decltype(_next)>(_next) };
         if (idx == 0)
             return _first;

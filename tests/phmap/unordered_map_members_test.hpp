@@ -34,22 +34,16 @@ namespace gtl {
 namespace priv {
 
 template<class UnordMap>
-class MembersTest : public ::testing::Test
-{
-};
+class MembersTest : public ::testing::Test {};
 
 TYPED_TEST_SUITE_P(MembersTest);
 
 template<typename T>
-void UseType()
-{
-}
+void UseType() {}
 
-TYPED_TEST_P(MembersTest, Typedefs)
-{
-    EXPECT_TRUE((
-        std::is_same<std::pair<const typename TypeParam::key_type, typename TypeParam::mapped_type>,
-                     typename TypeParam::value_type>()));
+TYPED_TEST_P(MembersTest, Typedefs) {
+    EXPECT_TRUE((std::is_same<std::pair<const typename TypeParam::key_type, typename TypeParam::mapped_type>,
+                              typename TypeParam::value_type>()));
     EXPECT_TRUE((std::conjunction<std::negation<std::is_signed<typename TypeParam::size_type>>,
                                   std::is_integral<typename TypeParam::size_type>>()));
     EXPECT_TRUE((std::conjunction<std::is_signed<typename TypeParam::difference_type>,
@@ -61,23 +55,18 @@ TYPED_TEST_P(MembersTest, Typedefs)
                                          std::declval<const typename TypeParam::key_type&>(),
                                          std::declval<const typename TypeParam::key_type&>())),
                                      bool>()));
-    EXPECT_TRUE((std::is_same<typename TypeParam::allocator_type::value_type,
-                              typename TypeParam::value_type>()));
+    EXPECT_TRUE((std::is_same<typename TypeParam::allocator_type::value_type, typename TypeParam::value_type>()));
     EXPECT_TRUE((std::is_same<typename TypeParam::value_type&, typename TypeParam::reference>()));
-    EXPECT_TRUE((std::is_same<const typename TypeParam::value_type&,
-                              typename TypeParam::const_reference>()));
-    EXPECT_TRUE(
-        (std::is_same<typename std::allocator_traits<typename TypeParam::allocator_type>::pointer,
-                      typename TypeParam::pointer>()));
-    EXPECT_TRUE((std::is_same<
-                 typename std::allocator_traits<typename TypeParam::allocator_type>::const_pointer,
-                 typename TypeParam::const_pointer>()));
+    EXPECT_TRUE((std::is_same<const typename TypeParam::value_type&, typename TypeParam::const_reference>()));
+    EXPECT_TRUE((std::is_same<typename std::allocator_traits<typename TypeParam::allocator_type>::pointer,
+                              typename TypeParam::pointer>()));
+    EXPECT_TRUE((std::is_same<typename std::allocator_traits<typename TypeParam::allocator_type>::const_pointer,
+                              typename TypeParam::const_pointer>()));
 }
 
 TYPED_TEST_P(MembersTest, SimpleFunctions) { EXPECT_GT(TypeParam().max_size(), 0); }
 
-TYPED_TEST_P(MembersTest, BeginEnd)
-{
+TYPED_TEST_P(MembersTest, BeginEnd) {
     TypeParam t = { typename TypeParam::value_type{} };
     EXPECT_EQ(t.begin(), t.cbegin());
     EXPECT_EQ(t.end(), t.cend());

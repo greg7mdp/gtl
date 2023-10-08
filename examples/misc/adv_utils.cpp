@@ -2,8 +2,7 @@
 #include <cstdio>
 #include <gtl/adv_utils.hpp>
 
-int main()
-{
+int main() {
     {
         // For example, we can use gtl::binary_search to take an integer square root:
         auto x = gtl::binary_search(

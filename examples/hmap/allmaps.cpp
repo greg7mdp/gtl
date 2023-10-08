@@ -4,8 +4,7 @@
 #include <string>
 
 template<class Set, class F>
-void test_set(const F& f)
-{
+void test_set(const F& f) {
     Set                    s;
     typename Set::iterator it;
     for (int i = 0; i < 100; ++i)
@@ -21,8 +20,7 @@ void test_set(const F& f)
     it = s.begin();
 }
 
-int main(int, char**)
-{
+int main(int, char**) {
     using namespace std;
 
     auto make_int    = [](int i) { return i; };

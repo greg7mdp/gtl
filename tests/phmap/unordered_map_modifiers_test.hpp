@@ -32,14 +32,11 @@ namespace gtl {
 namespace priv {
 
 template<class UnordMap>
-class ModifiersTest : public ::testing::Test
-{
-};
+class ModifiersTest : public ::testing::Test {};
 
 TYPED_TEST_SUITE_P(ModifiersTest);
 
-TYPED_TEST_P(ModifiersTest, Clear)
-{
+TYPED_TEST_P(ModifiersTest, Clear) {
     using T = hash_internal::GeneratedType<TypeParam>;
     std::vector<T> values;
     std::generate_n(std::back_inserter(values), 10, hash_internal::Generator<T>());
@@ -50,8 +47,7 @@ TYPED_TEST_P(ModifiersTest, Clear)
     EXPECT_TRUE(m.empty());
 }
 
-TYPED_TEST_P(ModifiersTest, Insert)
-{
+TYPED_TEST_P(ModifiersTest, Insert) {
     using T       = hash_internal::GeneratedType<TypeParam>;
     using V       = typename TypeParam::mapped_type;
     T         val = hash_internal::Generator<T>()();
@@ -65,8 +61,7 @@ TYPED_TEST_P(ModifiersTest, Insert)
     EXPECT_EQ(val, *p.first);
 }
 
-TYPED_TEST_P(ModifiersTest, InsertHint)
-{
+TYPED_TEST_P(ModifiersTest, InsertHint) {
     using T       = hash_internal::GeneratedType<TypeParam>;
     using V       = typename TypeParam::mapped_type;
     T         val = hash_internal::Generator<T>()();
@@ -80,8 +75,7 @@ TYPED_TEST_P(ModifiersTest, InsertHint)
     EXPECT_EQ(val, *it);
 }
 
-TYPED_TEST_P(ModifiersTest, InsertRange)
-{
+TYPED_TEST_P(ModifiersTest, InsertRange) {
     using T = hash_internal::GeneratedType<TypeParam>;
     std::vector<T> values;
     std::generate_n(std::back_inserter(values), 10, hash_internal::Generator<T>());
@@ -90,8 +84,7 @@ TYPED_TEST_P(ModifiersTest, InsertRange)
     ASSERT_THAT(items(m), ::testing::UnorderedElementsAreArray(values));
 }
 
-TYPED_TEST_P(ModifiersTest, InsertOrAssign)
-{
+TYPED_TEST_P(ModifiersTest, InsertOrAssign) {
     using std::get;
     using K       = typename TypeParam::key_type;
     using V       = typename TypeParam::mapped_type;
@@ -109,8 +102,7 @@ TYPED_TEST_P(ModifiersTest, InsertOrAssign)
     EXPECT_EQ(val2, get<1>(*p.first));
 }
 
-TYPED_TEST_P(ModifiersTest, InsertOrAssignHint)
-{
+TYPED_TEST_P(ModifiersTest, InsertOrAssignHint) {
     using std::get;
     using K       = typename TypeParam::key_type;
     using V       = typename TypeParam::mapped_type;
@@ -127,8 +119,7 @@ TYPED_TEST_P(ModifiersTest, InsertOrAssignHint)
     EXPECT_EQ(val2, get<1>(*it));
 }
 
-TYPED_TEST_P(ModifiersTest, Emplace)
-{
+TYPED_TEST_P(ModifiersTest, Emplace) {
     using T       = hash_internal::GeneratedType<TypeParam>;
     using V       = typename TypeParam::mapped_type;
     T         val = hash_internal::Generator<T>()();
@@ -144,8 +135,7 @@ TYPED_TEST_P(ModifiersTest, Emplace)
     EXPECT_EQ(val, *p.first);
 }
 
-TYPED_TEST_P(ModifiersTest, EmplaceHint)
-{
+TYPED_TEST_P(ModifiersTest, EmplaceHint) {
     using T       = hash_internal::GeneratedType<TypeParam>;
     using V       = typename TypeParam::mapped_type;
     T         val = hash_internal::Generator<T>()();
@@ -159,8 +149,7 @@ TYPED_TEST_P(ModifiersTest, EmplaceHint)
     EXPECT_EQ(val, *it);
 }
 
-TYPED_TEST_P(ModifiersTest, TryEmplace)
-{
+TYPED_TEST_P(ModifiersTest, TryEmplace) {
     using T       = hash_internal::GeneratedType<TypeParam>;
     using V       = typename TypeParam::mapped_type;
     T         val = hash_internal::Generator<T>()();
@@ -176,8 +165,7 @@ TYPED_TEST_P(ModifiersTest, TryEmplace)
     EXPECT_EQ(val, *p.first);
 }
 
-TYPED_TEST_P(ModifiersTest, TryEmplaceHint)
-{
+TYPED_TEST_P(ModifiersTest, TryEmplaceHint) {
     using T       = hash_internal::GeneratedType<TypeParam>;
     using V       = typename TypeParam::mapped_type;
     T         val = hash_internal::Generator<T>()();
@@ -196,24 +184,20 @@ using IfNotVoid = typename std::enable_if<!std::is_void<V>::value, V>::type;
 
 // In openmap we chose not to return the iterator from erase because that's
 // more expensive. As such we adapt erase to return an iterator here.
-struct EraseFirst
-{
+struct EraseFirst {
     template<class Map>
-    auto operator()(Map* m, int) const -> IfNotVoid<decltype(m->erase(m->begin()))>
-    {
+    auto operator()(Map* m, int) const -> IfNotVoid<decltype(m->erase(m->begin()))> {
         return m->erase(m->begin());
     }
     template<class Map>
-    typename Map::iterator operator()(Map* m, ...) const
-    {
+    typename Map::iterator operator()(Map* m, ...) const {
         auto it = m->begin();
         m->erase(it++);
         return it;
     }
 };
 
-TYPED_TEST_P(ModifiersTest, Erase)
-{
+TYPED_TEST_P(ModifiersTest, Erase) {
     using T = hash_internal::GeneratedType<TypeParam>;
     using std::get;
     std::vector<T> values;
@@ -231,8 +215,7 @@ TYPED_TEST_P(ModifiersTest, Erase)
     EXPECT_THAT(items(m), ::testing::UnorderedElementsAreArray(values2.begin(), values2.end()));
 }
 
-TYPED_TEST_P(ModifiersTest, EraseRange)
-{
+TYPED_TEST_P(ModifiersTest, EraseRange) {
     using T = hash_internal::GeneratedType<TypeParam>;
     std::vector<T> values;
     std::generate_n(std::back_inserter(values), 10, hash_internal::Generator<T>());
@@ -243,8 +226,7 @@ TYPED_TEST_P(ModifiersTest, EraseRange)
     EXPECT_TRUE(it == m.end());
 }
 
-TYPED_TEST_P(ModifiersTest, EraseKey)
-{
+TYPED_TEST_P(ModifiersTest, EraseKey) {
     using T = hash_internal::GeneratedType<TypeParam>;
     std::vector<T> values;
     std::generate_n(std::back_inserter(values), 10, hash_internal::Generator<T>());
@@ -255,8 +237,7 @@ TYPED_TEST_P(ModifiersTest, EraseKey)
     EXPECT_THAT(items(m), ::testing::UnorderedElementsAreArray(values.begin() + 1, values.end()));
 }
 
-TYPED_TEST_P(ModifiersTest, Swap)
-{
+TYPED_TEST_P(ModifiersTest, Swap) {
     using T = hash_internal::GeneratedType<TypeParam>;
     std::vector<T> v1;
     std::vector<T> v2;

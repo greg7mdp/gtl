@@ -11,17 +11,13 @@
 
 // -------------------------------------------------------------------
 // -------------------------------------------------------------------
-class Timer
-{
+class Timer {
 public:
     Timer(const std::string& name)
         : _name(name)
-        , _start(std::chrono::high_resolution_clock::now())
-    {
-    }
+        , _start(std::chrono::high_resolution_clock::now()) {}
 
-    ~Timer()
-    {
+    ~Timer() {
         std::chrono::duration<float> elapsed_seconds = std::chrono::high_resolution_clock::now() - _start;
         printf("%s: %.3fs\n", _name.c_str(), elapsed_seconds.count());
     }
@@ -34,14 +30,12 @@ private:
 // --------------------------------------------------------------------------
 //  from: https://github.com/preshing/RandomSequence
 // --------------------------------------------------------------------------
-class RSU
-{
+class RSU {
 private:
     uint32_t m_index;
     uint32_t m_intermediateOffset;
 
-    static uint32_t permuteQPR(uint32_t x)
-    {
+    static uint32_t permuteQPR(uint32_t x) {
         static const uint32_t prime = 4294967291u;
         if (x >= prime)
             return x; // The 5 integers out of range are mapped to themselves.
@@ -50,8 +44,7 @@ private:
     }
 
 public:
-    RSU(uint32_t seedBase, uint32_t seedOffset)
-    {
+    RSU(uint32_t seedBase, uint32_t seedOffset) {
         m_index              = permuteQPR(permuteQPR(seedBase) + 0x682f0161);
         m_intermediateOffset = permuteQPR(permuteQPR(seedOffset) + 0x46790905);
     }
@@ -64,8 +57,7 @@ using Perturb = std::function<void(std::vector<uint64_t>&)>;
 // --------------------------------------------------------------------------
 // --------------------------------------------------------------------------
 template<class Set, size_t N>
-void test(const char* name, const Perturb& perturb1, const Perturb& /* perturb2 */)
-{
+void test(const char* name, const Perturb& perturb1, const Perturb& /* perturb2 */) {
     // gtl::btree_set<uint64_t> s;
     Set s;
 
@@ -79,7 +71,7 @@ void test(const char* name, const Perturb& perturb1, const Perturb& /* perturb2 
                                 s.end()); // contains sorted, randomly generated keys (when using gtl::btree_set)
                                           // or keys in the final order of a Set (when using Set).
 
-    perturb1(order);                      // either keep them in same order, or shuffle them
+    perturb1(order); // either keep them in same order, or shuffle them
 
 #if 0
     order.resize(N/4);
@@ -105,8 +97,7 @@ using pset = gtl::parallel_flat_hash_set<T,
 
 // --------------------------------------------------------------------------
 // --------------------------------------------------------------------------
-int main()
-{
+int main() {
     auto shuffle = [](std::vector<uint64_t>& order) {
         std::random_device rd;
         std::mt19937       g(rd());

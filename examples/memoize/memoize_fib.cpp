@@ -19,8 +19,7 @@ uint64_t fib(uint64_t n) // cached fibonacci
 
 #else
 
-uint64_t fib(uint64_t n)
-{
+uint64_t fib(uint64_t n) {
     if (n <= 1)
         return n;
     return fib(n - 1) + fib(n - 2);
@@ -28,16 +27,12 @@ uint64_t fib(uint64_t n)
 
 #endif
 
-int main()
-{
+int main() {
     stopwatch          sw;
     constexpr uint64_t val = 42;
 
     uint64_t x = fib(val);
     sw.snap();
-    printf("fib(%" PRIu64 "):         => %" PRIu64 " in %10.3f seconds\n",
-           val,
-           x,
-           sw.since_start() / 1000);
+    printf("fib(%" PRIu64 "):         => %" PRIu64 " in %10.3f seconds\n", val, x, sw.since_start() / 1000);
     return 0;
 }

@@ -24,14 +24,11 @@ namespace gtl {
 namespace priv {
 
 template<class UnordSet>
-class LookupTest : public ::testing::Test
-{
-};
+class LookupTest : public ::testing::Test {};
 
 TYPED_TEST_SUITE_P(LookupTest);
 
-TYPED_TEST_P(LookupTest, Count)
-{
+TYPED_TEST_P(LookupTest, Count) {
     using T = hash_internal::GeneratedType<TypeParam>;
     std::vector<T> values;
     std::generate_n(std::back_inserter(values), 10, hash_internal::Generator<T>());
@@ -43,8 +40,7 @@ TYPED_TEST_P(LookupTest, Count)
         EXPECT_EQ(1u, m.count(v)) << ::testing::PrintToString(v);
 }
 
-TYPED_TEST_P(LookupTest, Find)
-{
+TYPED_TEST_P(LookupTest, Find) {
     using T = hash_internal::GeneratedType<TypeParam>;
     std::vector<T> values;
     std::generate_n(std::back_inserter(values), 10, hash_internal::Generator<T>());
@@ -54,18 +50,14 @@ TYPED_TEST_P(LookupTest, Find)
     m.insert(values.begin(), values.end());
     for (const auto& v : values) {
         typename TypeParam::iterator it = m.find(v);
-        static_assert(std::is_same<const typename TypeParam::value_type&, decltype(*it)>::value,
-                      "");
-        static_assert(
-            std::is_same<const typename TypeParam::value_type*, decltype(it.operator->())>::value,
-            "");
+        static_assert(std::is_same<const typename TypeParam::value_type&, decltype(*it)>::value, "");
+        static_assert(std::is_same<const typename TypeParam::value_type*, decltype(it.operator->())>::value, "");
         EXPECT_TRUE(m.end() != it) << ::testing::PrintToString(v);
         EXPECT_EQ(v, *it) << ::testing::PrintToString(v);
     }
 }
 
-TYPED_TEST_P(LookupTest, EqualRange)
-{
+TYPED_TEST_P(LookupTest, EqualRange) {
     using T = hash_internal::GeneratedType<TypeParam>;
     std::vector<T> values;
     std::generate_n(std::back_inserter(values), 10, hash_internal::Generator<T>());

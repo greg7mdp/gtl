@@ -107,22 +107,19 @@ inline void UnalignedStore64(void* p, uint64_t v) { __sanitizer_unaligned_store6
 namespace gtl {
 namespace bits {
 
-inline uint16_t UnalignedLoad16(const void* p)
-{
+inline uint16_t UnalignedLoad16(const void* p) {
     uint16_t t;
     memcpy(&t, p, sizeof t);
     return t;
 }
 
-inline uint32_t UnalignedLoad32(const void* p)
-{
+inline uint32_t UnalignedLoad32(const void* p) {
     uint32_t t;
     memcpy(&t, p, sizeof t);
     return t;
 }
 
-inline uint64_t UnalignedLoad64(const void* p)
-{
+inline uint64_t UnalignedLoad64(const void* p) {
     uint64_t t;
     memcpy(&t, p, sizeof t);
     return t;
@@ -180,8 +177,7 @@ inline void UnalignedStore64(void* p, uint64_t v) { memcpy(p, &v, sizeof v); }
 
 #ifdef GTL_HAVE_INTRINSIC_INT128
 __extension__ typedef unsigned __int128 gtl_uint128;
-inline uint64_t                         umul128(uint64_t a, uint64_t b, uint64_t* high)
-{
+inline uint64_t                         umul128(uint64_t a, uint64_t b, uint64_t* high) {
     auto result = static_cast<gtl_uint128>(a) * static_cast<gtl_uint128>(b);
     *high       = static_cast<uint64_t>(result >> 64);
     return static_cast<uint64_t>(result);
@@ -260,8 +256,7 @@ inline uint64_t umul128(uint64_t a, uint64_t b, uint64_t* high) { return _umul12
 
 namespace gtl {
 
-GTL_FORCEINLINE uint32_t CountLeadingZeros64Slow(uint64_t n)
-{
+GTL_FORCEINLINE uint32_t CountLeadingZeros64Slow(uint64_t n) {
     uint32_t zeroes = 60;
     if (n >> 32)
         zeroes -= 32, n >>= 32;
@@ -274,8 +269,7 @@ GTL_FORCEINLINE uint32_t CountLeadingZeros64Slow(uint64_t n)
     return "\4\3\2\2\1\1\1\1\0\0\0\0\0\0\0"[n] + zeroes;
 }
 
-GTL_FORCEINLINE uint32_t CountLeadingZeros64(uint64_t n)
-{
+GTL_FORCEINLINE uint32_t CountLeadingZeros64(uint64_t n) {
 #if defined(_MSC_VER) && defined(_M_X64)
     // MSVC does not have __buitin_clzll. Use _BitScanReverse64.
     unsigned long result = 0; // NOLINT(runtime/int)
@@ -311,8 +305,7 @@ GTL_FORCEINLINE uint32_t CountLeadingZeros64(uint64_t n)
 #endif
 }
 
-GTL_FORCEINLINE uint32_t CountLeadingZeros32Slow(uint64_t n)
-{
+GTL_FORCEINLINE uint32_t CountLeadingZeros32Slow(uint64_t n) {
     uint32_t zeroes = 28;
     if (n >> 16)
         zeroes -= 16, n >>= 16;
@@ -323,8 +316,7 @@ GTL_FORCEINLINE uint32_t CountLeadingZeros32Slow(uint64_t n)
     return "\4\3\2\2\1\1\1\1\0\0\0\0\0\0\0"[n] + zeroes;
 }
 
-GTL_FORCEINLINE uint32_t CountLeadingZeros32(uint32_t n)
-{
+GTL_FORCEINLINE uint32_t CountLeadingZeros32(uint32_t n) {
 #if defined(_MSC_VER) && !defined(__clang__)
     unsigned long result = 0; // NOLINT(runtime/int)
     if (_BitScanReverse(&result, n)) {
@@ -348,8 +340,7 @@ GTL_FORCEINLINE uint32_t CountLeadingZeros32(uint32_t n)
 #endif
 }
 
-GTL_FORCEINLINE uint32_t CountTrailingZerosNonZero64Slow(uint64_t n)
-{
+GTL_FORCEINLINE uint32_t CountTrailingZerosNonZero64Slow(uint64_t n) {
     uint32_t c = 63;
     n &= ~n + 1;
     if (n & 0x00000000FFFFFFFF)
@@ -367,8 +358,7 @@ GTL_FORCEINLINE uint32_t CountTrailingZerosNonZero64Slow(uint64_t n)
     return c;
 }
 
-GTL_FORCEINLINE uint32_t CountTrailingZerosNonZero64(uint64_t n)
-{
+GTL_FORCEINLINE uint32_t CountTrailingZerosNonZero64(uint64_t n) {
 #if defined(_MSC_VER) && !defined(__clang__) && defined(_M_X64)
     unsigned long result = 0; // NOLINT(runtime/int)
     _BitScanForward64(&result, n);
@@ -390,8 +380,7 @@ GTL_FORCEINLINE uint32_t CountTrailingZerosNonZero64(uint64_t n)
 #endif
 }
 
-GTL_FORCEINLINE uint32_t CountTrailingZerosNonZero32Slow(uint32_t n)
-{
+GTL_FORCEINLINE uint32_t CountTrailingZerosNonZero32Slow(uint32_t n) {
     uint32_t c = 31;
     n &= ~n + 1;
     if (n & 0x0000FFFF)
@@ -407,8 +396,7 @@ GTL_FORCEINLINE uint32_t CountTrailingZerosNonZero32Slow(uint32_t n)
     return c;
 }
 
-GTL_FORCEINLINE uint32_t CountTrailingZerosNonZero32(uint32_t n)
-{
+GTL_FORCEINLINE uint32_t CountTrailingZerosNonZero32(uint32_t n) {
 #if defined(_MSC_VER) && !defined(__clang__)
     unsigned long result = 0; // NOLINT(runtime/int)
     _BitScanForward(&result, n);
@@ -455,8 +443,7 @@ inline uint16_t gbswap_16(uint16_t host_int) { return OSSwapInt64(host_int); }
 
 #else
 
-inline uint64_t gbswap_64(uint64_t host_int)
-{
+inline uint64_t gbswap_64(uint64_t host_int) {
     #if defined(__GNUC__) && defined(__x86_64__) && !defined(__APPLE__)
     // Adapted from /usr/include/byteswap.h.  Not available on Mac.
     if (__builtin_constant_p(host_int)) {
@@ -469,29 +456,27 @@ inline uint64_t gbswap_64(uint64_t host_int)
     #elif defined(__GLIBC__)
     return bswap_64(host_int);
     #else
-    return (((host_int& uint64_t{ 0xFF }) << 56) | ((host_int& uint64_t{ 0xFF00 }) << 40) |
-            ((host_int& uint64_t{ 0xFF0000 }) << 24) | ((host_int& uint64_t{ 0xFF000000 }) << 8) |
-            ((host_int& uint64_t{ 0xFF00000000 }) >> 8) | ((host_int& uint64_t{ 0xFF0000000000 }) >> 24) |
-            ((host_int& uint64_t{ 0xFF000000000000 }) >> 40) | ((host_int& uint64_t{ 0xFF00000000000000 }) >> 56));
+    return (((host_int & uint64_t{ 0xFF }) << 56) | ((host_int & uint64_t{ 0xFF00 }) << 40) |
+            ((host_int & uint64_t{ 0xFF0000 }) << 24) | ((host_int & uint64_t{ 0xFF000000 }) << 8) |
+            ((host_int & uint64_t{ 0xFF00000000 }) >> 8) | ((host_int & uint64_t{ 0xFF0000000000 }) >> 24) |
+            ((host_int & uint64_t{ 0xFF000000000000 }) >> 40) | ((host_int & uint64_t{ 0xFF00000000000000 }) >> 56));
     #endif // bswap_64
 }
 
-inline uint32_t gbswap_32(uint32_t host_int)
-{
+inline uint32_t gbswap_32(uint32_t host_int) {
     #if defined(__GLIBC__)
     return bswap_32(host_int);
     #else
-    return (((host_int& uint32_t{ 0xFF }) << 24) | ((host_int& uint32_t{ 0xFF00 }) << 8) |
-            ((host_int& uint32_t{ 0xFF0000 }) >> 8) | ((host_int& uint32_t{ 0xFF000000 }) >> 24));
+    return (((host_int & uint32_t{ 0xFF }) << 24) | ((host_int & uint32_t{ 0xFF00 }) << 8) |
+            ((host_int & uint32_t{ 0xFF0000 }) >> 8) | ((host_int & uint32_t{ 0xFF000000 }) >> 24));
     #endif
 }
 
-inline uint16_t gbswap_16(uint16_t host_int)
-{
+inline uint16_t gbswap_16(uint16_t host_int) {
     #if defined(__GLIBC__)
     return bswap_16(host_int);
     #else
-    return (((host_int& uint16_t{ 0xFF }) << 8) | ((host_int& uint16_t{ 0xFF00 }) >> 8));
+    return (((host_int & uint16_t{ 0xFF }) << 8) | ((host_int & uint16_t{ 0xFF00 }) >> 8));
     #endif
 }
 

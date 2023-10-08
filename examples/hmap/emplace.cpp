@@ -13,10 +13,9 @@ using milliseconds = std::chrono::duration<T, std::milli>;
 
 // type containing std::string. Seems to take a long time to construct (and maybe move)
 // ------------------------------------------------------------------------------------
-class custom_type
-{
-    std::string   one   = "one";
-    std::string   two   = "two";
+class custom_type {
+    std::string                    one   = "one";
+    std::string                    two   = "two";
     [[maybe_unused]] std::uint32_t three = 3;
     [[maybe_unused]] std::uint64_t four  = 4;
     [[maybe_unused]] std::uint64_t five  = 5;
@@ -36,8 +35,7 @@ public:
 
 // type containing only integrals. should be faster to create.
 // -----------------------------------------------------------
-class custom_type_2
-{
+class custom_type_2 {
     [[maybe_unused]] std::uint32_t three = 3;
     [[maybe_unused]] std::uint64_t four  = 4;
     [[maybe_unused]] std::uint64_t five  = 5;
@@ -59,16 +57,13 @@ public:
 // convert std::size_t to appropriate key
 // --------------------------------------
 template<class K>
-struct GenKey
-{
+struct GenKey {
     K operator()(std::size_t j);
 };
 
 template<>
-struct GenKey<std::string>
-{
-    std::string operator()(std::size_t j)
-    {
+struct GenKey<std::string> {
+    std::string operator()(std::size_t j) {
         std::ostringstream stm;
         stm << j;
         return stm.str();
@@ -76,38 +71,33 @@ struct GenKey<std::string>
 };
 
 template<>
-struct GenKey<int>
-{
+struct GenKey<int> {
     int operator()(std::size_t j) { return (int)j; }
 };
 
 // emplace key + large struct
 // --------------------------
 template<class Map, class K, class V, class T>
-struct _emplace
-{
+struct _emplace {
     void operator()(Map& m, std::size_t j);
 };
 
 // "void" template parameter -> use emplace
 template<class Map, class K, class V>
-struct _emplace<Map, K, V, void>
-{
+struct _emplace<Map, K, V, void> {
     void operator()(Map& m, std::size_t j) { m.emplace(GenKey<K>()(j), V()); }
 };
 
 // "int" template parameter -> use emplace_back for std::vector
 template<class Map, class K, class V>
-struct _emplace<Map, K, V, int>
-{
+struct _emplace<Map, K, V, int> {
     void operator()(Map& m, std::size_t j) { m.emplace_back(GenKey<K>()(j), V()); }
 };
 
 // The test itself
 // ---------------
 template<class Map, class K, class V, class T, template<class, class, class, class> class INSERT>
-void _test(std::size_t iterations, std::size_t container_size, const char* map_name)
-{
+void _test(std::size_t iterations, std::size_t container_size, const char* map_name) {
     std::size_t          count = 0;
     auto                 t1    = std::chrono::high_resolution_clock::now();
     INSERT<Map, K, V, T> insert;
@@ -125,24 +115,17 @@ void _test(std::size_t iterations, std::size_t container_size, const char* map_n
 }
 
 template<class K, class V, template<class, class, class, class> class INSERT>
-void test(std::size_t iterations, std::size_t container_size)
-{
-    std::clog << "bench: iterations: " << iterations << " / container_size: " << container_size
-              << "\n";
+void test(std::size_t iterations, std::size_t container_size) {
+    std::clog << "bench: iterations: " << iterations << " / container_size: " << container_size << "\n";
 
-    _test<std::map<K, V>, K, V, void, INSERT>(
-        iterations, container_size, "  std::map:               ");
-    _test<std::unordered_map<K, V>, K, V, void, INSERT>(
-        iterations, container_size, "  std::unordered_map:     ");
-    _test<gtl::flat_hash_map<K, V>, K, V, void, INSERT>(
-        iterations, container_size, "  gtl::flat_hash_map:   ");
-    _test<std::vector<std::pair<K, V>>, K, V, int, INSERT>(
-        iterations, container_size, "  std::vector<std::pair>: ");
+    _test<std::map<K, V>, K, V, void, INSERT>(iterations, container_size, "  std::map:               ");
+    _test<std::unordered_map<K, V>, K, V, void, INSERT>(iterations, container_size, "  std::unordered_map:     ");
+    _test<gtl::flat_hash_map<K, V>, K, V, void, INSERT>(iterations, container_size, "  gtl::flat_hash_map:   ");
+    _test<std::vector<std::pair<K, V>>, K, V, int, INSERT>(iterations, container_size, "  std::vector<std::pair>: ");
     std::clog << "\n";
 }
 
-int main()
-{
+int main() {
     std::size_t iterations = 100000;
 
     // test with custom_type_2 (int key + 32 byte value). This is representative

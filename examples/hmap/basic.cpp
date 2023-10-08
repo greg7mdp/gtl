@@ -4,8 +4,7 @@
 
 using gtl::flat_hash_map;
 
-int main()
-{
+int main() {
     // Create an unordered_map of three strings (that map to strings)
     flat_hash_map<std::string, std::string> email = {
         {"tom",   "tom@gmail.com"     },

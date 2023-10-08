@@ -64,19 +64,17 @@ using ::testing::ElementsAreArray;
 using ::testing::IsEmpty;
 using ::testing::Pair;
 
-#define GTL_INTERNAL_CHECK(condition, message)                                                     \
-    if (!(condition))                                                                              \
+#define GTL_INTERNAL_CHECK(condition, message)                                                                         \
+    if (!(condition))                                                                                                  \
     assert(0)
 
 template<typename T, typename U>
-void CheckPairEquals(const T& x, const U& y)
-{
+void CheckPairEquals(const T& x, const U& y) {
     GTL_INTERNAL_CHECK(x == y, "Values are unequal.");
 }
 
 template<typename T, typename U, typename V, typename W>
-void CheckPairEquals(const std::pair<T, U>& x, const std::pair<V, W>& y)
-{
+void CheckPairEquals(const std::pair<T, U>& x, const std::pair<V, W>& y) {
     CheckPairEquals(x.first, y.first);
     CheckPairEquals(x.second, y.second);
 }
@@ -87,8 +85,7 @@ void CheckPairEquals(const std::pair<T, U>& x, const std::pair<V, W>& y)
 // against. TreeType is expected to be btree_{set,map,multiset,multimap} and
 // CheckerType is expected to be {set,map,multiset,multimap}.
 template<typename TreeType, typename CheckerType>
-class base_checker
-{
+class base_checker {
 public:
     using key_type               = typename TreeType::key_type;
     using value_type             = typename TreeType::value_type;
@@ -106,22 +103,16 @@ public:
 
 public:
     base_checker()
-        : const_tree_(tree_)
-    {
-    }
+        : const_tree_(tree_) {}
     base_checker(const base_checker& x)
         : tree_(x.tree_)
         , const_tree_(tree_)
-        , checker_(x.checker_)
-    {
-    }
+        , checker_(x.checker_) {}
     template<typename InputIterator>
     base_checker(InputIterator b, InputIterator e)
         : tree_(b, e)
         , const_tree_(tree_)
-        , checker_(b, e)
-    {
-    }
+        , checker_(b, e) {}
 
     iterator               begin() { return tree_.begin(); }
     const_iterator         begin() const { return tree_.begin(); }
@@ -133,8 +124,7 @@ public:
     const_reverse_iterator rend() const { return tree_.rend(); }
 
     template<typename IterType, typename CheckerIterType>
-    IterType iter_check(IterType tree_iter, CheckerIterType checker_iter) const
-    {
+    IterType iter_check(IterType tree_iter, CheckerIterType checker_iter) const {
         if (tree_iter == tree_.end()) {
             GTL_INTERNAL_CHECK(checker_iter == checker_.end(), "Checker iterator not at end.");
         } else {
@@ -143,8 +133,7 @@ public:
         return tree_iter;
     }
     template<typename IterType, typename CheckerIterType>
-    IterType riter_check(IterType tree_iter, CheckerIterType checker_iter) const
-    {
+    IterType riter_check(IterType tree_iter, CheckerIterType checker_iter) const {
         if (tree_iter == tree_.rend()) {
             GTL_INTERNAL_CHECK(checker_iter == checker_.rend(), "Checker iterator not at rend.");
         } else {
@@ -152,11 +141,9 @@ public:
         }
         return tree_iter;
     }
-    void value_check(const value_type& x)
-    {
-        typename KeyOfValue<typename TreeType::key_type, typename TreeType::value_type>::type
-                        key_of_value;
-        const key_type& key = key_of_value(x);
+    void value_check(const value_type& x) {
+        typename KeyOfValue<typename TreeType::key_type, typename TreeType::value_type>::type key_of_value;
+        const key_type&                                                                       key = key_of_value(x);
         CheckPairEquals(*find(key), x);
         lower_bound(key);
         upper_bound(key);
@@ -164,8 +151,7 @@ public:
         contains(key);
         count(key);
     }
-    void erase_check(const key_type& key)
-    {
+    void erase_check(const key_type& key) {
         EXPECT_FALSE(tree_.contains(key));
         EXPECT_EQ(tree_.find(key), const_tree_.end());
         EXPECT_FALSE(const_tree_.contains(key));
@@ -173,24 +159,15 @@ public:
         EXPECT_EQ(tree_.equal_range(key).first, const_tree_.equal_range(key).second);
     }
 
-    iterator lower_bound(const key_type& key)
-    {
+    iterator lower_bound(const key_type& key) { return iter_check(tree_.lower_bound(key), checker_.lower_bound(key)); }
+    const_iterator lower_bound(const key_type& key) const {
         return iter_check(tree_.lower_bound(key), checker_.lower_bound(key));
     }
-    const_iterator lower_bound(const key_type& key) const
-    {
-        return iter_check(tree_.lower_bound(key), checker_.lower_bound(key));
-    }
-    iterator upper_bound(const key_type& key)
-    {
+    iterator upper_bound(const key_type& key) { return iter_check(tree_.upper_bound(key), checker_.upper_bound(key)); }
+    const_iterator upper_bound(const key_type& key) const {
         return iter_check(tree_.upper_bound(key), checker_.upper_bound(key));
     }
-    const_iterator upper_bound(const key_type& key) const
-    {
-        return iter_check(tree_.upper_bound(key), checker_.upper_bound(key));
-    }
-    std::pair<iterator, iterator> equal_range(const key_type& key)
-    {
+    std::pair<iterator, iterator> equal_range(const key_type& key) {
         std::pair<typename CheckerType::iterator, typename CheckerType::iterator> checker_res =
             checker_.equal_range(key);
         std::pair<iterator, iterator> tree_res = tree_.equal_range(key);
@@ -198,37 +175,30 @@ public:
         iter_check(tree_res.second, checker_res.second);
         return tree_res;
     }
-    std::pair<const_iterator, const_iterator> equal_range(const key_type& key) const
-    {
-        std::pair<typename CheckerType::const_iterator, typename CheckerType::const_iterator>
-                                                  checker_res = checker_.equal_range(key);
-        std::pair<const_iterator, const_iterator> tree_res    = tree_.equal_range(key);
+    std::pair<const_iterator, const_iterator> equal_range(const key_type& key) const {
+        std::pair<typename CheckerType::const_iterator, typename CheckerType::const_iterator> checker_res =
+            checker_.equal_range(key);
+        std::pair<const_iterator, const_iterator> tree_res = tree_.equal_range(key);
         iter_check(tree_res.first, checker_res.first);
         iter_check(tree_res.second, checker_res.second);
         return tree_res;
     }
-    iterator find(const key_type& key) { return iter_check(tree_.find(key), checker_.find(key)); }
-    const_iterator find(const key_type& key) const
-    {
-        return iter_check(tree_.find(key), checker_.find(key));
-    }
-    bool      contains(const key_type& key) const { return find(key) != end(); }
-    size_type count(const key_type& key) const
-    {
+    iterator       find(const key_type& key) { return iter_check(tree_.find(key), checker_.find(key)); }
+    const_iterator find(const key_type& key) const { return iter_check(tree_.find(key), checker_.find(key)); }
+    bool           contains(const key_type& key) const { return find(key) != end(); }
+    size_type      count(const key_type& key) const {
         size_type res = checker_.count(key);
         EXPECT_EQ(res, tree_.count(key));
         return res;
     }
 
-    base_checker& operator=(const base_checker& x)
-    {
+    base_checker& operator=(const base_checker& x) {
         tree_    = x.tree_;
         checker_ = x.checker_;
         return *this;
     }
 
-    int erase(const key_type& key)
-    {
+    int erase(const key_type& key) {
         size_t size = tree_.size();
         int    res  = (int)checker_.erase(key);
         EXPECT_EQ(res, tree_.count(key));
@@ -238,8 +208,7 @@ public:
         erase_check(key);
         return res;
     }
-    iterator erase(iterator iter)
-    {
+    iterator erase(iterator iter) {
         key_type key          = iter.key();
         size_t   size         = tree_.size();
         size_t   count        = tree_.count(key);
@@ -260,8 +229,7 @@ public:
         return iter_check(iter, checker_next);
     }
 
-    void erase(iterator begin, iterator end)
-    {
+    void erase(iterator begin, iterator end) {
         size_t size          = tree_.size();
         int    count         = std::distance(begin, end);
         auto   checker_begin = checker_.lower_bound(begin.key());
@@ -280,19 +248,16 @@ public:
         EXPECT_EQ(tree_.size(), size - count);
     }
 
-    void clear()
-    {
+    void clear() {
         tree_.clear();
         checker_.clear();
     }
-    void swap(base_checker& x)
-    {
+    void swap(base_checker& x) {
         tree_.swap(x.tree_);
         checker_.swap(x.checker_);
     }
 
-    void verify() const
-    {
+    void verify() const {
         tree_.verify();
         EXPECT_EQ(tree_.size(), checker_.size());
 
@@ -331,14 +296,12 @@ public:
 
     const TreeType& tree() const { return tree_; }
 
-    size_type size() const
-    {
+    size_type size() const {
         EXPECT_EQ(tree_.size(), checker_.size());
         return tree_.size();
     }
     size_type max_size() const { return tree_.max_size(); }
-    bool      empty() const
-    {
+    bool      empty() const {
         EXPECT_EQ(tree_.empty(), checker_.empty());
         return tree_.empty();
     }
@@ -353,8 +316,7 @@ namespace {
 // A checker for unique sorted associative containers. TreeType is expected to
 // be btree_{set,map} and CheckerType is expected to be {set,map}.
 template<typename TreeType, typename CheckerType>
-class unique_checker : public base_checker<TreeType, CheckerType>
-{
+class unique_checker : public base_checker<TreeType, CheckerType> {
     using super_type = base_checker<TreeType, CheckerType>;
 
 public:
@@ -363,23 +325,16 @@ public:
 
 public:
     unique_checker()
-        : super_type()
-    {
-    }
+        : super_type() {}
     unique_checker(const unique_checker& x)
-        : super_type(x)
-    {
-    }
+        : super_type(x) {}
     template<class InputIterator>
     unique_checker(InputIterator b, InputIterator e)
-        : super_type(b, e)
-    {
-    }
+        : super_type(b, e) {}
     unique_checker& operator=(const unique_checker&) = default;
 
     // Insertion routines.
-    std::pair<iterator, bool> insert(const value_type& x)
-    {
+    std::pair<iterator, bool> insert(const value_type& x) {
         size_t                                          size        = this->tree_.size();
         std::pair<typename CheckerType::iterator, bool> checker_res = this->checker_.insert(x);
         std::pair<iterator, bool>                       tree_res    = this->tree_.insert(x);
@@ -389,19 +344,17 @@ public:
         EXPECT_EQ(this->tree_.size(), size + tree_res.second);
         return tree_res;
     }
-    iterator insert(iterator position, const value_type& x)
-    {
+    iterator insert(iterator position, const value_type& x) {
         size_t                                          size        = this->tree_.size();
         std::pair<typename CheckerType::iterator, bool> checker_res = this->checker_.insert(x);
-        iterator                                        tree_res = this->tree_.insert(position, x);
+        iterator                                        tree_res    = this->tree_.insert(position, x);
         CheckPairEquals(*tree_res, *checker_res.first);
         EXPECT_EQ(this->tree_.size(), this->checker_.size());
         EXPECT_EQ(this->tree_.size(), size + checker_res.second);
         return tree_res;
     }
     template<typename InputIterator>
-    void insert(InputIterator b, InputIterator e)
-    {
+    void insert(InputIterator b, InputIterator e) {
         for (; b != e; ++b) {
             insert(*b);
         }
@@ -412,8 +365,7 @@ public:
 // to be btree_{multiset,multimap} and CheckerType is expected to be
 // {multiset,multimap}.
 template<typename TreeType, typename CheckerType>
-class multi_checker : public base_checker<TreeType, CheckerType>
-{
+class multi_checker : public base_checker<TreeType, CheckerType> {
     using super_type = base_checker<TreeType, CheckerType>;
 
 public:
@@ -422,23 +374,16 @@ public:
 
 public:
     multi_checker()
-        : super_type()
-    {
-    }
+        : super_type() {}
     multi_checker(const multi_checker& x)
-        : super_type(x)
-    {
-    }
+        : super_type(x) {}
     template<class InputIterator>
     multi_checker(InputIterator b, InputIterator e)
-        : super_type(b, e)
-    {
-    }
+        : super_type(b, e) {}
     multi_checker& operator=(const multi_checker&) = default;
 
     // Insertion routines.
-    iterator insert(const value_type& x)
-    {
+    iterator insert(const value_type& x) {
         size_t   size        = this->tree_.size();
         auto     checker_res = this->checker_.insert(x);
         iterator tree_res    = this->tree_.insert(x);
@@ -447,8 +392,7 @@ public:
         EXPECT_EQ(this->tree_.size(), size + 1);
         return tree_res;
     }
-    iterator insert(iterator position, const value_type& x)
-    {
+    iterator insert(iterator position, const value_type& x) {
         size_t   size        = this->tree_.size();
         auto     checker_res = this->checker_.insert(x);
         iterator tree_res    = this->tree_.insert(position, x);
@@ -458,8 +402,7 @@ public:
         return tree_res;
     }
     template<typename InputIterator>
-    void insert(InputIterator b, InputIterator e)
-    {
+    void insert(InputIterator b, InputIterator e) {
         for (; b != e; ++b) {
             insert(*b);
         }
@@ -467,8 +410,7 @@ public:
 };
 
 template<typename T, typename V>
-void DoTest([[maybe_unused]] const char* name, T* b, const std::vector<V>& values)
-{
+void DoTest([[maybe_unused]] const char* name, T* b, const std::vector<V>& values) {
     typename KeyOfValue<typename T::key_type, V>::type key_of_value;
 
     T&       mutable_b = *b;
@@ -602,8 +544,7 @@ void DoTest([[maybe_unused]] const char* name, T* b, const std::vector<V>& value
 }
 
 template<typename T>
-void ConstTest()
-{
+void ConstTest() {
     using value_type = typename T::value_type;
     typename KeyOfValue<typename T::key_type, value_type>::type key_of_value;
 
@@ -655,8 +596,7 @@ void ConstTest()
 }
 
 template<typename T, typename C>
-void BtreeTest()
-{
+void BtreeTest() {
     ConstTest<T>();
 
     using V = typename remove_pair_const<typename T::value_type>::type;
@@ -679,8 +619,7 @@ void BtreeTest()
 }
 
 template<typename T, typename C>
-void BtreeMultiTest()
-{
+void BtreeMultiTest() {
     ConstTest<T>();
 
     using V = typename remove_pair_const<typename T::value_type>::type;
@@ -713,8 +652,7 @@ void BtreeMultiTest()
 }
 
 template<typename T>
-struct PropagatingCountingAlloc : public CountingAllocator<T>
-{
+struct PropagatingCountingAlloc : public CountingAllocator<T> {
     using propagate_on_container_copy_assignment = std::true_type;
     using propagate_on_container_move_assignment = std::true_type;
     using propagate_on_container_swap            = std::true_type;
@@ -724,20 +662,16 @@ struct PropagatingCountingAlloc : public CountingAllocator<T>
 
     template<typename U>
     explicit PropagatingCountingAlloc(const PropagatingCountingAlloc<U>& other)
-        : Base(other.bytes_used_)
-    {
-    }
+        : Base(other.bytes_used_) {}
 
     template<typename U>
-    struct rebind
-    {
+    struct rebind {
         using other = PropagatingCountingAlloc<U>;
     };
 };
 
 template<typename T>
-void BtreeAllocatorTest()
-{
+void BtreeAllocatorTest() {
     using value_type = typename T::value_type;
 
     int64_t                     bytes1 = 0, bytes2 = 0;
@@ -823,8 +757,7 @@ void BtreeAllocatorTest()
 }
 
 template<typename T>
-void BtreeMapTest()
-{
+void BtreeMapTest() {
     using value_type  = typename T::value_type;
     using mapped_type = typename T::mapped_type;
 
@@ -850,16 +783,14 @@ void BtreeMapTest()
 }
 
 template<typename T>
-void BtreeMultiMapTest()
-{
+void BtreeMultiMapTest() {
     using mapped_type = typename T::mapped_type;
     mapped_type m     = Generator<mapped_type>(0)(0);
     (void)m;
 }
 
 template<typename K, int N = 256>
-void SetTest()
-{
+void SetTest() {
     using BtreeSet         = gtl::btree_set<K>;
     using CountingBtreeSet = gtl::btree_set<K, std::less<K>, PropagatingCountingAlloc<K>>;
     BtreeTest<BtreeSet, std::set<K>>();
@@ -867,11 +798,9 @@ void SetTest()
 }
 
 template<typename K, int N = 256>
-void MapTest()
-{
-    using BtreeMap = gtl::btree_map<K, K>;
-    using CountingBtreeMap =
-        gtl::btree_map<K, K, std::less<K>, PropagatingCountingAlloc<std::pair<const K, K>>>;
+void MapTest() {
+    using BtreeMap         = gtl::btree_map<K, K>;
+    using CountingBtreeMap = gtl::btree_map<K, K, std::less<K>, PropagatingCountingAlloc<std::pair<const K, K>>>;
     BtreeTest<BtreeMap, std::map<K, K>>();
     BtreeAllocatorTest<CountingBtreeMap>();
     BtreeMapTest<BtreeMap>();
@@ -887,8 +816,7 @@ TEST(Btree, map_string) { MapTest<std::string>(); }
 TEST(Btree, map_pair) { MapTest<std::pair<int, int>>(); }
 
 template<typename K, int N = 256>
-void MultiSetTest()
-{
+void MultiSetTest() {
     using BtreeMSet         = gtl::btree_multiset<K>;
     using CountingBtreeMSet = gtl::btree_multiset<K, std::less<K>, PropagatingCountingAlloc<K>>;
     BtreeMultiTest<BtreeMSet, std::multiset<K>>();
@@ -896,11 +824,9 @@ void MultiSetTest()
 }
 
 template<typename K, int N = 256>
-void MultiMapTest()
-{
-    using BtreeMMap = gtl::btree_multimap<K, K>;
-    using CountingBtreeMMap =
-        gtl::btree_multimap<K, K, std::less<K>, PropagatingCountingAlloc<std::pair<const K, K>>>;
+void MultiMapTest() {
+    using BtreeMMap         = gtl::btree_multimap<K, K>;
+    using CountingBtreeMMap = gtl::btree_multimap<K, K, std::less<K>, PropagatingCountingAlloc<std::pair<const K, K>>>;
     BtreeMultiTest<BtreeMMap, std::multimap<K, K>>();
     BtreeMultiMapTest<BtreeMMap>();
     BtreeAllocatorTest<CountingBtreeMMap>();
@@ -915,19 +841,16 @@ TEST(Btree, multimap_int64) { MultiMapTest<int64_t>(); }
 TEST(Btree, multimap_string) { MultiMapTest<std::string>(); }
 TEST(Btree, multimap_pair) { MultiMapTest<std::pair<int, int>>(); }
 
-struct CompareIntToString
-{
+struct CompareIntToString {
     bool operator()(const std::string& a, const std::string& b) const { return a < b; }
     bool operator()(const std::string& a, int b) const { return a < std::to_string(b); }
     bool operator()(int a, const std::string& b) const { return std::to_string(a) < b; }
     using is_transparent = void;
 };
 
-struct NonTransparentCompare
-{
+struct NonTransparentCompare {
     template<typename T, typename U>
-    bool operator()(const T& t, const U& u) const
-    {
+    bool operator()(const T& t, const U& u) const {
         // Treating all comparators as transparent can cause inefficiencies (see
         // N3657 C++ proposal). Test that for comparators without 'is_transparent'
         // alias (like this one), we do not attempt heterogeneous lookup.
@@ -937,20 +860,17 @@ struct NonTransparentCompare
 };
 
 template<typename T>
-bool CanEraseWithEmptyBrace(T t, decltype(t.erase({}))*)
-{
+bool CanEraseWithEmptyBrace(T t, decltype(t.erase({}))*) {
     return true;
 }
 
 template<typename T>
-bool CanEraseWithEmptyBrace(T, ...)
-{
+bool CanEraseWithEmptyBrace(T, ...) {
     return false;
 }
 
 template<typename T>
-void TestHeterogeneous(T table)
-{
+void TestHeterogeneous(T table) {
     auto lb = table.lower_bound("3");
     EXPECT_EQ(lb, table.lower_bound(3));
     EXPECT_NE(lb, table.lower_bound(4));
@@ -999,8 +919,7 @@ void TestHeterogeneous(T table)
         TestHeterogeneous<const T&>(table);
 }
 
-TEST(Btree, HeterogeneousLookup)
-{
+TEST(Btree, HeterogeneousLookup) {
     TestHeterogeneous(btree_set<std::string, CompareIntToString>{ "1", "3", "5" });
     TestHeterogeneous(btree_map<std::string, int, CompareIntToString>{
         {"1",  1},
@@ -1030,8 +949,7 @@ TEST(Btree, HeterogeneousLookup)
     EXPECT_EQ(-1, cmap.at({}));
 }
 
-TEST(Btree, NoHeterogeneousLookupWithoutAlias)
-{
+TEST(Btree, NoHeterogeneousLookupWithoutAlias) {
     using StringSet = gtl::btree_set<std::string, NonTransparentCompare>;
     StringSet s;
     ASSERT_TRUE(s.insert("hello").second);
@@ -1056,8 +974,7 @@ TEST(Btree, NoHeterogeneousLookupWithoutAlias)
     EXPECT_FALSE(ms.contains("blah"));
 }
 
-TEST(Btree, DefaultTransparent)
-{
+TEST(Btree, DefaultTransparent) {
     {
         // `int` does not have a default transparent comparator.
         // The input value is converted to key_type.
@@ -1075,14 +992,12 @@ TEST(Btree, DefaultTransparent)
     }
 }
 
-class StringLike
-{
+class StringLike {
 public:
     StringLike() = default;
 
     StringLike(const char* s)
-        : s_(s)
-    { // NOLINT
+        : s_(s) { // NOLINT
         ++constructor_calls_;
     }
 
@@ -1099,8 +1014,7 @@ private:
 
 int StringLike::constructor_calls_ = 0;
 
-TEST(Btree, HeterogeneousLookupDoesntDegradePerformance)
-{
+TEST(Btree, HeterogeneousLookupDoesntDegradePerformance) {
     using StringSet = gtl::btree_set<StringLike>;
     StringSet s;
     for (int i = 0; i < 100; ++i) {
@@ -1137,22 +1051,17 @@ TEST(Btree, HeterogeneousLookupDoesntDegradePerformance)
 
 // Verify that swapping btrees swaps the key comparison functors and that we can
 // use non-default constructible comparators.
-struct SubstringLess
-{
+struct SubstringLess {
     SubstringLess() = delete;
     explicit SubstringLess(int length)
-        : n(length)
-    {
-    }
-    bool operator()(const std::string& a, const std::string& b) const
-    {
+        : n(length) {}
+    bool operator()(const std::string& a, const std::string& b) const {
         return std::string_view(a).substr(0, n) < std::string_view(b).substr(0, n);
     }
     int n;
 };
 
-TEST(Btree, SwapKeyCompare)
-{
+TEST(Btree, SwapKeyCompare) {
     using SubstringSet = gtl::btree_set<std::string, SubstringLess>;
     SubstringSet s1(SubstringLess(1), SubstringSet::allocator_type());
     SubstringSet s2(SubstringLess(2), SubstringSet::allocator_type());
@@ -1174,8 +1083,7 @@ TEST(Btree, SwapKeyCompare)
     ASSERT_FALSE(s2.insert("bb").second);
 }
 
-TEST(Btree, UpperBoundRegression)
-{
+TEST(Btree, UpperBoundRegression) {
     // Regress a bug where upper_bound would default-construct a new key_compare
     // instead of copying the existing one.
     using SubstringSet = gtl::btree_set<std::string, SubstringLess>;
@@ -1191,8 +1099,7 @@ TEST(Btree, UpperBoundRegression)
     EXPECT_EQ("aab", *it);
 }
 
-TEST(Btree, Comparison)
-{
+TEST(Btree, Comparison) {
     const int               kSetSize = 1201;
     gtl::btree_set<int64_t> my_set;
     for (int i = 0; i < kSetSize; ++i) {
@@ -1246,8 +1153,7 @@ TEST(Btree, Comparison)
     EXPECT_TRUE(my_map != my_map_copy);
 }
 
-TEST(Btree, RangeCtorSanity)
-{
+TEST(Btree, RangeCtorSanity) {
     std::vector<int> ivec;
     ivec.push_back(1);
     std::map<int, int> imap;
@@ -1262,8 +1168,7 @@ TEST(Btree, RangeCtorSanity)
     EXPECT_EQ(1, tmap.size());
 }
 
-TEST(Btree, BtreeMapCanHoldMoveOnlyTypes)
-{
+TEST(Btree, BtreeMapCanHoldMoveOnlyTypes) {
     gtl::btree_map<std::string, std::unique_ptr<std::string>> m;
 
     std::unique_ptr<std::string>& v = m["A"];
@@ -1274,8 +1179,7 @@ TEST(Btree, BtreeMapCanHoldMoveOnlyTypes)
     EXPECT_EQ("X", *iter->second);
 }
 
-TEST(Btree, InitializerListConstructor)
-{
+TEST(Btree, InitializerListConstructor) {
     gtl::btree_set<std::string> set({ "a", "b" });
     EXPECT_EQ(set.count("a"), 1);
     EXPECT_EQ(set.count("b"), 1);
@@ -1304,8 +1208,7 @@ TEST(Btree, InitializerListConstructor)
     EXPECT_EQ(++it, range.second);
 }
 
-TEST(Btree, InitializerListInsert)
-{
+TEST(Btree, InitializerListInsert) {
     gtl::btree_set<std::string> set;
     set.insert({ "a", "b" });
     EXPECT_EQ(set.count("a"), 1);
@@ -1342,27 +1245,21 @@ TEST(Btree, InitializerListInsert)
 }
 
 template<typename Compare, typename K>
-void AssertKeyCompareToAdapted()
-{
+void AssertKeyCompareToAdapted() {
     using Adapted = typename key_compare_to_adapter<Compare>::type;
-    static_assert(!std::is_same_v<Adapted, Compare>,
-                  "key_compare_to_adapter should have adapted this comparator.");
-    static_assert(
-        std::is_same_v<gtl::weak_ordering, std::invoke_result_t<Adapted, const K&, const K&>>,
-        "Adapted comparator should be a key-compare-to comparator.");
+    static_assert(!std::is_same_v<Adapted, Compare>, "key_compare_to_adapter should have adapted this comparator.");
+    static_assert(std::is_same_v<gtl::weak_ordering, std::invoke_result_t<Adapted, const K&, const K&>>,
+                  "Adapted comparator should be a key-compare-to comparator.");
 }
 template<typename Compare, typename K>
-void AssertKeyCompareToNotAdapted()
-{
+void AssertKeyCompareToNotAdapted() {
     using Unadapted = typename key_compare_to_adapter<Compare>::type;
-    static_assert(std::is_same_v<Unadapted, Compare>,
-                  "key_compare_to_adapter shouldn't have adapted this comparator.");
+    static_assert(std::is_same_v<Unadapted, Compare>, "key_compare_to_adapter shouldn't have adapted this comparator.");
     static_assert(std::is_same_v<bool, std::invoke_result_t<Unadapted, const K&, const K&>>,
                   "Un-adapted comparator should return bool.");
 }
 
-TEST(Btree, KeyCompareToAdapter)
-{
+TEST(Btree, KeyCompareToAdapter) {
     AssertKeyCompareToAdapted<std::less<std::string>, std::string>();
     AssertKeyCompareToAdapted<std::greater<std::string>, std::string>();
     AssertKeyCompareToAdapted<std::less<std::string_view>, std::string_view>();
@@ -1371,8 +1268,7 @@ TEST(Btree, KeyCompareToAdapter)
     AssertKeyCompareToNotAdapted<std::greater<int>, int>();
 }
 
-TEST(Btree, RValueInsert)
-{
+TEST(Btree, RValueInsert) {
     InstanceTracker tracker;
 
     gtl::btree_set<MovableOnlyInstance> set;
@@ -1421,13 +1317,11 @@ TEST(Btree, RValueInsert)
 
 } // namespace
 
-class BtreeNodePeer
-{
+class BtreeNodePeer {
 public:
     // Yields the size of a leaf node with a specific number of values.
     template<typename ValueType>
-    constexpr static size_t GetTargetNodeSize(size_t target_values_per_node)
-    {
+    constexpr static size_t GetTargetNodeSize(size_t target_values_per_node) {
         return btree_node<set_params<ValueType,
                                      std::less<ValueType>,
                                      std::allocator<ValueType>,
@@ -1437,8 +1331,7 @@ public:
 
     // Yields the number of values in a (non-root) leaf node for this set.
     template<typename Set>
-    constexpr static size_t GetNumValuesPerNode()
-    {
+    constexpr static size_t GetNumValuesPerNode() {
         return btree_node<typename Set::params_type>::kNodeValues;
     }
 };
@@ -1448,13 +1341,11 @@ namespace {
 // A btree set with a specific number of values per node.
 template<typename Key, int TargetValuesPerNode, typename Cmp = std::less<Key>>
 class SizedBtreeSet
-    : public btree_set_container<
-          btree<set_params<Key,
-                           Cmp,
-                           std::allocator<Key>,
-                           BtreeNodePeer::GetTargetNodeSize<Key>(TargetValuesPerNode),
-                           /*Multi=*/false>>>
-{
+    : public btree_set_container<btree<set_params<Key,
+                                                  Cmp,
+                                                  std::allocator<Key>,
+                                                  BtreeNodePeer::GetTargetNodeSize<Key>(TargetValuesPerNode),
+                                                  /*Multi=*/false>>> {
     using Base = typename SizedBtreeSet::btree_set_container;
 
 public:
@@ -1467,8 +1358,7 @@ void ExpectOperationCounts(const int               expected_moves,
                            const int               expected_comparisons,
                            const std::vector<int>& values,
                            InstanceTracker*        tracker,
-                           Set*                    set)
-{
+                           Set*                    set) {
     for (const int v : values)
         set->insert(MovableOnlyInstance(v));
     set->clear();
@@ -1481,8 +1371,7 @@ void ExpectOperationCounts(const int               expected_moves,
 
 // Note: when the values in this test change, it is expected to have an impact
 // on performance.
-TEST(Btree, MovesComparisonsCopiesSwapsTracking)
-{
+TEST(Btree, MovesComparisonsCopiesSwapsTracking) {
     InstanceTracker tracker;
     // Note: this is minimum number of values per node.
     SizedBtreeSet<MovableOnlyInstance, /*TargetValuesPerNode=*/3> set3;
@@ -1521,18 +1410,15 @@ TEST(Btree, MovesComparisonsCopiesSwapsTracking)
     ExpectOperationCounts(534529, 125279, values, &tracker, &set100);
 }
 
-struct MovableOnlyInstanceThreeWayCompare
-{
-    gtl::weak_ordering operator()(const MovableOnlyInstance& a, const MovableOnlyInstance& b) const
-    {
+struct MovableOnlyInstanceThreeWayCompare {
+    gtl::weak_ordering operator()(const MovableOnlyInstance& a, const MovableOnlyInstance& b) const {
         return a.compare(b);
     }
 };
 
 // Note: when the values in this test change, it is expected to have an impact
 // on performance.
-TEST(Btree, MovesComparisonsCopiesSwapsTrackingThreeWayCompare)
-{
+TEST(Btree, MovesComparisonsCopiesSwapsTrackingThreeWayCompare) {
     InstanceTracker tracker;
     // Note: this is minimum number of values per node.
     SizedBtreeSet<MovableOnlyInstance,
@@ -1580,19 +1466,15 @@ TEST(Btree, MovesComparisonsCopiesSwapsTrackingThreeWayCompare)
     ExpectOperationCounts(534529, 115280, values, &tracker, &set100);
 }
 
-struct NoDefaultCtor
-{
+struct NoDefaultCtor {
     int num;
     explicit NoDefaultCtor(int i)
-        : num(i)
-    {
-    }
+        : num(i) {}
 
     friend bool operator<(const NoDefaultCtor& a, const NoDefaultCtor& b) { return a.num < b.num; }
 };
 
-TEST(Btree, BtreeMapCanHoldNoDefaultCtorTypes)
-{
+TEST(Btree, BtreeMapCanHoldNoDefaultCtorTypes) {
     gtl::btree_map<NoDefaultCtor, NoDefaultCtor> m;
 
     for (int i = 1; i <= 99; ++i) {
@@ -1618,8 +1500,7 @@ TEST(Btree, BtreeMapCanHoldNoDefaultCtorTypes)
     EXPECT_EQ(iter25->second.num, 75);
 }
 
-TEST(Btree, BtreeMultimapCanHoldNoDefaultCtorTypes)
-{
+TEST(Btree, BtreeMultimapCanHoldNoDefaultCtorTypes) {
     gtl::btree_multimap<NoDefaultCtor, NoDefaultCtor> m;
 
     for (int i = 1; i <= 99; ++i) {
@@ -1644,8 +1525,7 @@ TEST(Btree, BtreeMultimapCanHoldNoDefaultCtorTypes)
     EXPECT_EQ(iter25->second.num, 75);
 }
 
-TEST(Btree, MapAt)
-{
+TEST(Btree, MapAt) {
     gtl::btree_map<int, int> map = {
         {1,  2},
         { 2, 4}
@@ -1659,8 +1539,7 @@ TEST(Btree, MapAt)
     EXPECT_THROW(map.at(3), std::out_of_range);
 }
 
-TEST(Btree, BtreeMultisetEmplace)
-{
+TEST(Btree, BtreeMultisetEmplace) {
     const int                value_to_insert = 123456;
     gtl::btree_multiset<int> s;
     auto                     iter = s.emplace(value_to_insert);
@@ -1674,8 +1553,7 @@ TEST(Btree, BtreeMultisetEmplace)
     EXPECT_EQ(std::distance(result.first, result.second), 2);
 }
 
-TEST(Btree, BtreeMultisetEmplaceHint)
-{
+TEST(Btree, BtreeMultisetEmplaceHint) {
     const int                value_to_insert = 123456;
     gtl::btree_multiset<int> s;
     auto                     iter = s.emplace(value_to_insert);
@@ -1687,8 +1565,7 @@ TEST(Btree, BtreeMultisetEmplaceHint)
     EXPECT_EQ(*emplace_iter, value_to_insert);
 }
 
-TEST(Btree, BtreeMultimapEmplace)
-{
+TEST(Btree, BtreeMultimapEmplace) {
     const int                             key_to_insert = 123456;
     const char                            value0[]      = "a";
     gtl::btree_multimap<int, std::string> s;
@@ -1706,8 +1583,7 @@ TEST(Btree, BtreeMultimapEmplace)
     EXPECT_EQ(std::distance(result.first, result.second), 2);
 }
 
-TEST(Btree, BtreeMultimapEmplaceHint)
-{
+TEST(Btree, BtreeMultimapEmplaceHint) {
     const int                             key_to_insert = 123456;
     const char                            value0[]      = "a";
     gtl::btree_multimap<int, std::string> s;
@@ -1723,8 +1599,7 @@ TEST(Btree, BtreeMultimapEmplaceHint)
     EXPECT_EQ(emplace_iter->second, value1);
 }
 
-TEST(Btree, ConstIteratorAccessors)
-{
+TEST(Btree, ConstIteratorAccessors) {
     gtl::btree_set<int> set;
     for (int i = 0; i < 100; ++i) {
         set.insert(i);
@@ -1754,8 +1629,7 @@ TEST(Btree, ConstIteratorAccessors)
 // literal 0. Defining this function allows for avoiding ClangTidy warnings.
 bool Identity(const bool b) { return b; }
 
-TEST(Btree, ValueComp)
-{
+TEST(Btree, ValueComp) {
     gtl::btree_set<int> s;
     EXPECT_TRUE(s.value_comp()(1, 2));
     EXPECT_FALSE(s.value_comp()(2, 2));
@@ -1772,8 +1646,7 @@ TEST(Btree, ValueComp)
     EXPECT_TRUE(Identity(m2.value_comp()(std::make_pair("b", 0), std::make_pair("a", 0)) > 0));
 }
 
-TEST(Btree, DefaultConstruction)
-{
+TEST(Btree, DefaultConstruction) {
     gtl::btree_set<int>           s;
     gtl::btree_map<int, int>      m;
     gtl::btree_multiset<int>      ms;
@@ -1847,8 +1720,7 @@ TEST(Btree, DefaultConstruction)
     }
 #endif
 
-TEST(Btree, ComparableSet)
-{
+TEST(Btree, ComparableSet) {
     gtl::btree_set<int> s1 = { 1, 2 };
     gtl::btree_set<int> s2 = { 2, 3 };
     EXPECT_LT(s1, s2);
@@ -1859,8 +1731,7 @@ TEST(Btree, ComparableSet)
     EXPECT_GE(s1, s1);
 }
 
-TEST(Btree, ComparableSetsDifferentLength)
-{
+TEST(Btree, ComparableSetsDifferentLength) {
     gtl::btree_set<int> s1 = { 1, 2 };
     gtl::btree_set<int> s2 = { 1, 2, 3 };
     EXPECT_LT(s1, s2);
@@ -1869,8 +1740,7 @@ TEST(Btree, ComparableSetsDifferentLength)
     EXPECT_GE(s2, s1);
 }
 
-TEST(Btree, ComparableMultiset)
-{
+TEST(Btree, ComparableMultiset) {
     gtl::btree_multiset<int> s1 = { 1, 2 };
     gtl::btree_multiset<int> s2 = { 2, 3 };
     EXPECT_LT(s1, s2);
@@ -1881,8 +1751,7 @@ TEST(Btree, ComparableMultiset)
     EXPECT_GE(s1, s1);
 }
 
-TEST(Btree, ComparableMap)
-{
+TEST(Btree, ComparableMap) {
     gtl::btree_map<int, int> s1 = {
         {1, 2}
     };
@@ -1897,8 +1766,7 @@ TEST(Btree, ComparableMap)
     EXPECT_GE(s1, s1);
 }
 
-TEST(Btree, ComparableMultimap)
-{
+TEST(Btree, ComparableMultimap) {
     gtl::btree_multimap<int, int> s1 = {
         {1, 2}
     };
@@ -1913,8 +1781,7 @@ TEST(Btree, ComparableMultimap)
     EXPECT_GE(s1, s1);
 }
 
-TEST(Btree, ComparableSetWithCustomComparator)
-{
+TEST(Btree, ComparableSetWithCustomComparator) {
     // As specified by
     // http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2012/n3337.pdf section
     // [container.requirements.general].12, ordering associative containers always
@@ -1930,8 +1797,7 @@ TEST(Btree, ComparableSetWithCustomComparator)
     EXPECT_GE(s1, s1);
 }
 
-TEST(Btree, EraseReturnsIterator)
-{
+TEST(Btree, EraseReturnsIterator) {
     gtl::btree_set<int> set       = { 1, 2, 3, 4, 5 };
     auto                result_it = set.erase(set.begin(), set.find(3));
     EXPECT_EQ(result_it, set.find(3));
@@ -1939,8 +1805,7 @@ TEST(Btree, EraseReturnsIterator)
     EXPECT_EQ(result_it, set.end());
 }
 
-TEST(Btree, ExtractAndInsertNodeHandleSet)
-{
+TEST(Btree, ExtractAndInsertNodeHandleSet) {
     gtl::btree_set<int> src1 = { 1, 2, 3, 4, 5 };
     auto                nh   = src1.extract(src1.find(3));
     EXPECT_THAT(src1, ElementsAre(1, 2, 4, 5));
@@ -1963,8 +1828,7 @@ TEST(Btree, ExtractAndInsertNodeHandleSet)
 }
 
 template<typename Set>
-void TestExtractWithTrackingForSet()
-{
+void TestExtractWithTrackingForSet() {
     InstanceTracker tracker;
     {
         Set s;
@@ -1996,8 +1860,7 @@ void TestExtractWithTrackingForSet()
 }
 
 template<typename Map>
-void TestExtractWithTrackingForMap()
-{
+void TestExtractWithTrackingForMap() {
     InstanceTracker tracker;
     {
         Map m;
@@ -2030,17 +1893,14 @@ void TestExtractWithTrackingForMap()
     EXPECT_EQ(0, tracker.instances());
 }
 
-TEST(Btree, ExtractTracking)
-{
+TEST(Btree, ExtractTracking) {
     TestExtractWithTrackingForSet<gtl::btree_set<MovableOnlyInstance>>();
     TestExtractWithTrackingForSet<gtl::btree_multiset<MovableOnlyInstance>>();
     TestExtractWithTrackingForMap<gtl::btree_map<CopyableMovableInstance, MovableOnlyInstance>>();
-    TestExtractWithTrackingForMap<
-        gtl::btree_multimap<CopyableMovableInstance, MovableOnlyInstance>>();
+    TestExtractWithTrackingForMap<gtl::btree_multimap<CopyableMovableInstance, MovableOnlyInstance>>();
 }
 
-TEST(Btree, ExtractAndInsertNodeHandleMultiSet)
-{
+TEST(Btree, ExtractAndInsertNodeHandleMultiSet) {
     gtl::btree_multiset<int> src1 = { 1, 2, 3, 3, 4, 5 };
     auto                     nh   = src1.extract(src1.find(3));
     EXPECT_THAT(src1, ElementsAre(1, 2, 3, 4, 5));
@@ -2057,8 +1917,7 @@ TEST(Btree, ExtractAndInsertNodeHandleMultiSet)
     EXPECT_EQ(res, ++other.find(3));
 }
 
-TEST(Btree, ExtractAndInsertNodeHandleMap)
-{
+TEST(Btree, ExtractAndInsertNodeHandleMap) {
     gtl::btree_map<int, int> src1 = {
         {1,  2},
         { 3, 4},
@@ -2087,8 +1946,7 @@ TEST(Btree, ExtractAndInsertNodeHandleMap)
     EXPECT_EQ(res.node.mapped(), 6);
 }
 
-TEST(Btree, ExtractAndInsertNodeHandleMultiMap)
-{
+TEST(Btree, ExtractAndInsertNodeHandleMultiMap) {
     gtl::btree_multimap<int, int> src1 = {
         {1,  2},
         { 3, 4},
@@ -2113,29 +1971,20 @@ TEST(Btree, ExtractAndInsertNodeHandleMultiMap)
 
 // For multisets, insert with hint also affects correctness because we need to
 // insert immediately before the hint if possible.
-struct InsertMultiHintData
-{
+struct InsertMultiHintData {
     int  key;
     int  not_key;
-    bool operator==(const InsertMultiHintData other) const
-    {
-        return key == other.key && not_key == other.not_key;
-    }
+    bool operator==(const InsertMultiHintData other) const { return key == other.key && not_key == other.not_key; }
 };
 
-struct InsertMultiHintDataKeyCompare
-{
+struct InsertMultiHintDataKeyCompare {
     using is_transparent = void;
-    bool operator()(const InsertMultiHintData a, const InsertMultiHintData b) const
-    {
-        return a.key < b.key;
-    }
+    bool operator()(const InsertMultiHintData a, const InsertMultiHintData b) const { return a.key < b.key; }
     bool operator()(const int a, const InsertMultiHintData b) const { return a < b.key; }
     bool operator()(const InsertMultiHintData a, const int b) const { return a.key < b; }
 };
 
-TEST(Btree, InsertHintNodeHandle)
-{
+TEST(Btree, InsertHintNodeHandle) {
     // For unique sets, insert with hint is just a performance optimization.
     // Test that insert works correctly when the hint is right or wrong.
     {
@@ -2187,10 +2036,8 @@ TEST(Btree, InsertHintNodeHandle)
     EXPECT_EQ(it, other.begin());
 }
 
-struct IntCompareToCmp
-{
-    gtl::weak_ordering operator()(const int& a, const int& b) const
-    {
+struct IntCompareToCmp {
+    gtl::weak_ordering operator()(const int& a, const int& b) const {
         if (a < b)
             return gtl::weak_ordering::less;
         if (a > b)
@@ -2199,8 +2046,7 @@ struct IntCompareToCmp
     }
 };
 
-TEST(Btree, MergeIntoUniqueContainers)
-{
+TEST(Btree, MergeIntoUniqueContainers) {
     gtl::btree_set<int, IntCompareToCmp> src1 = { 1, 2, 3 };
     gtl::btree_multiset<int>             src2 = { 3, 4, 4, 5 };
     gtl::btree_set<int>                  dst;
@@ -2213,8 +2059,7 @@ TEST(Btree, MergeIntoUniqueContainers)
     EXPECT_THAT(dst, ElementsAre(1, 2, 3, 4, 5));
 }
 
-TEST(Btree, MergeIntoUniqueContainersWithCompareTo)
-{
+TEST(Btree, MergeIntoUniqueContainersWithCompareTo) {
     gtl::btree_set<int, IntCompareToCmp> src1 = { 1, 2, 3 };
     gtl::btree_multiset<int>             src2 = { 3, 4, 4, 5 };
     gtl::btree_set<int, IntCompareToCmp> dst;
@@ -2227,8 +2072,7 @@ TEST(Btree, MergeIntoUniqueContainersWithCompareTo)
     EXPECT_THAT(dst, ElementsAre(1, 2, 3, 4, 5));
 }
 
-TEST(Btree, MergeIntoMultiContainers)
-{
+TEST(Btree, MergeIntoMultiContainers) {
     gtl::btree_set<int, IntCompareToCmp> src1 = { 1, 2, 3 };
     gtl::btree_multiset<int>             src2 = { 3, 4, 4, 5 };
     gtl::btree_multiset<int>             dst;
@@ -2241,8 +2085,7 @@ TEST(Btree, MergeIntoMultiContainers)
     EXPECT_THAT(dst, ElementsAre(1, 2, 3, 3, 4, 4, 5));
 }
 
-TEST(Btree, MergeIntoMultiContainersWithCompareTo)
-{
+TEST(Btree, MergeIntoMultiContainersWithCompareTo) {
     gtl::btree_set<int, IntCompareToCmp>      src1 = { 1, 2, 3 };
     gtl::btree_multiset<int>                  src2 = { 3, 4, 4, 5 };
     gtl::btree_multiset<int, IntCompareToCmp> dst;
@@ -2255,8 +2098,7 @@ TEST(Btree, MergeIntoMultiContainersWithCompareTo)
     EXPECT_THAT(dst, ElementsAre(1, 2, 3, 3, 4, 4, 5));
 }
 
-TEST(Btree, MergeIntoMultiMapsWithDifferentComparators)
-{
+TEST(Btree, MergeIntoMultiMapsWithDifferentComparators) {
     gtl::btree_map<int, int, IntCompareToCmp> src1 = {
         {1,  1},
         { 2, 2},
@@ -2275,36 +2117,26 @@ TEST(Btree, MergeIntoMultiMapsWithDifferentComparators)
     EXPECT_THAT(dst, ElementsAre(Pair(1, 1), Pair(2, 2), Pair(3, 3)));
     dst.merge(src2);
     EXPECT_TRUE(src2.empty());
-    EXPECT_THAT(
-        dst,
-        ElementsAre(
-            Pair(1, 1), Pair(2, 2), Pair(3, 3), Pair(3, 2), Pair(4, 1), Pair(4, 4), Pair(5, 5)));
+    EXPECT_THAT(dst, ElementsAre(Pair(1, 1), Pair(2, 2), Pair(3, 3), Pair(3, 2), Pair(4, 1), Pair(4, 4), Pair(5, 5)));
 }
 
-struct KeyCompareToWeakOrdering
-{
+struct KeyCompareToWeakOrdering {
     template<typename T>
-    gtl::weak_ordering operator()(const T& a, const T& b) const
-    {
-        return a < b    ? gtl::weak_ordering::less
-               : a == b ? gtl::weak_ordering::equivalent
-                        : gtl::weak_ordering::greater;
+    gtl::weak_ordering operator()(const T& a, const T& b) const {
+        return a < b ? gtl::weak_ordering::less : a == b ? gtl::weak_ordering::equivalent : gtl::weak_ordering::greater;
     }
 };
 
-struct KeyCompareToStrongOrdering
-{
+struct KeyCompareToStrongOrdering {
     template<typename T>
-    gtl::strong_ordering operator()(const T& a, const T& b) const
-    {
+    gtl::strong_ordering operator()(const T& a, const T& b) const {
         return a < b    ? gtl::strong_ordering::less
                : a == b ? gtl::strong_ordering::equal
                         : gtl::strong_ordering::greater;
     }
 };
 
-TEST(Btree, UserProvidedKeyCompareToComparators)
-{
+TEST(Btree, UserProvidedKeyCompareToComparators) {
     gtl::btree_set<int, KeyCompareToWeakOrdering> weak_set = { 1, 2, 3 };
     EXPECT_TRUE(weak_set.contains(2));
     EXPECT_FALSE(weak_set.contains(4));
@@ -2314,8 +2146,7 @@ TEST(Btree, UserProvidedKeyCompareToComparators)
     EXPECT_FALSE(strong_set.contains(4));
 }
 
-TEST(Btree, TryEmplaceBasicTest)
-{
+TEST(Btree, TryEmplaceBasicTest) {
     gtl::btree_map<int, std::string> m;
 
     // Should construct a std::string from the literal.
@@ -2336,8 +2167,7 @@ TEST(Btree, TryEmplaceBasicTest)
     }));
 }
 
-TEST(Btree, TryEmplaceWithHintWorks)
-{
+TEST(Btree, TryEmplaceWithHintWorks) {
     // Use a counting comparator here to verify that hint is used.
     int  calls = 0;
     auto cmp   = [&calls](int x, int y) {
@@ -2397,8 +2227,7 @@ TEST(Btree, TryEmplaceWithHintWorks)
     EXPECT_TRUE(std::is_sorted(m.begin(), m.end()));
 }
 
-TEST(Btree, TryEmplaceWithBadHint)
-{
+TEST(Btree, TryEmplaceWithBadHint) {
     gtl::btree_map<int, int> m = {
         {1,  1},
         { 9, 9}
@@ -2426,8 +2255,7 @@ TEST(Btree, TryEmplaceWithBadHint)
     }));
 }
 
-TEST(Btree, TryEmplaceMaintainsSortedOrder)
-{
+TEST(Btree, TryEmplaceMaintainsSortedOrder) {
     gtl::btree_map<int, std::string> m;
     std::pair<int, std::string>      pair5 = { 5, "five" };
 
@@ -2444,22 +2272,19 @@ TEST(Btree, TryEmplaceMaintainsSortedOrder)
     EXPECT_TRUE(std::is_sorted(m.begin(), m.end()));
 }
 
-TEST(Btree, TryEmplaceWithHintAndNoValueArgsWorks)
-{
+TEST(Btree, TryEmplaceWithHintAndNoValueArgsWorks) {
     gtl::btree_map<int, int> m;
     m.try_emplace(m.end(), 1);
     EXPECT_EQ(0, m[1]);
 }
 
-TEST(Btree, TryEmplaceWithHintAndMultipleValueArgsWorks)
-{
+TEST(Btree, TryEmplaceWithHintAndMultipleValueArgsWorks) {
     gtl::btree_map<int, std::string> m;
     m.try_emplace(m.end(), 1, 10, 'a');
     EXPECT_EQ(std::string(10, 'a'), m[1]);
 }
 
-TEST(Btree, MoveAssignmentAllocatorPropagation)
-{
+TEST(Btree, MoveAssignmentAllocatorPropagation) {
     InstanceTracker tracker;
 
     int64_t                                       bytes1 = 0, bytes2 = 0;
@@ -2483,9 +2308,7 @@ TEST(Btree, MoveAssignmentAllocatorPropagation)
     }
     // Test non-propagating allocator_type with equal allocators.
     {
-        gtl::btree_set<MovableOnlyInstance,
-                       std::less<MovableOnlyInstance>,
-                       CountingAllocator<MovableOnlyInstance>>
+        gtl::btree_set<MovableOnlyInstance, std::less<MovableOnlyInstance>, CountingAllocator<MovableOnlyInstance>>
             set1(cmp, allocator1), set2(cmp, allocator1);
 
         for (int i = 0; i < 100; ++i)
@@ -2497,9 +2320,7 @@ TEST(Btree, MoveAssignmentAllocatorPropagation)
     }
     // Test non-propagating allocator_type with different allocators.
     {
-        gtl::btree_set<MovableOnlyInstance,
-                       std::less<MovableOnlyInstance>,
-                       CountingAllocator<MovableOnlyInstance>>
+        gtl::btree_set<MovableOnlyInstance, std::less<MovableOnlyInstance>, CountingAllocator<MovableOnlyInstance>>
             set1(cmp, allocator1), set2(cmp, allocator2);
 
         for (int i = 0; i < 100; ++i)
@@ -2511,8 +2332,7 @@ TEST(Btree, MoveAssignmentAllocatorPropagation)
     }
 }
 
-TEST(Btree, EmptyTree)
-{
+TEST(Btree, EmptyTree) {
     gtl::btree_set<int> s;
     EXPECT_TRUE(s.empty());
     EXPECT_EQ(s.size(), 0u);
@@ -2521,8 +2341,7 @@ TEST(Btree, EmptyTree)
 
 bool IsEven(int k) { return k % 2 == 0; }
 
-TEST(Btree, EraseIf)
-{
+TEST(Btree, EraseIf) {
     // Test that erase_if works with all the container types and supports lambdas.
     {
         gtl::btree_set<int> s = { 1, 3, 5, 6, 100 };

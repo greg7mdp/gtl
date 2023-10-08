@@ -43,8 +43,7 @@
 namespace gtl {
 
 template<typename... Ts>
-class soa
-{
+class soa {
 public:
     using storage_type = std::tuple<std::vector<Ts>...>;
 
@@ -55,14 +54,12 @@ public:
     using col_type = typename nth_col_type<col_idx>::value_type;
 
     template<size_t col_idx>
-    const auto& get_column() const
-    {
+    const auto& get_column() const {
         return std::get<col_idx>(data_);
     }
 
     template<size_t col_idx>
-    nth_col_type<col_idx>& get_column()
-    {
+    nth_col_type<col_idx>& get_column() {
         return std::get<col_idx>(data_);
     }
 
@@ -71,36 +68,42 @@ public:
     bool empty() const { return get_column<0>().empty(); }
 
     template<typename... Xs>
-    void insert(Xs... xs)
-    {
+    void insert(Xs... xs) {
         insert_impl(std::index_sequence_for<Ts...>{}, std::forward_as_tuple(xs...));
     }
 
-    auto operator[](size_t idx) const { return std::apply([=](auto& ...x) { return std::tie(x[idx]...); }, data_); }
+    auto operator[](size_t idx) const {
+        return std::apply([=](auto&... x) { return std::tie(x[idx]...); }, data_);
+    }
 
-    auto operator[](size_t idx) { return std::apply([=](auto& ...x) { return std::tie(x[idx]...); }, data_); }
+    auto operator[](size_t idx) {
+        return std::apply([=](auto&... x) { return std::tie(x[idx]...); }, data_);
+    }
 
     template<size_t... I>
-    auto view(size_t row) const
-    {
+    auto view(size_t row) const {
         return get_row_impl(std::integer_sequence<size_t, I...>{}, row);
     }
 
     template<size_t... I>
-    auto view(size_t row)
-    {
+    auto view(size_t row) {
         return get_row_impl(std::integer_sequence<size_t, I...>{}, row);
     }
 
-    void clear() { std::apply([](auto& ...x) { (x.clear(), ...); }, data_); }
+    void clear() {
+        std::apply([](auto&... x) { (x.clear(), ...); }, data_);
+    }
 
-    void resize(size_t sz) { std::apply([=](auto& ...x) { (x.resize(sz), ...); }, data_); }
+    void resize(size_t sz) {
+        std::apply([=](auto&... x) { (x.resize(sz), ...); }, data_);
+    }
 
-    void reserve(size_t sz) { std::apply([=](auto& ...x) { (x.reserve(sz), ...); }, data_); }
+    void reserve(size_t sz) {
+        std::apply([=](auto&... x) { (x.reserve(sz), ...); }, data_);
+    }
 
     template<size_t col_idx, typename C>
-    void sort_by_field(C&& comp)
-    {
+    void sort_by_field(C&& comp) {
         size_t                 num_elems = size();
         thread_local sort_data sort_tmp; // thread_local makes it static
 
@@ -118,17 +121,15 @@ public:
     }
 
     template<size_t col_idx>
-    void sort_by_field()
-    {
+    void sort_by_field() {
         sort_by_field<col_idx>([](auto&& a, auto&& b) { return a < b; });
     }
 
-    void print(std::basic_ostream<char>& ss) const
-    {
+    void print(std::basic_ostream<char>& ss) const {
         size_t num_elems = size();
         ss << "soa {\n";
         for (size_t i = 0; i < num_elems; ++i) {
-           const auto t = (*this)[i];
+            const auto t = (*this)[i];
             ss << "\t";
             print(ss, t, std::make_index_sequence<sizeof...(Ts)>());
             ss << '\n';
@@ -137,45 +138,38 @@ public:
     }
 
 private:
-    struct sort_data
-    {
-        std::vector<size_t> o;    // sort order
-        bit_vector          done; 
-        void                resize(size_t sz)
-        {
+    struct sort_data {
+        std::vector<size_t> o; // sort order
+        bit_vector          done;
+        void                resize(size_t sz) {
             o.resize(sz);
             done.resize(sz);
         }
     };
 
     template<class TupType, size_t... I>
-    static void print(std::basic_ostream<char>& ss, const TupType& _tup, std::index_sequence<I...>)
-    {
+    static void print(std::basic_ostream<char>& ss, const TupType& _tup, std::index_sequence<I...>) {
         // c++17 unary left fold, of the form `... op pack`, where `op` is the comma operator
         (..., (ss << (I == 0 ? "" : ", ") << std::get<I>(_tup)));
     }
 
     template<typename T, size_t... I>
-    void insert_impl(std::integer_sequence<size_t, I...>, T t)
-    {
+    void insert_impl(std::integer_sequence<size_t, I...>, T t) {
         ((get_column<I>().push_back(std::get<I>(t))), ...);
     }
 
     template<size_t... I>
-    auto get_row_impl(std::integer_sequence<size_t, I...>, size_t row) const
-    {
+    auto get_row_impl(std::integer_sequence<size_t, I...>, size_t row) const {
         return std::tie(get_column<I>()[row]...);
     }
 
     template<size_t... I>
-    auto get_row_impl(std::integer_sequence<size_t, I...>, size_t row)
-    {
+    auto get_row_impl(std::integer_sequence<size_t, I...>, size_t row) {
         return std::tie(get_column<I>()[row]...);
     }
 
     template<size_t... I>
-    void sort_by_reference_impl(sort_data& sort_tmp, std::integer_sequence<size_t, I...>)
-    {
+    void sort_by_reference_impl(sort_data& sort_tmp, std::integer_sequence<size_t, I...>) {
         ((sort_col_by_reference(sort_tmp, std::integral_constant<size_t, I>{})), ...);
     }
 
@@ -183,8 +177,7 @@ private:
     // so if o[0] = 5, it means that c[5] should go to c[0].
     // c contains the values to be reordered according to o.
     template<class C>
-    void reorder(C& c, const std::vector<size_t>& o, bit_vector& done)
-    {
+    void reorder(C& c, const std::vector<size_t>& o, bit_vector& done) {
         size_t num_elems = o.size();
 
         done.reset();
@@ -209,8 +202,7 @@ private:
     }
 
     template<size_t col_idx>
-    void sort_col_by_reference(sort_data& sort_tmp, std::integral_constant<size_t, col_idx>)
-    {
+    void sort_col_by_reference(sort_data& sort_tmp, std::integral_constant<size_t, col_idx>) {
         auto& col = std::get<col_idx>(data_);
         reorder(col, sort_tmp.o, sort_tmp.done);
     }
@@ -219,8 +211,7 @@ private:
 };
 
 template<typename... Ts>
-std::ostream& operator<<(std::ostream& cout, const gtl::soa<Ts...>& soa)
-{
+std::ostream& operator<<(std::ostream& cout, const gtl::soa<Ts...>& soa) {
     soa.print(cout);
     return cout;
 }

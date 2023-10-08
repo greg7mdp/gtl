@@ -73,34 +73,29 @@ namespace priv {
 // type, which is non-portable.
 // ----------------------------------------------------------------------------
 template<class Pair, class = std::true_type>
-struct OffsetOf
-{
+struct OffsetOf {
     static constexpr size_t kFirst  = (size_t)-1;
     static constexpr size_t kSecond = (size_t)-1;
 };
 
 template<class Pair>
-struct OffsetOf<Pair, typename std::is_standard_layout<Pair>::type>
-{
+struct OffsetOf<Pair, typename std::is_standard_layout<Pair>::type> {
     static constexpr size_t kFirst  = offsetof(Pair, first);
     static constexpr size_t kSecond = offsetof(Pair, second);
 };
 
 // ----------------------------------------------------------------------------
 template<class K, class V>
-struct IsLayoutCompatible
-{
+struct IsLayoutCompatible {
 private:
-    struct Pair
-    {
+    struct Pair {
         K first;
         V second;
     };
 
     // Is P layout-compatible with Pair?
     template<class P>
-    static constexpr bool LayoutCompatible()
-    {
+    static constexpr bool LayoutCompatible() {
         return std::is_standard_layout<P>() && sizeof(P) == sizeof(Pair) && alignof(P) == alignof(Pair) &&
                OffsetOf<P>::kFirst == OffsetOf<Pair>::kFirst && OffsetOf<P>::kSecond == OffsetOf<Pair>::kSecond;
     }
@@ -140,8 +135,7 @@ public:
 // https://timsong-cpp.github.io/cppwp/n3337/class.mem#19 (9.2.19)
 // ----------------------------------------------------------------------------
 template<class K, class V>
-union map_slot_type
-{
+union map_slot_type {
     map_slot_type() {}
     ~map_slot_type()                               = delete;
     map_slot_type(const map_slot_type&)            = delete;
@@ -158,15 +152,13 @@ union map_slot_type
 // ----------------------------------------------------------------------------
 // ----------------------------------------------------------------------------
 template<class K, class V>
-struct map_slot_policy
-{
+struct map_slot_policy {
     using slot_type          = map_slot_type<K, V>;
     using value_type         = std::pair<const K, V>;
     using mutable_value_type = std::pair<K, V>;
 
 private:
-    static void emplace(slot_type* slot)
-    {
+    static void emplace(slot_type* slot) {
         // The construction of union doesn't do anything at runtime but it allows us
         // to access its members without violating aliasing rules.
         new (slot) slot_type;
@@ -183,8 +175,7 @@ public:
     static const K& key(const slot_type* slot) { return kMutableKeys::value ? slot->key : slot->value.first; }
 
     template<class Allocator, class... Args>
-    static void construct(Allocator* alloc, slot_type* slot, Args&&... args)
-    {
+    static void construct(Allocator* alloc, slot_type* slot, Args&&... args) {
         emplace(slot);
         if (kMutableKeys::value) {
             std::allocator_traits<Allocator>::construct(*alloc, &slot->mutable_value, std::forward<Args>(args)...);
@@ -195,8 +186,7 @@ public:
 
     // Construct this slot by moving from another slot.
     template<class Allocator>
-    static void construct(Allocator* alloc, slot_type* slot, slot_type* other)
-    {
+    static void construct(Allocator* alloc, slot_type* slot, slot_type* other) {
         emplace(slot);
         if (kMutableKeys::value) {
             std::allocator_traits<Allocator>::construct(*alloc, &slot->mutable_value, std::move(other->mutable_value));
@@ -206,8 +196,7 @@ public:
     }
 
     template<class Allocator>
-    static void destroy(Allocator* alloc, slot_type* slot)
-    {
+    static void destroy(Allocator* alloc, slot_type* slot) {
         if (kMutableKeys::value) {
             std::allocator_traits<Allocator>::destroy(*alloc, &slot->mutable_value);
         } else {
@@ -216,8 +205,7 @@ public:
     }
 
     template<class Allocator>
-    static void transfer(Allocator* alloc, slot_type* new_slot, slot_type* old_slot)
-    {
+    static void transfer(Allocator* alloc, slot_type* new_slot, slot_type* old_slot) {
         emplace(new_slot);
         if (kMutableKeys::value) {
             std::allocator_traits<Allocator>::construct(
@@ -229,8 +217,7 @@ public:
     }
 
     template<class Allocator>
-    static void swap(Allocator* alloc, slot_type* a, slot_type* b)
-    {
+    static void swap(Allocator* alloc, slot_type* a, slot_type* b) {
         if (kMutableKeys::value) {
             using std::swap;
             swap(a->mutable_value, b->mutable_value);
@@ -244,8 +231,7 @@ public:
     }
 
     template<class Allocator>
-    static void move(Allocator* alloc, slot_type* src, slot_type* dest)
-    {
+    static void move(Allocator* alloc, slot_type* src, slot_type* dest) {
         if (kMutableKeys::value) {
             dest->mutable_value = std::move(src->mutable_value);
         } else {
@@ -255,8 +241,7 @@ public:
     }
 
     template<class Allocator>
-    static void move(Allocator* alloc, slot_type* first, slot_type* last, slot_type* result)
-    {
+    static void move(Allocator* alloc, slot_type* first, slot_type* last, slot_type* result) {
         for (slot_type *src = first, *dest = result; src != last; ++src, ++dest)
             move(alloc, src, dest);
     }
@@ -277,13 +262,10 @@ struct Aligned;
 namespace internal_layout {
 
 template<class T>
-struct NotAligned
-{
-};
+struct NotAligned {};
 
 template<class T, size_t N>
-struct NotAligned<const Aligned<T, N>>
-{
+struct NotAligned<const Aligned<T, N>> {
     static_assert(sizeof(T) == 0, "Aligned<T, N> cannot be const-qualified");
 };
 
@@ -294,39 +276,31 @@ template<class>
 using TypeToSize = size_t;
 
 template<class T>
-struct Type : NotAligned<T>
-{
+struct Type : NotAligned<T> {
     using type = T;
 };
 
 template<class T, size_t N>
-struct Type<Aligned<T, N>>
-{
+struct Type<Aligned<T, N>> {
     using type = T;
 };
 
 template<class T>
 struct SizeOf
     : NotAligned<T>
-    , std::integral_constant<size_t, sizeof(T)>
-{
-};
+    , std::integral_constant<size_t, sizeof(T)> {};
 
 template<class T, size_t N>
-struct SizeOf<Aligned<T, N>> : std::integral_constant<size_t, sizeof(T)>
-{
-};
+struct SizeOf<Aligned<T, N>> : std::integral_constant<size_t, sizeof(T)> {};
 
 // Note: workaround for https://gcc.gnu.org/PR88115
 template<class T>
-struct AlignOf : NotAligned<T>
-{
+struct AlignOf : NotAligned<T> {
     static constexpr size_t value = alignof(T);
 };
 
 template<class T, size_t N>
-struct AlignOf<Aligned<T, N>>
-{
+struct AlignOf<Aligned<T, N>> {
     static_assert(N % alignof(T) == 0, "Custom alignment can't be lower than the type's alignment");
     static constexpr size_t value = N;
 };
@@ -344,15 +318,13 @@ using CopyConst = typename std::conditional_t<std::is_const_v<From>, const To, T
 namespace adl_barrier {
 
 template<class Needle, class... Ts>
-constexpr size_t Find(Needle, Needle, Ts...)
-{
+constexpr size_t Find(Needle, Needle, Ts...) {
     static_assert(!Contains<Needle, Ts...>(), "Duplicate element type");
     return 0;
 }
 
 template<class Needle, class T, class... Ts>
-constexpr size_t Find(Needle, T, Ts...)
-{
+constexpr size_t Find(Needle, T, Ts...) {
     return adl_barrier::Find(Needle(), Ts()...) + 1;
 }
 
@@ -367,8 +339,7 @@ constexpr size_t Min(size_t a, size_t b) { return b < a ? b : a; }
 constexpr size_t Max(size_t a) { return a; }
 
 template<class... Ts>
-constexpr size_t Max(size_t a, size_t b, Ts... rest)
-{
+constexpr size_t Max(size_t a, size_t b, Ts... rest) {
     return adl_barrier::Max(b < a ? a : b, rest...);
 }
 
@@ -403,14 +374,12 @@ class LayoutImpl;
 // can compute offsets).
 // ---------------------------------------------------------------------------
 template<class... Elements, size_t... SizeSeq, size_t... OffsetSeq>
-class LayoutImpl<std::tuple<Elements...>, std::index_sequence<SizeSeq...>, std::index_sequence<OffsetSeq...>>
-{
+class LayoutImpl<std::tuple<Elements...>, std::index_sequence<SizeSeq...>, std::index_sequence<OffsetSeq...>> {
 private:
     static_assert(sizeof...(Elements) > 0, "At least one field is required");
     static_assert(std::conjunction_v<IsLegalElementType<Elements>...>, "Invalid element type (see IsLegalElementType)");
 
-    enum
-    {
+    enum {
         NumTypes   = sizeof...(Elements),
         NumSizes   = sizeof...(SizeSeq),
         NumOffsets = sizeof...(OffsetSeq),
@@ -423,8 +392,7 @@ private:
     // Returns the index of `T` in `Elements...`. Results in a compilation error
     // if `Elements...` doesn't contain exactly one instance of `T`.
     template<class T>
-    static constexpr size_t ElementIndex()
-    {
+    static constexpr size_t ElementIndex() {
         static_assert(Contains<Type<T>, Type<typename Type<Elements>::type>...>(), "Type not found");
         return adl_barrier::Find(Type<T>(), Type<typename Type<Elements>::type>()...);
     }
@@ -441,9 +409,7 @@ public:
     using ElementType = typename std::tuple_element<N, ElementTypes>::type;
 
     constexpr explicit LayoutImpl(IntToSize<SizeSeq>... sizes)
-        : size_{ sizes... }
-    {
-    }
+        : size_{ sizes... } {}
 
     // Alignment of the layout, equal to the strictest alignment of all elements.
     // All pointers passed to the methods of layout must be aligned to this value.
@@ -459,14 +425,12 @@ public:
     // Requires: `N <= NumSizes && N < sizeof...(Ts)`.
     // ----------------------------------------------------------------------------
     template<size_t N, EnableIf<N == 0> = 0>
-    constexpr size_t Offset() const
-    {
+    constexpr size_t Offset() const {
         return 0;
     }
 
     template<size_t N, EnableIf<N != 0> = 0>
-    constexpr size_t Offset() const
-    {
+    constexpr size_t Offset() const {
         static_assert(N < NumOffsets, "Index out of bounds");
         return adl_barrier::Align(Offset<N - 1>() + SizeOf<ElementType<N - 1>>::value * size_[N - 1],
                                   ElementAlignment<N>::value);
@@ -482,8 +446,7 @@ public:
     //   assert(x.Offset<double>() == 16);  // The doubles starts from 16.
     // ----------------------------------------------------------------------------
     template<class T>
-    constexpr size_t Offset() const
-    {
+    constexpr size_t Offset() const {
         return Offset<ElementIndex<T>()>();
     }
 
@@ -501,8 +464,7 @@ public:
     // Requires: `N < NumSizes`.
     // ----------------------------------------------------------------------------
     template<size_t N>
-    constexpr size_t Size() const
-    {
+    constexpr size_t Size() const {
         static_assert(N < NumSizes, "Index out of bounds");
         return size_[N];
     }
@@ -517,8 +479,7 @@ public:
     //   assert(x.Size<double>() == 4);
     // ----------------------------------------------------------------------------
     template<class T>
-    constexpr size_t Size() const
-    {
+    constexpr size_t Size() const {
         return Size<ElementIndex<T>()>();
     }
 
@@ -539,8 +500,7 @@ public:
     // Requires: `p` is aligned to `Alignment()`.
     // ----------------------------------------------------------------------------
     template<size_t N, class Char>
-    CopyConst<Char, ElementType<N>>* Pointer(Char* p) const
-    {
+    CopyConst<Char, ElementType<N>>* Pointer(Char* p) const {
         using C = typename std::remove_const_t<Char>;
         static_assert(std::is_same<C, char>() || std::is_same<C, unsigned char>() || std::is_same<C, signed char>(),
                       "The argument must be a pointer to [const] [signed|unsigned] char");
@@ -565,8 +525,7 @@ public:
     // Requires: `p` is aligned to `Alignment()`.
     // ----------------------------------------------------------------------------
     template<class T, class Char>
-    CopyConst<Char, T>* Pointer(Char* p) const
-    {
+    CopyConst<Char, T>* Pointer(Char* p) const {
         return Pointer<ElementIndex<T>()>(p);
     }
 
@@ -588,8 +547,8 @@ public:
     // under MSVC.
     // ----------------------------------------------------------------------------
     template<class Char>
-    std::tuple<CopyConst<Char, typename std::tuple_element<OffsetSeq, ElementTypes>::type>*...> Pointers(Char* p) const
-    {
+    std::tuple<CopyConst<Char, typename std::tuple_element<OffsetSeq, ElementTypes>::type>*...> Pointers(
+        Char* p) const {
         return std::tuple<CopyConst<Char, ElementType<OffsetSeq>>*...>(Pointer<OffsetSeq>(p)...);
     }
 
@@ -601,8 +560,7 @@ public:
     //
     // Requires: `NumSizes == sizeof...(Ts)`.
     // ----------------------------------------------------------------------------
-    constexpr size_t AllocSize() const
-    {
+    constexpr size_t AllocSize() const {
         static_assert(NumTypes == NumSizes, "You must specify sizes of all fields");
         return Offset<NumTypes - 1>() + SizeOf<ElementType<NumTypes - 1>>::value * size_[NumTypes - 1];
     }
@@ -616,14 +574,12 @@ public:
     // Requires: `p` is aligned to `Alignment()`.
     // ----------------------------------------------------------------------------
     template<class Char, size_t N = NumOffsets - 1, EnableIf<N == 0> = 0>
-    void PoisonPadding(const Char* p) const
-    {
+    void PoisonPadding(const Char* p) const {
         Pointer<0>(p); // verify the requirements on `Char` and `p`
     }
 
     template<class Char, size_t N = NumOffsets - 1, EnableIf<N != 0> = 0>
-    void PoisonPadding(const Char* p) const
-    {
+    void PoisonPadding(const Char* p) const {
         static_assert(N < NumOffsets, "Index out of bounds");
         (void)p;
 #ifdef ADDRESS_SANITIZER
@@ -659,8 +615,7 @@ using LayoutType = LayoutImpl<std::tuple<Ts...>,
 // by `Layout`.
 // ---------------------------------------------------------------------------
 template<class... Ts>
-class Layout : public internal_layout::LayoutType<sizeof...(Ts), Ts...>
-{
+class Layout : public internal_layout::LayoutType<sizeof...(Ts), Ts...> {
 public:
     static_assert(sizeof...(Ts) > 0, "At least one field is required");
     static_assert(std::conjunction_v<internal_layout::IsLegalElementType<Ts>...>,
@@ -670,8 +625,7 @@ public:
     using PartialType = internal_layout::LayoutType<NumSizes, Ts...>;
 
     template<class... Sizes>
-    static constexpr PartialType<sizeof...(Sizes)> Partial(Sizes&&... sizes)
-    {
+    static constexpr PartialType<sizeof...(Sizes)> Partial(Sizes&&... sizes) {
         static_assert(sizeof...(Sizes) <= sizeof...(Ts), "");
         return PartialType<sizeof...(Sizes)>(std::forward<Sizes>(sizes)...);
     }
@@ -685,9 +639,7 @@ public:
     // Note: The sizes of the arrays must be specified in number of elements,
     // not in bytes.
     constexpr explicit Layout(internal_layout::TypeToSize<Ts>... sizes)
-        : internal_layout::LayoutType<sizeof...(Ts), Ts...>(sizes...)
-    {
-    }
+        : internal_layout::LayoutType<sizeof...(Ts), Ts...>(sizes...) {}
 };
 
 } // priv
@@ -695,26 +647,20 @@ public:
 // -----------------------------------------------------------------------
 // -----------------------------------------------------------------------
 template<class, class = void>
-struct IsTransparent : std::false_type
-{
-};
+struct IsTransparent : std::false_type {};
 
 template<class T>
-struct IsTransparent<T, std::void_t<typename T::is_transparent>> : std::true_type
-{
-};
+struct IsTransparent<T, std::void_t<typename T::is_transparent>> : std::true_type {};
 
 template<bool is_transparent>
-struct KeyArg
-{
+struct KeyArg {
     // Transparent. Forward `K`.
     template<typename K, typename key_type>
     using type = K;
 };
 
 template<>
-struct KeyArg<false>
-{
+struct KeyArg<false> {
     // Not transparent. Always use `key_type`.
     template<typename K, typename key_type>
     using type = key_type;
@@ -723,14 +669,12 @@ struct KeyArg<false>
 // -----------------------------------------------------------------------
 // -----------------------------------------------------------------------
 template<class T>
-struct EqualTo
-{
+struct EqualTo {
     inline bool operator()(const T& a, const T& b) const { return std::equal_to<T>()(a, b); }
 };
 
 template<class T>
-struct Less
-{
+struct Less {
     inline bool operator()(const T& a, const T& b) const { return std::less<T>()(a, b); }
 };
 
@@ -738,10 +682,8 @@ struct Less
 // std::aligned_storage and std::aligned_storage_t are deprecated in C++23
 // -----------------------------------------------------------------------
 template<std::size_t Len, std::size_t Align>
-struct aligned_storage
-{
-    struct type
-    {
+struct aligned_storage {
+    struct type {
         alignas(Align) unsigned char data[Len];
     };
 };
@@ -755,8 +697,7 @@ using aligned_storage_t = typename aligned_storage<Len, Align>::type;
 // common API of both.
 // -----------------------------------------------------------------------
 template<typename PolicyTraits, typename Alloc>
-class node_handle_base
-{
+class node_handle_base {
 protected:
     using slot_type = typename PolicyTraits::slot_type;
 
@@ -769,8 +710,7 @@ public:
 
     ~node_handle_base() { destroy(); }
 
-    node_handle_base& operator=(node_handle_base&& other) noexcept
-    {
+    node_handle_base& operator=(node_handle_base&& other) noexcept {
         destroy();
         if (!other.empty()) {
             alloc_ = other.alloc_;
@@ -787,47 +727,39 @@ public:
 protected:
     friend struct CommonAccess;
 
-    struct transfer_tag_t
-    {};
+    struct transfer_tag_t {};
     node_handle_base(transfer_tag_t, const allocator_type& a, slot_type* s)
-        : alloc_(a)
-    {
+        : alloc_(a) {
         PolicyTraits::transfer(alloc(), slot(), s);
     }
 
-    struct move_tag_t
-    {};
+    struct move_tag_t {};
     node_handle_base(move_tag_t, const allocator_type& a, slot_type* s)
-        : alloc_(a)
-    {
+        : alloc_(a) {
         PolicyTraits::construct(alloc(), slot(), s);
     }
 
     node_handle_base(const allocator_type& a, slot_type* s)
-        : alloc_(a)
-    {
+        : alloc_(a) {
         PolicyTraits::transfer(alloc(), slot(), s);
     }
 
     // node_handle_base(const node_handle_base&) = delete;
     // node_handle_base& operator=(const node_handle_base&) = delete;
 
-    void destroy()
-    {
+    void destroy() {
         if (!empty()) {
             PolicyTraits::destroy(alloc(), slot());
             reset();
         }
     }
 
-    void reset()
-    {
+    void reset() {
         assert(alloc_.has_value());
         alloc_ = std::nullopt;
     }
 
-    slot_type* slot() const
-    {
+    slot_type* slot() const {
         assert(!empty());
         return reinterpret_cast<slot_type*>(std::addressof(slot_space_));
     }
@@ -842,8 +774,7 @@ private:
 // For sets.
 // ---------
 template<typename Policy, typename PolicyTraits, typename Alloc, typename = void>
-class node_handle : public node_handle_base<PolicyTraits, Alloc>
-{
+class node_handle : public node_handle_base<PolicyTraits, Alloc> {
     using Base = node_handle_base<PolicyTraits, Alloc>;
 
 public:
@@ -865,8 +796,7 @@ private:
 // ---------
 template<typename Policy, typename PolicyTraits, typename Alloc>
 class node_handle<Policy, PolicyTraits, Alloc, std::void_t<typename Policy::mapped_type>>
-    : public node_handle_base<PolicyTraits, Alloc>
-{
+    : public node_handle_base<PolicyTraits, Alloc> {
     using Base = node_handle_base<PolicyTraits, Alloc>;
 
 public:
@@ -887,41 +817,34 @@ private:
 
 // Provide access to non-public node-handle functions.
 // ---------------------------------------------------
-struct CommonAccess
-{
+struct CommonAccess {
     template<typename Node>
-    static auto GetSlot(const Node& node) -> decltype(node.slot())
-    {
+    static auto GetSlot(const Node& node) -> decltype(node.slot()) {
         return node.slot();
     }
 
     template<typename Node>
-    static void Destroy(Node* node)
-    {
+    static void Destroy(Node* node) {
         node->destroy();
     }
 
     template<typename Node>
-    static void Reset(Node* node)
-    {
+    static void Reset(Node* node) {
         node->reset();
     }
 
     template<typename T, typename... Args>
-    static T Make(Args&&... args)
-    {
+    static T Make(Args&&... args) {
         return T(std::forward<Args>(args)...);
     }
 
     template<typename T, typename... Args>
-    static T Transfer(Args&&... args)
-    {
+    static T Transfer(Args&&... args) {
         return T(typename T::transfer_tag_t{}, std::forward<Args>(args)...);
     }
 
     template<typename T, typename... Args>
-    static T Move(Args&&... args)
-    {
+    static T Move(Args&&... args) {
         return T(typename T::move_tag_t{}, std::forward<Args>(args)...);
     }
 };
@@ -929,8 +852,7 @@ struct CommonAccess
 // Implement the insert_return_type<> concept of C++17.
 // ----------------------------------------------------
 template<class Iterator, class NodeType>
-struct InsertReturnType
-{
+struct InsertReturnType {
     Iterator position;
     bool     inserted;
     NodeType node;
@@ -945,15 +867,13 @@ struct InsertReturnType
 // type, which is non-portable.
 // ----------------------------------------------------------------------------
 template<class Pair, class = std::true_type>
-struct OffsetOf
-{
+struct OffsetOf {
     static constexpr size_t kFirst  = (size_t)-1;
     static constexpr size_t kSecond = (size_t)-1;
 };
 
 template<class Pair>
-struct OffsetOf<Pair, typename std::is_standard_layout<Pair>::type>
-{
+struct OffsetOf<Pair, typename std::is_standard_layout<Pair>::type> {
     static constexpr size_t kFirst  = offsetof(Pair, first);
     static constexpr size_t kSecond = offsetof(Pair, second);
 };
@@ -976,12 +896,10 @@ struct OffsetOf<Pair, typename std::is_standard_layout<Pair>::type>
 // returns insufficiently alignment pointer, that's what you are going to get.
 // ----------------------------------------------------------------------------
 template<size_t Alignment, class Alloc>
-void* Allocate(Alloc* alloc, size_t n)
-{
+void* Allocate(Alloc* alloc, size_t n) {
     static_assert(Alignment > 0, "");
     assert(n && "n must be positive");
-    struct alignas(Alignment) M
-    {};
+    struct alignas(Alignment) M {};
     using A  = typename std::allocator_traits<Alloc>::template rebind_alloc<M>;
     using AT = typename std::allocator_traits<Alloc>::template rebind_traits<M>;
     A     mem_alloc(*alloc);
@@ -995,12 +913,10 @@ void* Allocate(Alloc* alloc, size_t n)
 // Allocate<Alignment>(alloc, n).
 // ----------------------------------------------------------------------------
 template<size_t Alignment, class Alloc>
-void Deallocate(Alloc* alloc, void* p, size_t n)
-{
+void Deallocate(Alloc* alloc, void* p, size_t n) {
     static_assert(Alignment > 0, "");
     assert(n && "n must be positive");
-    struct alignas(Alignment) M
-    {};
+    struct alignas(Alignment) M {};
     using A  = typename std::allocator_traits<Alloc>::template rebind_alloc<M>;
     using AT = typename std::allocator_traits<Alloc>::template rebind_traits<M>;
     A mem_alloc(*alloc);
@@ -1017,8 +933,7 @@ void Deallocate(Alloc* alloc, void* p, size_t n)
     #include <sanitizer/asan_interface.h>
 #endif
 
-inline void SanitizerPoisonMemoryRegion(const void* m, size_t s)
-{
+inline void SanitizerPoisonMemoryRegion(const void* m, size_t s) {
 #ifdef ADDRESS_SANITIZER
     ASAN_POISON_MEMORY_REGION(m, s);
 #endif
@@ -1029,8 +944,7 @@ inline void SanitizerPoisonMemoryRegion(const void* m, size_t s)
     (void)s;
 }
 
-inline void SanitizerUnpoisonMemoryRegion(const void* m, size_t s)
-{
+inline void SanitizerUnpoisonMemoryRegion(const void* m, size_t s) {
 #ifdef ADDRESS_SANITIZER
     ASAN_UNPOISON_MEMORY_REGION(m, s);
 #endif
@@ -1042,14 +956,12 @@ inline void SanitizerUnpoisonMemoryRegion(const void* m, size_t s)
 }
 
 template<typename T>
-inline void SanitizerPoisonObject(const T* object)
-{
+inline void SanitizerPoisonObject(const T* object) {
     SanitizerPoisonMemoryRegion(object, sizeof(T));
 }
 
 template<typename T>
-inline void SanitizerUnpoisonObject(const T* object)
-{
+inline void SanitizerUnpoisonObject(const T* object) {
     SanitizerUnpoisonMemoryRegion(object, sizeof(T));
 }
 

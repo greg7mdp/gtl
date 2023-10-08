@@ -31,28 +31,20 @@ namespace priv {
 namespace hash_testing_internal {
 
 template<class Derived>
-struct WithId
-{
+struct WithId {
     WithId()
-        : id_(next_id<Derived>())
-    {
-    }
+        : id_(next_id<Derived>()) {}
     WithId(const WithId& that)
-        : id_(that.id_)
-    {
-    }
+        : id_(that.id_) {}
     WithId(WithId&& that)
-        : id_(that.id_)
-    {
+        : id_(that.id_) {
         that.id_ = 0;
     }
-    WithId& operator=(const WithId& that)
-    {
+    WithId& operator=(const WithId& that) {
         id_ = that.id_;
         return *this;
     }
-    WithId& operator=(WithId&& that)
-    {
+    WithId& operator=(WithId&& that) {
         id_      = that.id_;
         that.id_ = 0;
         return *this;
@@ -65,16 +57,13 @@ struct WithId
 
 protected:
     explicit WithId(size_t id)
-        : id_(id)
-    {
-    }
+        : id_(id) {}
 
 private:
     size_t id_;
 
     template<class T>
-    static size_t next_id()
-    {
+    static size_t next_id() {
         // 0 is reserved for moved from state.
         static size_t gId = 1;
         return gId++;
@@ -83,47 +72,33 @@ private:
 
 } // namespace hash_testing_internal
 
-struct NonStandardLayout
-{
+struct NonStandardLayout {
     NonStandardLayout() {}
     explicit NonStandardLayout(std::string s)
-        : value(std::move(s))
-    {
-    }
+        : value(std::move(s)) {}
     virtual ~NonStandardLayout() {}
 
-    friend bool operator==(const NonStandardLayout& a, const NonStandardLayout& b)
-    {
-        return a.value == b.value;
-    }
-    friend bool operator!=(const NonStandardLayout& a, const NonStandardLayout& b)
-    {
-        return a.value != b.value;
-    }
+    friend bool operator==(const NonStandardLayout& a, const NonStandardLayout& b) { return a.value == b.value; }
+    friend bool operator!=(const NonStandardLayout& a, const NonStandardLayout& b) { return a.value != b.value; }
 
     template<typename H>
-    friend H AbslHashValue(H h, const NonStandardLayout& v)
-    {
+    friend H AbslHashValue(H h, const NonStandardLayout& v) {
         return H::combine(std::move(h), v.value);
     }
 
     std::string value;
 };
 
-struct StatefulTestingHash : gtl::priv::hash_testing_internal::WithId<StatefulTestingHash>
-{
+struct StatefulTestingHash : gtl::priv::hash_testing_internal::WithId<StatefulTestingHash> {
     template<class T>
-    size_t operator()(const T& t) const
-    {
+    size_t operator()(const T& t) const {
         return gtl::Hash<T>{}(t);
     }
 };
 
-struct StatefulTestingEqual : gtl::priv::hash_testing_internal::WithId<StatefulTestingEqual>
-{
+struct StatefulTestingEqual : gtl::priv::hash_testing_internal::WithId<StatefulTestingEqual> {
     template<class T, class U>
-    bool operator()(const T& t, const U& u) const
-    {
+    bool operator()(const T& t, const U& u) const {
         return t == u;
     }
 };
@@ -131,15 +106,12 @@ struct StatefulTestingEqual : gtl::priv::hash_testing_internal::WithId<StatefulT
 // It is expected that Alloc() == Alloc() for all allocators so we cannot use
 // WithId base. We need to explicitly assign ids.
 template<class T = int>
-struct Alloc : std::allocator<T>
-{
+struct Alloc : std::allocator<T> {
     using propagate_on_container_swap = std::true_type;
 
     // Using old paradigm for this to ensure compatibility.
     explicit Alloc(size_t id = 0)
-        : id_(id)
-    {
-    }
+        : id_(id) {}
 
     Alloc(const Alloc&)            = default;
     Alloc& operator=(const Alloc&) = default;
@@ -147,13 +119,10 @@ struct Alloc : std::allocator<T>
     template<class U>
     Alloc(const Alloc<U>& that)
         : std::allocator<T>(that)
-        , id_(that.id())
-    {
-    }
+        , id_(that.id()) {}
 
     template<class U>
-    struct rebind
-    {
+    struct rebind {
         using other = Alloc<U>;
     };
 
@@ -167,9 +136,7 @@ private:
 };
 
 template<class Map>
-auto items(const Map& m)
-    -> std::vector<std::pair<typename Map::key_type, typename Map::mapped_type>>
-{
+auto items(const Map& m) -> std::vector<std::pair<typename Map::key_type, typename Map::mapped_type>> {
     using std::get;
     std::vector<std::pair<typename Map::key_type, typename Map::mapped_type>> res;
     res.reserve(m.size());
@@ -179,8 +146,7 @@ auto items(const Map& m)
 }
 
 template<class Set>
-auto keys(const Set& s) -> std::vector<typename std::decay<typename Set::key_type>::type>
-{
+auto keys(const Set& s) -> std::vector<typename std::decay<typename Set::key_type>::type> {
     std::vector<typename std::decay<typename Set::key_type>::type> res;
     res.reserve(s.size());
     for (const auto& v : s)
@@ -195,12 +161,8 @@ namespace std {
 // inject specialization of std::hash for NonStandardLayout into namespace std
 // ----------------------------------------------------------------
 template<>
-struct hash<gtl::priv::NonStandardLayout>
-{
-    std::size_t operator()(gtl::priv::NonStandardLayout const& p) const
-    {
-        return std::hash<std::string>()(p.value);
-    }
+struct hash<gtl::priv::NonStandardLayout> {
+    std::size_t operator()(gtl::priv::NonStandardLayout const& p) const { return std::hash<std::string>()(p.value); }
 };
 }
 
@@ -212,8 +174,7 @@ struct hash<gtl::priv::NonStandardLayout>
 // From GCC-4.9 Changelog: (src: https://gcc.gnu.org/gcc-4.9/changes.html)
 // "the unordered associative containers in <unordered_map> and <unordered_set>
 // meet the allocator-aware container requirements;"
-#if (defined(__GLIBCXX__) && __GLIBCXX__ <= 20140425) ||                                           \
-    (__GNUC__ < 4 || (__GNUC__ == 4 && __GNUC_MINOR__ < 9))
+#if (defined(__GLIBCXX__) && __GLIBCXX__ <= 20140425) || (__GNUC__ < 4 || (__GNUC__ == 4 && __GNUC_MINOR__ < 9))
     #define GTL_UNORDERED_SUPPORTS_ALLOC_CTORS 0
 #else
     #define GTL_UNORDERED_SUPPORTS_ALLOC_CTORS 1

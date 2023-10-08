@@ -9,8 +9,7 @@
 using gtl::flat_hash_map;
 using Map = flat_hash_map<std::string, std::string>;
 
-void f2(Map& email)
-{
+void f2(Map& email) {
     // Iterate and print keys and values
     for (const auto& n : email)
         std::cout << n.first << "'s email is: " << n.second << "\n";

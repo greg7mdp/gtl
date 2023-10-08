@@ -2,8 +2,7 @@
 #include <gtl/btree.hpp>
 #include <iostream>
 
-int main()
-{
+int main() {
     // initialise map with some values using an initializer_list
     gtl::btree_map<std::string, int> map = {
         {"John",  35},
@@ -26,8 +25,7 @@ int main()
 
     IntString map2; // IntString is declared in btree_fwd.hpp
 
-    map2.emplace(
-        std::piecewise_construct, std::forward_as_tuple(0), std::forward_as_tuple(10, 'c'));
+    map2.emplace(std::piecewise_construct, std::forward_as_tuple(0), std::forward_as_tuple(10, 'c'));
     map2.try_emplace(1, 10, 'a'); // gtl::btree_map supports c++17 API
 
     for (auto& p : map2)

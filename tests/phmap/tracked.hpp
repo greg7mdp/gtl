@@ -24,38 +24,31 @@ namespace priv {
 
 // A class that tracks its copies and moves so that it can be queried in tests.
 template<class T>
-class Tracked
-{
+class Tracked {
 public:
     Tracked() {}
     // NOLINTNEXTLINE(runtime/explicit)
     Tracked(const T& val)
-        : val_(val)
-    {
-    }
+        : val_(val) {}
     Tracked(const Tracked& that)
         : val_(that.val_)
         , num_moves_(that.num_moves_)
-        , num_copies_(that.num_copies_)
-    {
+        , num_copies_(that.num_copies_) {
         ++(*num_copies_);
     }
     Tracked(Tracked&& that)
         : val_(std::move(that.val_))
         , num_moves_(std::move(that.num_moves_))
-        , num_copies_(std::move(that.num_copies_))
-    {
+        , num_copies_(std::move(that.num_copies_)) {
         ++(*num_moves_);
     }
-    Tracked& operator=(const Tracked& that)
-    {
+    Tracked& operator=(const Tracked& that) {
         val_        = that.val_;
         num_moves_  = that.num_moves_;
         num_copies_ = that.num_copies_;
         ++(*num_copies_);
     }
-    Tracked& operator=(Tracked&& that)
-    {
+    Tracked& operator=(Tracked&& that) {
         val_        = std::move(that.val_);
         num_moves_  = std::move(that.num_moves_);
         num_copies_ = std::move(that.num_copies_);

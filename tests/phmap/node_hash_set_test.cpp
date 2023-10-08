@@ -32,36 +32,29 @@ using ::gtl::priv::hash_internal::EnumClass;
 using ::testing::Pointee;
 using ::testing::UnorderedElementsAre;
 
-using SetTypes = ::testing::Types<
-    THIS_HASH_SET<int, StatefulTestingHash, StatefulTestingEqual, Alloc<int>>,
-    THIS_HASH_SET<std::string, StatefulTestingHash, StatefulTestingEqual, Alloc<std::string>>,
-    THIS_HASH_SET<Enum, StatefulTestingHash, StatefulTestingEqual, Alloc<Enum>>,
-    THIS_HASH_SET<EnumClass, StatefulTestingHash, StatefulTestingEqual, Alloc<EnumClass>>>;
+using SetTypes =
+    ::testing::Types<THIS_HASH_SET<int, StatefulTestingHash, StatefulTestingEqual, Alloc<int>>,
+                     THIS_HASH_SET<std::string, StatefulTestingHash, StatefulTestingEqual, Alloc<std::string>>,
+                     THIS_HASH_SET<Enum, StatefulTestingHash, StatefulTestingEqual, Alloc<Enum>>,
+                     THIS_HASH_SET<EnumClass, StatefulTestingHash, StatefulTestingEqual, Alloc<EnumClass>>>;
 
 INSTANTIATE_TYPED_TEST_SUITE_P(THIS_TEST_NAME, ConstructorTest, SetTypes);
 INSTANTIATE_TYPED_TEST_SUITE_P(THIS_TEST_NAME, LookupTest, SetTypes);
 INSTANTIATE_TYPED_TEST_SUITE_P(THIS_TEST_NAME, MembersTest, SetTypes);
 INSTANTIATE_TYPED_TEST_SUITE_P(THIS_TEST_NAME, ModifiersTest, SetTypes);
 
-TEST(THIS_TEST_NAME, MoveableNotCopyableCompiles)
-{
+TEST(THIS_TEST_NAME, MoveableNotCopyableCompiles) {
     THIS_HASH_SET<std::unique_ptr<void*>> t;
     THIS_HASH_SET<std::unique_ptr<void*>> u;
     u = std::move(t);
 }
 
-TEST(THIS_TEST_NAME, MergeExtractInsert)
-{
-    struct Hash
-    {
+TEST(THIS_TEST_NAME, MergeExtractInsert) {
+    struct Hash {
         size_t operator()(const std::unique_ptr<int>& p) const { return *p; }
     };
-    struct Eq
-    {
-        bool operator()(const std::unique_ptr<int>& a, const std::unique_ptr<int>& b) const
-        {
-            return *a == *b;
-        }
+    struct Eq {
+        bool operator()(const std::unique_ptr<int>& a, const std::unique_ptr<int>& b) const { return *a == *b; }
     };
     gtl::THIS_HASH_SET<std::unique_ptr<int>, Hash, Eq> set1, set2;
     set1.insert(std::make_unique<int>(7));

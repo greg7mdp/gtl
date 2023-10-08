@@ -47,17 +47,14 @@ INSTANTIATE_TYPED_TEST_SUITE_P(THIS_TEST_NAME, LookupTest, SetTypes);
 INSTANTIATE_TYPED_TEST_SUITE_P(THIS_TEST_NAME, MembersTest, SetTypes);
 INSTANTIATE_TYPED_TEST_SUITE_P(THIS_TEST_NAME, ModifiersTest, SetTypes);
 
-TEST(THIS_TEST_NAME, EmplaceString)
-{
+TEST(THIS_TEST_NAME, EmplaceString) {
     std::vector<std::string>             v = { "a", "b" };
     gtl::THIS_HASH_SET<std::string_view> hs(v.begin(), v.end());
     // EXPECT_THAT(hs, UnorderedElementsAreArray(v));
 }
 
-TEST(THIS_TEST_NAME, BitfieldArgument)
-{
-    union
-    {
+TEST(THIS_TEST_NAME, BitfieldArgument) {
+    union {
         int n : 1;
     };
     n                         = 0;
@@ -73,18 +70,12 @@ TEST(THIS_TEST_NAME, BitfieldArgument)
     s.equal_range(n);
 }
 
-TEST(THIS_TEST_NAME, MergeExtractInsert)
-{
-    struct Hash
-    {
+TEST(THIS_TEST_NAME, MergeExtractInsert) {
+    struct Hash {
         size_t operator()(const std::unique_ptr<int>& p) const { return *p; }
     };
-    struct Eq
-    {
-        bool operator()(const std::unique_ptr<int>& a, const std::unique_ptr<int>& b) const
-        {
-            return *a == *b;
-        }
+    struct Eq {
+        bool operator()(const std::unique_ptr<int>& a, const std::unique_ptr<int>& b) const { return *a == *b; }
     };
     gtl::THIS_HASH_SET<std::unique_ptr<int>, Hash, Eq> set1, set2;
     set1.insert(std::make_unique<int>(7));

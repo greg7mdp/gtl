@@ -16,11 +16,9 @@
 namespace gtl {
 // -------------------------------------------------------------------------------
 template<typename time_unit = std::milli>
-class stopwatch
-{
+class stopwatch {
 public:
-    stopwatch(bool do_start = true)
-    {
+    stopwatch(bool do_start = true) {
         if (do_start)
             start();
     }
@@ -37,8 +35,7 @@ private:
     using point = std::chrono::time_point<clock>;
 
     template<typename T>
-    static T get_diff(const point& start, const point& end)
-    {
+    static T get_diff(const point& start, const point& end) {
         using duration_t = std::chrono::duration<T, time_unit>;
         return std::chrono::duration_cast<duration_t>(end - start).count();
     }
@@ -49,12 +46,10 @@ private:
 
 // -------------------------------------------------------------------------------
 template<typename StopWatch>
-class start_snap
-{
+class start_snap {
 public:
     start_snap(StopWatch& sw)
-        : _sw(sw)
-    {
+        : _sw(sw) {
         _sw.start();
     }
     ~start_snap() { _sw.snap(); }

@@ -15,16 +15,14 @@
 
 using namespace std::chrono_literals;
 
-double complexMathFunction(int a, double b)
-{
+double complexMathFunction(int a, double b) {
     double x = 0;
     for (int i = a; i < a + 5000; ++i)
         x += std::sin(double(i) / b) + std::cos((double)i) + tanh(double(i));
     return x;
 }
 
-double simulate()
-{
+double simulate() {
     double res = 0;
 
 #if USE_CACHING
@@ -43,8 +41,7 @@ double simulate()
     return res;
 }
 
-int main()
-{
+int main() {
     double                           sum = 0;
     std::vector<std::future<double>> threads;
     gtl::stopwatch<std::milli>       sw;

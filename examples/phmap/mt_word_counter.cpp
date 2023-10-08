@@ -15,8 +15,7 @@
  * count the number of occurrences of each word in a large text file using multiple threads
  */
 
-int main()
-{
+int main() {
     const std::string filename = "1342-0.txt";
 
     if (!std::filesystem::exists(filename)) {

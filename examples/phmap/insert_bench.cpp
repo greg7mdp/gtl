@@ -9,8 +9,7 @@
 
 // this is probably the fastest high quality 64bit random number generator that exists.
 // Implements Small Fast Counting v4 RNG from PractRand.
-class sfc64
-{
+class sfc64 {
 public:
     using result_type = uint64_t;
 
@@ -25,24 +24,19 @@ public:
         : m_a(_state[0])
         , m_b(_state[1])
         , m_c(_state[2])
-        , m_counter(_state[3])
-    {
-    }
+        , m_counter(_state[3]) {}
 
     static constexpr uint64_t(min)() { return (std::numeric_limits<uint64_t>::min)(); }
     static constexpr uint64_t(max)() { return (std::numeric_limits<uint64_t>::max)(); }
 
     sfc64()
-        : sfc64(UINT64_C(0x853c49e6748fea9b))
-    {
-    }
+        : sfc64(UINT64_C(0x853c49e6748fea9b)) {}
 
     sfc64(uint64_t _seed)
         : m_a(_seed)
         , m_b(_seed)
         , m_c(_seed)
-        , m_counter(1)
-    {
+        , m_counter(1) {
         for (int i = 0; i < 12; ++i) {
             operator()();
         }
@@ -50,8 +44,7 @@ public:
 
     void seed() { *this = sfc64{ std::random_device{}() }; }
 
-    uint64_t operator()() noexcept
-    {
+    uint64_t operator()() noexcept {
         auto const tmp = m_a + m_b + m_counter++;
         m_a            = m_b ^ (m_b >> right_shift);
         m_b            = m_c + (m_c << left_shift);
@@ -60,8 +53,7 @@ public:
     }
 
     // this is a bit biased, but for our use case that's not important.
-    uint64_t operator()([[maybe_unused]] uint64_t boundExcluded) noexcept
-    {
+    uint64_t operator()([[maybe_unused]] uint64_t boundExcluded) noexcept {
 #ifdef GTL_HAS_UMUL128
         uint64_t h;
         (void)umul128(operator()(), boundExcluded, &h);
@@ -71,15 +63,13 @@ public:
 #endif
     }
 
-    std::array<uint64_t, 4> state() const
-    {
+    std::array<uint64_t, 4> state() const {
         return {
             {m_a, m_b, m_c, m_counter}
         };
     }
 
-    void state(std::array<uint64_t, 4> const& s)
-    {
+    void state(std::array<uint64_t, 4> const& s) {
         m_a       = s[0];
         m_b       = s[1];
         m_c       = s[2];
@@ -88,8 +78,7 @@ public:
 
 private:
     template<typename T>
-    T rotl(T const x, int k)
-    {
+    T rotl(T const x, int k) {
         return (x << k) | (x >> (8 * sizeof(T) - k));
     }
 
@@ -102,8 +91,7 @@ private:
     uint64_t             m_counter;
 };
 
-int main()
-{
+int main() {
     // Create an unordered_map of three strings (that map to strings)
     using Map             = gtl::parallel_node_hash_map<int, int>;
     static size_t const n = 50000000;

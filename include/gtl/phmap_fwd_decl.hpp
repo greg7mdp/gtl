@@ -54,8 +54,7 @@ namespace priv {
 
 // The hash of an object of type T is computed by using gtl::Hash.
 template<class T, class E = void>
-struct HashEq
-{
+struct HashEq {
     using Hash = gtl::Hash<T>;
     using Eq   = gtl::EqualTo<T>;
 };
@@ -74,8 +73,7 @@ using Allocator = typename gtl::Allocator<T>;
 template<class T1, class T2>
 using Pair = typename gtl::Pair<T1, T2>;
 
-struct empty
-{};
+struct empty {};
 
 } // namespace priv
 

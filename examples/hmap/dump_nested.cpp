@@ -9,13 +9,11 @@
 #include <iostream>
 
 template<class K, class V>
-class MyMap : public gtl::flat_hash_map<K, gtl::flat_hash_set<V>>
-{
+class MyMap : public gtl::flat_hash_map<K, gtl::flat_hash_set<V>> {
 public:
     using Set = gtl::flat_hash_set<V>;
 
-    void dump(const std::string& filename)
-    {
+    void dump(const std::string& filename) {
         gtl::BinaryOutputArchive ar_out(filename.c_str());
 
         ar_out.saveBinary(this->size());
@@ -25,8 +23,7 @@ public:
         }
     }
 
-    void load(const std::string& filename)
-    {
+    void load(const std::string& filename) {
         gtl::BinaryInputArchive ar_in(filename.c_str());
 
         size_t size;
@@ -44,14 +41,12 @@ public:
         }
     }
 
-    void insert(K k, V v)
-    {
+    void insert(K k, V v) {
         Set& set = (*this)[k];
         set.insert(v);
     }
 
-    friend std::ostream& operator<<(std::ostream& os, const MyMap& map)
-    {
+    friend std::ostream& operator<<(std::ostream& os, const MyMap& map) {
         for (const auto& [k, m] : map) {
             os << k << ": [";
             for (const auto& x : m)
@@ -62,8 +57,7 @@ public:
     }
 };
 
-int main()
-{
+int main() {
     MyMap<size_t, size_t> m;
     m.insert(1, 5);
     m.insert(1, 8);

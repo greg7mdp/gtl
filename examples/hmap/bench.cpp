@@ -29,8 +29,7 @@
         #endif
     #elif 1
         #include <windows.h>
-class srwlock
-{
+class srwlock {
     SRWLOCK _lock;
 
 public:
@@ -42,13 +41,11 @@ public:
     #else
     // spinlocks - slow!
         #include <atomic>
-class spinlock
-{
+class spinlock {
     std::atomic_flag flag = ATOMIC_FLAG_INIT;
 
 public:
-    void lock()
-    {
+    void lock() {
         while (flag.test_and_set(std::memory_order_acquire))
             ;
     }
@@ -113,21 +110,18 @@ int64_t _abs(int64_t x) { return (x < 0) ? -x : x; }
 #endif // _MSC_VER
 
 // --------------------------------------------------------------------------
-class Timer
-{
+class Timer {
     typedef std::chrono::high_resolution_clock high_resolution_clock;
     typedef std::chrono::milliseconds          milliseconds;
 
 public:
-    explicit Timer(bool run = false)
-    {
+    explicit Timer(bool run = false) {
         if (run)
             reset();
     }
     void reset() { _start = high_resolution_clock::now(); }
 
-    milliseconds elapsed() const
-    {
+    milliseconds elapsed() const {
         return std::chrono::duration_cast<milliseconds>(high_resolution_clock::now() - _start);
     }
 
@@ -138,14 +132,12 @@ private:
 // --------------------------------------------------------------------------
 //  from: https://github.com/preshing/RandomSequence
 // --------------------------------------------------------------------------
-class RSU
-{
+class RSU {
 private:
     unsigned int m_index;
     unsigned int m_intermediateOffset;
 
-    static unsigned int permuteQPR(unsigned int x)
-    {
+    static unsigned int permuteQPR(unsigned int x) {
         static const unsigned int prime = 4294967291u;
         if (x >= prime)
             return x; // The 5 integers out of range are mapped to themselves.
@@ -154,8 +146,7 @@ private:
     }
 
 public:
-    RSU(unsigned int seedBase, unsigned int seedOffset)
-    {
+    RSU(unsigned int seedBase, unsigned int seedOffset) {
         m_index              = permuteQPR(permuteQPR(seedBase) + 0x682f0161);
         m_intermediateOffset = permuteQPR(permuteQPR(seedOffset) + 0x46790905);
     }
@@ -165,8 +156,7 @@ public:
 
 // --------------------------------------------------------------------------
 template<class T>
-void _fill(vector<T>& v)
-{
+void _fill(vector<T>& v) {
     srand(1); // for a fair/deterministic comparison
     for (size_t i = 0, sz = v.size(); i < sz; ++i)
         v[i] = (T)(i * 10 + rand() % 10);
@@ -174,16 +164,14 @@ void _fill(vector<T>& v)
 
 // --------------------------------------------------------------------------
 template<class T>
-void _shuffle(vector<T>& v)
-{
+void _shuffle(vector<T>& v) {
     for (size_t n = v.size(); n >= 2; --n)
         std::swap(v[n - 1], v[static_cast<unsigned>(rand()) % n]);
 }
 
 // --------------------------------------------------------------------------
 template<class T, class HT>
-Timer _fill_random(vector<T>& v, HT& hash)
-{
+Timer _fill_random(vector<T>& v, HT& hash) {
     _fill<T>(v);
     _shuffle<T>(v);
 
@@ -195,14 +183,12 @@ Timer _fill_random(vector<T>& v, HT& hash)
 }
 
 // --------------------------------------------------------------------------
-void out(const char* test, uint64_t cnt, const Timer& t, bool = false)
-{
+void out(const char* test, uint64_t cnt, const Timer& t, bool = false) {
     printf("%s,time,%" PRIu64 ",%s,%f\n", test, cnt, program_slug, ((double)t.elapsed().count() / 1000));
 }
 
 // --------------------------------------------------------------------------
-void outmem(const char*, uint64_t cnt, uint64_t mem, bool final = false)
-{
+void outmem(const char*, uint64_t cnt, uint64_t mem, bool final = false) {
     static uint64_t max_mem  = 0;
     static uint64_t max_keys = 0;
     if (final)
@@ -223,8 +209,7 @@ static const char* test           = "random";
 
 // --------------------------------------------------------------------------
 template<class HT>
-void _fill_random_inner(int64_t cnt, HT& hash, RSU& rsu)
-{
+void _fill_random_inner(int64_t cnt, HT& hash, RSU& rsu) {
     for (int64_t i = 0; i < cnt; ++i) {
         hash.insert(typename HT::value_type(rsu.next(), 0));
         ++s_num_keys[0];
@@ -233,8 +218,7 @@ void _fill_random_inner(int64_t cnt, HT& hash, RSU& rsu)
 
 // --------------------------------------------------------------------------
 template<class HT>
-void _fill_random_inner_mt(int64_t cnt, HT& hash, RSU& rsu)
-{
+void _fill_random_inner_mt(int64_t cnt, HT& hash, RSU& rsu) {
     constexpr int64_t            num_threads = 8; // has to be a power of two
     std::unique_ptr<std::thread> threads[num_threads];
 
@@ -278,8 +262,7 @@ void _fill_random_inner_mt(int64_t cnt, HT& hash, RSU& rsu)
 }
 
 // --------------------------------------------------------------------------
-uint64_t total_num_keys()
-{
+uint64_t total_num_keys() {
     uint64_t n = 0;
     for (int i = 0; i < 16; ++i)
         n += s_num_keys[i];
@@ -288,8 +271,7 @@ uint64_t total_num_keys()
 
 // --------------------------------------------------------------------------
 template<class HT>
-Timer _fill_random2(int64_t cnt, HT& hash)
-{
+Timer _fill_random2(int64_t cnt, HT& hash) {
     test              = "random";
     unsigned int seed = 76687;
     RSU          rsu(seed, seed + 1);
@@ -317,8 +299,7 @@ Timer _fill_random2(int64_t cnt, HT& hash)
 
 // --------------------------------------------------------------------------
 template<class T, class HT>
-Timer _lookup(vector<T>& v, HT& hash, size_t& num_present)
-{
+Timer _lookup(vector<T>& v, HT& hash, size_t& num_present) {
     _fill_random(v, hash);
 
     num_present    = 0;
@@ -334,8 +315,7 @@ Timer _lookup(vector<T>& v, HT& hash, size_t& num_present)
 
 // --------------------------------------------------------------------------
 template<class T, class HT>
-Timer _delete(vector<T>& v, HT& hash)
-{
+Timer _delete(vector<T>& v, HT& hash) {
     _fill_random(v, hash);
     _shuffle(v); // don't delete in insertion order
 
@@ -347,8 +327,7 @@ Timer _delete(vector<T>& v, HT& hash)
 }
 
 // --------------------------------------------------------------------------
-void memlog()
-{
+void memlog() {
     std::this_thread::sleep_for(std::chrono::milliseconds(10));
     uint64_t nbytes_old_out = gtl::GetProcessMemoryUsed();
     uint64_t nbytes_old     = gtl::GetProcessMemoryUsed(); // last non outputted mem measurement
@@ -359,7 +338,8 @@ void memlog()
         uint64_t nbytes = gtl::GetProcessMemoryUsed();
 
         if ((double)_abs(nbytes - nbytes_old_out) / nbytes_old_out > 0.03 ||
-            (double)_abs(nbytes - nbytes_old) / nbytes_old > 0.01) {
+            (double)_abs(nbytes - nbytes_old) / nbytes_old > 0.01)
+        {
             if ((double)(nbytes - nbytes_old) / nbytes_old > 0.03)
                 outmem(test, total_num_keys() - 1, nbytes_old);
             outmem(test, total_num_keys(), nbytes);
@@ -377,8 +357,7 @@ void memlog()
 }
 
 // --------------------------------------------------------------------------
-int main(int argc, char** argv)
-{
+int main(int argc, char** argv) {
     int64_t     num_keys   = 100000000;
     const char* bench_name = "random";
     int64_t     i, value = 0;
@@ -414,7 +393,8 @@ int main(int argc, char** argv)
             out("random", num_keys, timer);
         }
 #endif
-        else if (!strcmp(bench_name, "random")) {
+        else if (!strcmp(bench_name, "random"))
+        {
             fprintf(stderr, "size = %zu\n", sizeof(hash));
             timer = _fill_random2(num_keys, hash);
         } else if (!strcmp(bench_name, "lookup")) {

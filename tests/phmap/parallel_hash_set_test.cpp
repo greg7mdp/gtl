@@ -9,24 +9,19 @@ namespace gtl {
 namespace priv {
 namespace {
 
-struct Entry
-{
+struct Entry {
     Entry(int k, int v = 0)
         : key(k)
-        , value(v)
-    {
-    }
+        , value(v) {}
 
-    bool operator==(const Entry& o) const
-    {
+    bool operator==(const Entry& o) const {
         return key == o.key; // not checking value
     }
 
     // Demonstrates how to provide the hash function as a friend member function of the class
     // This can be used as an alternative to providing a std::hash<Person> specialization
     // --------------------------------------------------------------------------------------
-    friend size_t hash_value(const Entry& p)
-    {
+    friend size_t hash_value(const Entry& p) {
         return gtl::HashState().combine(0, p.key); // not checking value
     }
 
@@ -34,15 +29,14 @@ struct Entry
     int value;
 };
 
-TEST(THIS_TEST_NAME, IfContains)
-{
+TEST(THIS_TEST_NAME, IfContains) {
     // ----------------
     // test if_contains
     // ----------------
     using Set = gtl::THIS_HASH_SET<Entry>;
     Set m     = {
-            {1,  7},
-            { 2, 9}
+        {1,  7},
+        { 2, 9}
     };
     const Set& const_m(m);
 
@@ -54,15 +48,14 @@ TEST(THIS_TEST_NAME, IfContains)
     EXPECT_FALSE(m.if_contains(Entry{ 3 }, get_value));
 }
 
-TEST(THIS_TEST_NAME, ModifyIf)
-{
+TEST(THIS_TEST_NAME, ModifyIf) {
     // --------------
     // test modify_if
     // --------------
     using Set = gtl::THIS_HASH_SET<Entry>;
     Set m     = {
-            {1,  7},
-            { 2, 9}
+        {1,  7},
+        { 2, 9}
     };
 
     auto set_value = [](Set::value_type& v) { v.value = 11; };
@@ -76,47 +69,41 @@ TEST(THIS_TEST_NAME, ModifyIf)
     EXPECT_FALSE(m.modify_if(Entry{ 3 }, set_value)); // because m[3] does not exist
 }
 
-TEST(THIS_TEST_NAME, LazyEmplaceL)
-{
+TEST(THIS_TEST_NAME, LazyEmplaceL) {
     // --------------------
     // test lazy_emplace_l
     // --------------------
     using Set = gtl::THIS_HASH_SET<Entry>;
     Set m     = {
-            {1,  7},
-            { 2, 9}
+        {1,  7},
+        { 2, 9}
     };
 
     // insert a value that is not already present.
     // right now m[5] does not exist
     m.lazy_emplace_l(
         Entry{ 5 },
-        [](Set::value_type& v) { v.value = 6; }, // called only when key was already present
-        [](const Set::constructor& ctor) {
-            ctor(5, 13);
-        }); // construct value_type in place when key not present
+        [](Set::value_type& v) { v.value = 6; },            // called only when key was already present
+        [](const Set::constructor& ctor) { ctor(5, 13); }); // construct value_type in place when key not present
     EXPECT_EQ(m.find(Entry{ 5 })->value, 13);
 
     // change a value that is present.
     m.lazy_emplace_l(
         Entry{ 5 },
-        [](Set::value_type& v) { v.value = 6; }, // called only when key was already present
-        [](const Set::constructor& ctor) {
-            ctor(5, 13);
-        }); // construct value_type in place when key not present
+        [](Set::value_type& v) { v.value = 6; },            // called only when key was already present
+        [](const Set::constructor& ctor) { ctor(5, 13); }); // construct value_type in place when key not present
     EXPECT_EQ(m.find(Entry{ 5 })->value, 6);
 }
 
-TEST(THIS_TEST_NAME, EraseIf)
-{
+TEST(THIS_TEST_NAME, EraseIf) {
     // -------------
     // test erase_if
     // -------------
     using Set = gtl::THIS_HASH_SET<Entry>;
     Set m     = {
-            {1,  7},
-            { 2, 9},
-            { 5, 6}
+        {1,  7},
+        { 2, 9},
+        { 5, 6}
     };
 
     EXPECT_EQ(m.erase_if(Entry{ 9 },
@@ -133,16 +120,15 @@ TEST(THIS_TEST_NAME, EraseIf)
     EXPECT_EQ(m.find(Entry{ 5 }), m.end());
 }
 
-TEST(THIS_TEST_NAME, ForEach)
-{
+TEST(THIS_TEST_NAME, ForEach) {
     // -------------
     // test for_each
     // -------------
     using Set = gtl::THIS_HASH_SET<Entry>;
     Set m     = {
-            {1,  7 },
-            { 2, 8 },
-            { 5, 11}
+        {1,  7 },
+        { 2, 8 },
+        { 5, 11}
     };
 
     int counter = 0;
@@ -153,8 +139,7 @@ TEST(THIS_TEST_NAME, ForEach)
     EXPECT_EQ(counter, 3);
 }
 
-TEST(THIS_TEST_NAME, EmplaceSingle)
-{
+TEST(THIS_TEST_NAME, EmplaceSingle) {
     using Set = gtl::THIS_HASH_SET<int>;
 
     // --------------------

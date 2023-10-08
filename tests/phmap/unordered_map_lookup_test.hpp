@@ -32,14 +32,11 @@ namespace gtl {
 namespace priv {
 
 template<class UnordMap>
-class LookupTest : public ::testing::Test
-{
-};
+class LookupTest : public ::testing::Test {};
 
 TYPED_TEST_SUITE_P(LookupTest);
 
-TYPED_TEST_P(LookupTest, At)
-{
+TYPED_TEST_P(LookupTest, At) {
     using T = hash_internal::GeneratedType<TypeParam>;
     std::vector<T> values;
     std::generate_n(std::back_inserter(values), 10, hash_internal::Generator<T>());
@@ -50,8 +47,7 @@ TYPED_TEST_P(LookupTest, At)
     }
 }
 
-TYPED_TEST_P(LookupTest, OperatorBracket)
-{
+TYPED_TEST_P(LookupTest, OperatorBracket) {
     using T = hash_internal::GeneratedType<TypeParam>;
     using V = typename TypeParam::mapped_type;
     std::vector<T> values;
@@ -66,8 +62,7 @@ TYPED_TEST_P(LookupTest, OperatorBracket)
         EXPECT_EQ(p.second, m[p.first]) << ::testing::PrintToString(p.first);
 }
 
-TYPED_TEST_P(LookupTest, Count)
-{
+TYPED_TEST_P(LookupTest, Count) {
     using T = hash_internal::GeneratedType<TypeParam>;
     std::vector<T> values;
     std::generate_n(std::back_inserter(values), 10, hash_internal::Generator<T>());
@@ -79,8 +74,7 @@ TYPED_TEST_P(LookupTest, Count)
         EXPECT_EQ(1, m.count(p.first)) << ::testing::PrintToString(p.first);
 }
 
-TYPED_TEST_P(LookupTest, Find)
-{
+TYPED_TEST_P(LookupTest, Find) {
     using std::get;
     using T = hash_internal::GeneratedType<TypeParam>;
     std::vector<T> values;
@@ -96,8 +90,7 @@ TYPED_TEST_P(LookupTest, Find)
     }
 }
 
-TYPED_TEST_P(LookupTest, EqualRange)
-{
+TYPED_TEST_P(LookupTest, EqualRange) {
     using std::get;
     using T = hash_internal::GeneratedType<TypeParam>;
     std::vector<T> values;

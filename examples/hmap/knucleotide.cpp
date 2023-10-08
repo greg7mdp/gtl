@@ -49,14 +49,12 @@
 // ------------------------------------------------------------------
 constexpr size_t thread_count = 4;
 
-struct Cfg
-{
+struct Cfg {
     unsigned char* to_char;
     unsigned char  to_num[128];
     using Data = std::vector<unsigned char>;
 
-    Cfg()
-    {
+    Cfg() {
         static unsigned char __tochar[]         = { 'A', 'C', 'T', 'G' };
         to_char                                 = __tochar;
         to_num[static_cast<unsigned char>('A')] = to_num[static_cast<unsigned char>('a')] = 0;
@@ -68,24 +66,19 @@ struct Cfg
 
 // ------------------------------------------------------------------
 template<size_t size>
-struct Key
-{
+struct Key {
     // select type to use for 'data', if hash key can fit on 32-bit integer
     // then use uint32_t else use uint64_t.
     using Data = typename std::conditional<size <= 16, uint32_t, uint64_t>::type;
 
-    struct Hash
-    {
+    struct Hash {
         Data operator()(const Key& t) const { return t._data; }
     };
 
     Key()
-        : _data(0)
-    {
-    }
+        : _data(0) {}
 
-    Key(const char* str)
-    {
+    Key(const char* str) {
         _data = 0;
         for (unsigned i = 0; i < size; ++i) {
             _data <<= 2;
@@ -94,8 +87,7 @@ struct Key
     }
 
     // initialize hash from input data
-    void InitKey(const unsigned char* data)
-    {
+    void InitKey(const unsigned char* data) {
         for (unsigned i = 0; i < size; ++i) {
             _data <<= 2;
             _data |= data[i];
@@ -103,8 +95,7 @@ struct Key
     }
 
     // updates the key with 1 byte
-    void UpdateKey(const unsigned char data)
-    {
+    void UpdateKey(const unsigned char data) {
         _data <<= 2;
         _data |= data;
     }
@@ -113,8 +104,7 @@ struct Key
     void MaskKey() { _data &= _mask; }
 
     // implicit casting operator to string
-    operator std::string() const
-    {
+    operator std::string() const {
         std::string tmp;
         Data        data = _data;
         for (size_t i = 0; i != size; ++i, data >>= 2)
@@ -136,8 +126,7 @@ using HashTable = gtl::flat_hash_map<K, unsigned, typename K::Hash>;
 
 // ------------------------------------------------------------------
 template<size_t size>
-void Calculate(const Cfg::Data& input, size_t begin, HashTable<size>& table)
-{
+void Calculate(const Cfg::Data& input, size_t begin, HashTable<size>& table) {
     // original implementation fully recomputes the hash key for each
     // insert to the hash table. This implementation only partially
     // updates the hash, this is the same with C GCC, Rust #6 and Rust #4
@@ -165,8 +154,7 @@ void Calculate(const Cfg::Data& input, size_t begin, HashTable<size>& table)
 
 // ------------------------------------------------------------------
 template<size_t size>
-HashTable<size> CalculateInThreads(const Cfg::Data& input)
-{
+HashTable<size> CalculateInThreads(const Cfg::Data& input) {
     HashTable<size> hash_tables[thread_count];
     std::thread     threads[thread_count];
 
@@ -189,10 +177,9 @@ HashTable<size> CalculateInThreads(const Cfg::Data& input)
 
 // ------------------------------------------------------------------
 template<unsigned size>
-void WriteFrequencies(const Cfg::Data& input)
-{
+void WriteFrequencies(const Cfg::Data& input) {
     // we "receive" the returned object by move instead of copy.
-    auto&& frequencies = CalculateInThreads<size>(input);
+    auto&&                                                  frequencies = CalculateInThreads<size>(input);
     std::map<unsigned, std::string, std::greater<unsigned>> freq;
     for (const auto& i : frequencies)
         freq.insert({ i.second, i.first });
@@ -205,21 +192,18 @@ void WriteFrequencies(const Cfg::Data& input)
 
 // ------------------------------------------------------------------
 template<unsigned size>
-void WriteCount(const Cfg::Data& input, const char* text)
-{
+void WriteCount(const Cfg::Data& input, const char* text) {
     // we "receive" the returned object by move instead of copy.
     auto&& frequencies = CalculateInThreads<size>(input);
     std::cout << frequencies[Key<size>(text)] << '\t' << text << '\n';
 }
 
 // ------------------------------------------------------------------
-int main()
-{
+int main() {
     Cfg::Data             data;
     std::array<char, 256> buf;
 
-    while (fgets(buf.data(), static_cast<int>(buf.size()), stdin) &&
-           memcmp(">THREE", buf.data(), 6))
+    while (fgets(buf.data(), static_cast<int>(buf.size()), stdin) && memcmp(">THREE", buf.data(), 6))
         ;
     while (fgets(buf.data(), static_cast<int>(buf.size()), stdin) && buf.front() != '>') {
         if (buf.front() != ';') {
@@ -227,8 +211,7 @@ int main()
             data.insert(data.end(), buf.begin(), i);
         }
     }
-    std::transform(
-        data.begin(), data.end(), data.begin(), [](unsigned char c) { return cfg.to_num[c]; });
+    std::transform(data.begin(), data.end(), data.begin(), [](unsigned char c) { return cfg.to_num[c]; });
     std::cout << std::setprecision(3) << std::setiosflags(std::ios::fixed);
 
     WriteFrequencies<1>(data);

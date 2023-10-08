@@ -26,14 +26,12 @@ using milliseconds = std::chrono::duration<T, std::milli>;
 // --------------------------------------------------------------------------
 //  from: https://github.com/preshing/RandomSequence
 // --------------------------------------------------------------------------
-class RSU
-{
+class RSU {
 private:
     unsigned int m_index;
     unsigned int m_intermediateOffset;
 
-    static unsigned int permuteQPR(unsigned int x)
-    {
+    static unsigned int permuteQPR(unsigned int x) {
         static const unsigned int prime = 4294967291u;
         if (x >= prime)
             return x; // The 5 integers out of range are mapped to themselves.
@@ -42,8 +40,7 @@ private:
     }
 
 public:
-    RSU(unsigned int seedBase, unsigned int seedOffset)
-    {
+    RSU(unsigned int seedBase, unsigned int seedOffset) {
         m_index              = permuteQPR(permuteQPR(seedBase) + 0x682f0161);
         m_intermediateOffset = permuteQPR(permuteQPR(seedOffset) + 0x46790905);
     }
@@ -53,8 +50,7 @@ public:
 
 // --------------------------------------------------------------------------
 // --------------------------------------------------------------------------
-void showtime(const char* name, const std::function<void()>& doit)
-{
+void showtime(const char* name, const std::function<void()>& doit) {
     auto t1 = std::chrono::high_resolution_clock::now();
     doit();
     auto t2      = std::chrono::high_resolution_clock::now();
@@ -65,8 +61,7 @@ void showtime(const char* name, const std::function<void()>& doit)
 // --------------------------------------------------------------------------
 // --------------------------------------------------------------------------
 template<class MapType>
-void testMapSerialization(const char* maptype, const char* fname)
-{
+void testMapSerialization(const char* maptype, const char* fname) {
     MapType   table;
     const int num_items = 100000000;
 
@@ -125,8 +120,7 @@ void testMapSerialization(const char* maptype, const char* fname)
 // --------------------------------------------------------------------------
 // --------------------------------------------------------------------------
 template<class SetType>
-void testSetSerialization(const char* settype, const char* fname)
-{
+void testSetSerialization(const char* settype, const char* fname) {
     SetType   table;
     const int num_items = 100000000;
 
@@ -184,8 +178,7 @@ void testSetSerialization(const char* settype, const char* fname)
 
 // --------------------------------------------------------------------------
 // --------------------------------------------------------------------------
-int main()
-{
+int main() {
     testSetSerialization<gtl::flat_hash_set<unsigned int>>("flat_hash_set", "dump1.bin");
 #if 0
     testSetSerialization<gtl::parallel_flat_hash_set<unsigned int>>("parallel_flat_hash_set", "dump1.bin");

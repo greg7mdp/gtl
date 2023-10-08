@@ -36,29 +36,24 @@ namespace gtl {
 namespace priv {
 
 template<class UnordMap>
-class ConstructorTest : public ::testing::Test
-{
-};
+class ConstructorTest : public ::testing::Test {};
 
 TYPED_TEST_SUITE_P(ConstructorTest);
 
-TYPED_TEST_P(ConstructorTest, NoArgs)
-{
+TYPED_TEST_P(ConstructorTest, NoArgs) {
     TypeParam m;
     EXPECT_TRUE(m.empty());
     EXPECT_THAT(m, ::testing::UnorderedElementsAre());
 }
 
-TYPED_TEST_P(ConstructorTest, BucketCount)
-{
+TYPED_TEST_P(ConstructorTest, BucketCount) {
     TypeParam m(123);
     EXPECT_TRUE(m.empty());
     EXPECT_THAT(m, ::testing::UnorderedElementsAre());
     EXPECT_GE(m.bucket_count(), 123);
 }
 
-TYPED_TEST_P(ConstructorTest, BucketCountHash)
-{
+TYPED_TEST_P(ConstructorTest, BucketCountHash) {
     using H = typename TypeParam::hasher;
     H         hasher;
     TypeParam m(123, hasher);
@@ -68,8 +63,7 @@ TYPED_TEST_P(ConstructorTest, BucketCountHash)
     EXPECT_GE(m.bucket_count(), 123);
 }
 
-TYPED_TEST_P(ConstructorTest, BucketCountHashEqual)
-{
+TYPED_TEST_P(ConstructorTest, BucketCountHashEqual) {
     using H = typename TypeParam::hasher;
     using E = typename TypeParam::key_equal;
     H         hasher;
@@ -82,8 +76,7 @@ TYPED_TEST_P(ConstructorTest, BucketCountHashEqual)
     EXPECT_GE(m.bucket_count(), 123);
 }
 
-TYPED_TEST_P(ConstructorTest, BucketCountHashEqualAlloc)
-{
+TYPED_TEST_P(ConstructorTest, BucketCountHashEqualAlloc) {
     using H = typename TypeParam::hasher;
     using E = typename TypeParam::key_equal;
     using A = typename TypeParam::allocator_type;
@@ -100,29 +93,21 @@ TYPED_TEST_P(ConstructorTest, BucketCountHashEqualAlloc)
 }
 
 template<typename T>
-struct is_std_unordered_map : std::false_type
-{
-};
+struct is_std_unordered_map : std::false_type {};
 
 template<typename... T>
-struct is_std_unordered_map<std::unordered_map<T...>> : std::true_type
-{
-};
+struct is_std_unordered_map<std::unordered_map<T...>> : std::true_type {};
 
 using has_cxx14_std_apis = std::true_type;
 
 template<typename T>
-using expect_cxx14_apis =
-    std::disjunction<std::negation<is_std_unordered_map<T>>, has_cxx14_std_apis>;
+using expect_cxx14_apis = std::disjunction<std::negation<is_std_unordered_map<T>>, has_cxx14_std_apis>;
 
 template<typename TypeParam>
-void BucketCountAllocTest(std::false_type)
-{
-}
+void BucketCountAllocTest(std::false_type) {}
 
 template<typename TypeParam>
-void BucketCountAllocTest(std::true_type)
-{
+void BucketCountAllocTest(std::true_type) {
     using A = typename TypeParam::allocator_type;
     A         alloc(0);
     TypeParam m(123, alloc);
@@ -132,19 +117,13 @@ void BucketCountAllocTest(std::true_type)
     EXPECT_GE(m.bucket_count(), 123);
 }
 
-TYPED_TEST_P(ConstructorTest, BucketCountAlloc)
-{
-    BucketCountAllocTest<TypeParam>(expect_cxx14_apis<TypeParam>());
-}
+TYPED_TEST_P(ConstructorTest, BucketCountAlloc) { BucketCountAllocTest<TypeParam>(expect_cxx14_apis<TypeParam>()); }
 
 template<typename TypeParam>
-void BucketCountHashAllocTest(std::false_type)
-{
-}
+void BucketCountHashAllocTest(std::false_type) {}
 
 template<typename TypeParam>
-void BucketCountHashAllocTest(std::true_type)
-{
+void BucketCountHashAllocTest(std::true_type) {
     using H = typename TypeParam::hasher;
     using A = typename TypeParam::allocator_type;
     H         hasher;
@@ -157,8 +136,7 @@ void BucketCountHashAllocTest(std::true_type)
     EXPECT_GE(m.bucket_count(), 123);
 }
 
-TYPED_TEST_P(ConstructorTest, BucketCountHashAlloc)
-{
+TYPED_TEST_P(ConstructorTest, BucketCountHashAlloc) {
     BucketCountHashAllocTest<TypeParam>(expect_cxx14_apis<TypeParam>());
 }
 
@@ -169,17 +147,13 @@ using has_alloc_std_constructors = std::false_type;
 #endif
 
 template<typename T>
-using expect_alloc_constructors =
-    std::disjunction<std::negation<is_std_unordered_map<T>>, has_alloc_std_constructors>;
+using expect_alloc_constructors = std::disjunction<std::negation<is_std_unordered_map<T>>, has_alloc_std_constructors>;
 
 template<typename TypeParam>
-void AllocTest(std::false_type)
-{
-}
+void AllocTest(std::false_type) {}
 
 template<typename TypeParam>
-void AllocTest(std::true_type)
-{
+void AllocTest(std::true_type) {
     using A = typename TypeParam::allocator_type;
     A         alloc(0);
     TypeParam m(alloc);
@@ -188,13 +162,9 @@ void AllocTest(std::true_type)
     EXPECT_THAT(m, ::testing::UnorderedElementsAre());
 }
 
-TYPED_TEST_P(ConstructorTest, Alloc)
-{
-    AllocTest<TypeParam>(expect_alloc_constructors<TypeParam>());
-}
+TYPED_TEST_P(ConstructorTest, Alloc) { AllocTest<TypeParam>(expect_alloc_constructors<TypeParam>()); }
 
-TYPED_TEST_P(ConstructorTest, InputIteratorBucketHashEqualAlloc)
-{
+TYPED_TEST_P(ConstructorTest, InputIteratorBucketHashEqualAlloc) {
     using T = hash_internal::GeneratedType<TypeParam>;
     using H = typename TypeParam::hasher;
     using E = typename TypeParam::key_equal;
@@ -213,13 +183,10 @@ TYPED_TEST_P(ConstructorTest, InputIteratorBucketHashEqualAlloc)
 }
 
 template<typename TypeParam>
-void InputIteratorBucketAllocTest(std::false_type)
-{
-}
+void InputIteratorBucketAllocTest(std::false_type) {}
 
 template<typename TypeParam>
-void InputIteratorBucketAllocTest(std::true_type)
-{
+void InputIteratorBucketAllocTest(std::true_type) {
     using T = hash_internal::GeneratedType<TypeParam>;
     using A = typename TypeParam::allocator_type;
     A              alloc(0);
@@ -231,19 +198,15 @@ void InputIteratorBucketAllocTest(std::true_type)
     EXPECT_GE(m.bucket_count(), 123);
 }
 
-TYPED_TEST_P(ConstructorTest, InputIteratorBucketAlloc)
-{
+TYPED_TEST_P(ConstructorTest, InputIteratorBucketAlloc) {
     InputIteratorBucketAllocTest<TypeParam>(expect_cxx14_apis<TypeParam>());
 }
 
 template<typename TypeParam>
-void InputIteratorBucketHashAllocTest(std::false_type)
-{
-}
+void InputIteratorBucketHashAllocTest(std::false_type) {}
 
 template<typename TypeParam>
-void InputIteratorBucketHashAllocTest(std::true_type)
-{
+void InputIteratorBucketHashAllocTest(std::true_type) {
     using T = hash_internal::GeneratedType<TypeParam>;
     using H = typename TypeParam::hasher;
     using A = typename TypeParam::allocator_type;
@@ -258,13 +221,11 @@ void InputIteratorBucketHashAllocTest(std::true_type)
     EXPECT_GE(m.bucket_count(), 123);
 }
 
-TYPED_TEST_P(ConstructorTest, InputIteratorBucketHashAlloc)
-{
+TYPED_TEST_P(ConstructorTest, InputIteratorBucketHashAlloc) {
     InputIteratorBucketHashAllocTest<TypeParam>(expect_cxx14_apis<TypeParam>());
 }
 
-TYPED_TEST_P(ConstructorTest, CopyConstructor)
-{
+TYPED_TEST_P(ConstructorTest, CopyConstructor) {
     using T = hash_internal::GeneratedType<TypeParam>;
     using H = typename TypeParam::hasher;
     using E = typename TypeParam::key_equal;
@@ -283,13 +244,10 @@ TYPED_TEST_P(ConstructorTest, CopyConstructor)
 }
 
 template<typename TypeParam>
-void CopyConstructorAllocTest(std::false_type)
-{
-}
+void CopyConstructorAllocTest(std::false_type) {}
 
 template<typename TypeParam>
-void CopyConstructorAllocTest(std::true_type)
-{
+void CopyConstructorAllocTest(std::true_type) {
     using T = hash_internal::GeneratedType<TypeParam>;
     using H = typename TypeParam::hasher;
     using E = typename TypeParam::key_equal;
@@ -307,15 +265,13 @@ void CopyConstructorAllocTest(std::true_type)
     EXPECT_EQ(m, n);
 }
 
-TYPED_TEST_P(ConstructorTest, CopyConstructorAlloc)
-{
+TYPED_TEST_P(ConstructorTest, CopyConstructorAlloc) {
     CopyConstructorAllocTest<TypeParam>(expect_alloc_constructors<TypeParam>());
 }
 
 // TODO(alkis): Test non-propagating allocators on copy constructors.
 
-TYPED_TEST_P(ConstructorTest, MoveConstructor)
-{
+TYPED_TEST_P(ConstructorTest, MoveConstructor) {
     using T = hash_internal::GeneratedType<TypeParam>;
     using H = typename TypeParam::hasher;
     using E = typename TypeParam::key_equal;
@@ -335,13 +291,10 @@ TYPED_TEST_P(ConstructorTest, MoveConstructor)
 }
 
 template<typename TypeParam>
-void MoveConstructorAllocTest(std::false_type)
-{
-}
+void MoveConstructorAllocTest(std::false_type) {}
 
 template<typename TypeParam>
-void MoveConstructorAllocTest(std::true_type)
-{
+void MoveConstructorAllocTest(std::true_type) {
     using T = hash_internal::GeneratedType<TypeParam>;
     using H = typename TypeParam::hasher;
     using E = typename TypeParam::key_equal;
@@ -360,15 +313,13 @@ void MoveConstructorAllocTest(std::true_type)
     EXPECT_EQ(m, n);
 }
 
-TYPED_TEST_P(ConstructorTest, MoveConstructorAlloc)
-{
+TYPED_TEST_P(ConstructorTest, MoveConstructorAlloc) {
     MoveConstructorAllocTest<TypeParam>(expect_alloc_constructors<TypeParam>());
 }
 
 // TODO(alkis): Test non-propagating allocators on move constructors.
 
-TYPED_TEST_P(ConstructorTest, InitializerListBucketHashEqualAlloc)
-{
+TYPED_TEST_P(ConstructorTest, InitializerListBucketHashEqualAlloc) {
     using T = hash_internal::GeneratedType<TypeParam>;
     hash_internal::Generator<T> gen;
     std::initializer_list<T>    values = { gen(), gen(), gen(), gen(), gen() };
@@ -387,13 +338,10 @@ TYPED_TEST_P(ConstructorTest, InitializerListBucketHashEqualAlloc)
 }
 
 template<typename TypeParam>
-void InitializerListBucketAllocTest(std::false_type)
-{
-}
+void InitializerListBucketAllocTest(std::false_type) {}
 
 template<typename TypeParam>
-void InitializerListBucketAllocTest(std::true_type)
-{
+void InitializerListBucketAllocTest(std::true_type) {
     using T = hash_internal::GeneratedType<TypeParam>;
     using A = typename TypeParam::allocator_type;
     hash_internal::Generator<T> gen;
@@ -405,19 +353,15 @@ void InitializerListBucketAllocTest(std::true_type)
     EXPECT_GE(m.bucket_count(), 123);
 }
 
-TYPED_TEST_P(ConstructorTest, InitializerListBucketAlloc)
-{
+TYPED_TEST_P(ConstructorTest, InitializerListBucketAlloc) {
     InitializerListBucketAllocTest<TypeParam>(expect_cxx14_apis<TypeParam>());
 }
 
 template<typename TypeParam>
-void InitializerListBucketHashAllocTest(std::false_type)
-{
-}
+void InitializerListBucketHashAllocTest(std::false_type) {}
 
 template<typename TypeParam>
-void InitializerListBucketHashAllocTest(std::true_type)
-{
+void InitializerListBucketHashAllocTest(std::true_type) {
     using T = hash_internal::GeneratedType<TypeParam>;
     using H = typename TypeParam::hasher;
     using A = typename TypeParam::allocator_type;
@@ -432,13 +376,11 @@ void InitializerListBucketHashAllocTest(std::true_type)
     EXPECT_GE(m.bucket_count(), 123);
 }
 
-TYPED_TEST_P(ConstructorTest, InitializerListBucketHashAlloc)
-{
+TYPED_TEST_P(ConstructorTest, InitializerListBucketHashAlloc) {
     InitializerListBucketHashAllocTest<TypeParam>(expect_cxx14_apis<TypeParam>());
 }
 
-TYPED_TEST_P(ConstructorTest, Assignment)
-{
+TYPED_TEST_P(ConstructorTest, Assignment) {
     using T = hash_internal::GeneratedType<TypeParam>;
     using H = typename TypeParam::hasher;
     using E = typename TypeParam::key_equal;
@@ -458,8 +400,7 @@ TYPED_TEST_P(ConstructorTest, Assignment)
 // TODO(alkis): Test [non-]propagating allocators on move/copy assignments
 // (it depends on traits).
 
-TYPED_TEST_P(ConstructorTest, MoveAssignment)
-{
+TYPED_TEST_P(ConstructorTest, MoveAssignment) {
     using T = hash_internal::GeneratedType<TypeParam>;
     using H = typename TypeParam::hasher;
     using E = typename TypeParam::key_equal;
@@ -477,8 +418,7 @@ TYPED_TEST_P(ConstructorTest, MoveAssignment)
     EXPECT_EQ(m, n);
 }
 
-TYPED_TEST_P(ConstructorTest, AssignmentFromInitializerList)
-{
+TYPED_TEST_P(ConstructorTest, AssignmentFromInitializerList) {
     using T = hash_internal::GeneratedType<TypeParam>;
     hash_internal::Generator<T> gen;
     std::initializer_list<T>    values = { gen(), gen(), gen(), gen(), gen() };
@@ -487,8 +427,7 @@ TYPED_TEST_P(ConstructorTest, AssignmentFromInitializerList)
     EXPECT_THAT(items(m), ::testing::UnorderedElementsAreArray(values));
 }
 
-TYPED_TEST_P(ConstructorTest, AssignmentOverwritesExisting)
-{
+TYPED_TEST_P(ConstructorTest, AssignmentOverwritesExisting) {
     using T = hash_internal::GeneratedType<TypeParam>;
     hash_internal::Generator<T> gen;
     TypeParam                   m({ gen(), gen(), gen() });
@@ -497,8 +436,7 @@ TYPED_TEST_P(ConstructorTest, AssignmentOverwritesExisting)
     EXPECT_EQ(m, n);
 }
 
-TYPED_TEST_P(ConstructorTest, MoveAssignmentOverwritesExisting)
-{
+TYPED_TEST_P(ConstructorTest, MoveAssignmentOverwritesExisting) {
     using T = hash_internal::GeneratedType<TypeParam>;
     hash_internal::Generator<T> gen;
     TypeParam                   m({ gen(), gen(), gen() });
@@ -508,8 +446,7 @@ TYPED_TEST_P(ConstructorTest, MoveAssignmentOverwritesExisting)
     EXPECT_EQ(m, n);
 }
 
-TYPED_TEST_P(ConstructorTest, AssignmentFromInitializerListOverwritesExisting)
-{
+TYPED_TEST_P(ConstructorTest, AssignmentFromInitializerListOverwritesExisting) {
     using T = hash_internal::GeneratedType<TypeParam>;
     hash_internal::Generator<T> gen;
     std::initializer_list<T>    values = { gen(), gen(), gen(), gen(), gen() };
@@ -518,8 +455,7 @@ TYPED_TEST_P(ConstructorTest, AssignmentFromInitializerListOverwritesExisting)
     EXPECT_THAT(items(m), ::testing::UnorderedElementsAreArray(values));
 }
 
-TYPED_TEST_P(ConstructorTest, AssignmentOnSelf)
-{
+TYPED_TEST_P(ConstructorTest, AssignmentOnSelf) {
     using T = hash_internal::GeneratedType<TypeParam>;
     hash_internal::Generator<T> gen;
     std::initializer_list<T>    values = { gen(), gen(), gen(), gen(), gen() };

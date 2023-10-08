@@ -41,8 +41,7 @@ auto cached_twin_primes = gtl::memoize<decltype(&twin_primes)>(&twin_primes);
 // returns f(end), but avoid recursing one by one
 // ---------------------------------------------------------
 template<class F>
-void avoid_deep_recursion(F& f, uint64_t end)
-{
+void avoid_deep_recursion(F& f, uint64_t end) {
     constexpr uint64_t incr = 512;
     if (end > incr && f.contains(end - incr))
         return;
@@ -53,8 +52,7 @@ void avoid_deep_recursion(F& f, uint64_t end)
 
 // return the nth element in the infinite list of prime numbers
 // ------------------------------------------------------------
-uint64_t nth_prime(uint64_t idx)
-{
+uint64_t nth_prime(uint64_t idx) {
     if (idx == 0)
         return 2;
 
@@ -70,8 +68,7 @@ uint64_t nth_prime(uint64_t idx)
 
 // returns the number of prime factors of n
 // ----------------------------------------
-uint64_t num_factors(uint64_t n)
-{
+uint64_t num_factors(uint64_t n) {
     for (uint64_t i = 0;; ++i) {
         uint64_t factor = cached_nth_prime(i);
         if (factor * factor > n)
@@ -86,8 +83,7 @@ uint64_t num_factors(uint64_t n)
 // returns the index, in the infinite list of prime numbers, of the first prime
 // of the idx'th pair of twin primes.
 // ----------------------------------------------------------------------------
-uint64_t twin_primes(uint64_t idx)
-{
+uint64_t twin_primes(uint64_t idx) {
     if (idx == 0)
         return 1; // (3, 5) are the first twin primes
 
@@ -104,8 +100,7 @@ uint64_t twin_primes(uint64_t idx)
     assert(0);
 }
 
-int main()
-{
+int main() {
     auto x1 = [](int i) -> int { return i + 1; };
     auto y  = gtl::memoize<decltype(x1)>(x1);
     printf("---- %d\n", y(6));
@@ -114,10 +109,7 @@ int main()
     constexpr uint64_t idx = 10000;
 
     auto x = cached_nth_prime(idx);
-    printf("cached_nth_prime(%" PRIu64 "):   => %" PRIu64 " in %10.3f seconds\n",
-           idx,
-           x,
-           sw.since_start() / 1000);
+    printf("cached_nth_prime(%" PRIu64 "):   => %" PRIu64 " in %10.3f seconds\n", idx, x, sw.since_start() / 1000);
 
     auto first = cached_twin_primes(idx);
     printf("cached_twin_primes(%" PRIu64 "): => (%" PRIu64 ", %" PRIu64 ") in %10.3f seconds\n",

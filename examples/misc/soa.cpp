@@ -32,8 +32,7 @@
 #include <gtl/soa.hpp>
 #include <iostream>
 
-int main()
-{
+int main() {
     // presidents will be a soa representing  order, first name, last name
 
     constexpr int order      = 0;

@@ -29,8 +29,7 @@ namespace {
 
 using ::testing::Pair;
 
-TEST(Memory, AlignmentLargerThanBase)
-{
+TEST(Memory, AlignmentLargerThanBase) {
     std::allocator<int8_t> alloc;
     void*                  mem = Allocate<2>(&alloc, 3);
     EXPECT_EQ(0u, reinterpret_cast<uintptr_t>(mem) % 2);
@@ -38,8 +37,7 @@ TEST(Memory, AlignmentLargerThanBase)
     Deallocate<2>(&alloc, mem, 3);
 }
 
-TEST(Memory, AlignmentSmallerThanBase)
-{
+TEST(Memory, AlignmentSmallerThanBase) {
     std::allocator<int64_t> alloc;
     void*                   mem = Allocate<2>(&alloc, 3);
     EXPECT_EQ(0u, reinterpret_cast<uintptr_t>(mem) % 2);
@@ -47,14 +45,12 @@ TEST(Memory, AlignmentSmallerThanBase)
     Deallocate<2>(&alloc, mem, 3);
 }
 
-class Fixture : public ::testing::Test
-{
+class Fixture : public ::testing::Test {
     using Alloc = std::allocator<std::string>;
 
 public:
     Fixture() { ptr_ = std::allocator_traits<Alloc>::allocate(*alloc(), 1); }
-    ~Fixture() override
-    {
+    ~Fixture() override {
         std::allocator_traits<Alloc>::destroy(*alloc(), ptr_);
         std::allocator_traits<Alloc>::deallocate(*alloc(), ptr_, 1);
     }
@@ -66,78 +62,58 @@ private:
     std::string* ptr_;
 };
 
-TEST_F(Fixture, ConstructNoArgs)
-{
+TEST_F(Fixture, ConstructNoArgs) {
     ConstructFromTuple(alloc(), ptr(), std::forward_as_tuple());
     EXPECT_EQ(*ptr(), "");
 }
 
-TEST_F(Fixture, ConstructOneArg)
-{
+TEST_F(Fixture, ConstructOneArg) {
     ConstructFromTuple(alloc(), ptr(), std::forward_as_tuple("abcde"));
     EXPECT_EQ(*ptr(), "abcde");
 }
 
-TEST_F(Fixture, ConstructTwoArg)
-{
+TEST_F(Fixture, ConstructTwoArg) {
     ConstructFromTuple(alloc(), ptr(), std::forward_as_tuple(5, 'a'));
     EXPECT_EQ(*ptr(), "aaaaa");
 }
 
-TEST(PairArgs, NoArgs)
-{
-    EXPECT_THAT(PairArgs(), Pair(std::forward_as_tuple(), std::forward_as_tuple()));
+TEST(PairArgs, NoArgs) { EXPECT_THAT(PairArgs(), Pair(std::forward_as_tuple(), std::forward_as_tuple())); }
+
+TEST(PairArgs, TwoArgs) {
+    EXPECT_EQ(std::make_pair(std::forward_as_tuple(1), std::forward_as_tuple('A')), PairArgs(1, 'A'));
 }
 
-TEST(PairArgs, TwoArgs)
-{
+TEST(PairArgs, Pair) {
+    EXPECT_EQ(std::make_pair(std::forward_as_tuple(1), std::forward_as_tuple('A')), PairArgs(std::make_pair(1, 'A')));
+}
+
+TEST(PairArgs, Piecewise) {
     EXPECT_EQ(std::make_pair(std::forward_as_tuple(1), std::forward_as_tuple('A')),
-              PairArgs(1, 'A'));
+              PairArgs(std::piecewise_construct, std::forward_as_tuple(1), std::forward_as_tuple('A')));
 }
 
-TEST(PairArgs, Pair)
-{
-    EXPECT_EQ(std::make_pair(std::forward_as_tuple(1), std::forward_as_tuple('A')),
-              PairArgs(std::make_pair(1, 'A')));
-}
-
-TEST(PairArgs, Piecewise)
-{
-    EXPECT_EQ(
-        std::make_pair(std::forward_as_tuple(1), std::forward_as_tuple('A')),
-        PairArgs(std::piecewise_construct, std::forward_as_tuple(1), std::forward_as_tuple('A')));
-}
-
-TEST(WithConstructed, Simple)
-{
-    EXPECT_EQ(1u,
-              WithConstructed<std::string_view>(std::make_tuple(std::string("a")),
-                                                [](std::string_view str) { return str.size(); }));
+TEST(WithConstructed, Simple) {
+    EXPECT_EQ(1u, WithConstructed<std::string_view>(std::make_tuple(std::string("a")), [](std::string_view str) {
+                  return str.size();
+              }));
 }
 
 template<class F, class Arg>
-decltype(DecomposeValue(std::declval<F>(), std::declval<Arg>())) DecomposeValueImpl(int,
-                                                                                    F&&   f,
-                                                                                    Arg&& arg)
-{
+decltype(DecomposeValue(std::declval<F>(), std::declval<Arg>())) DecomposeValueImpl(int, F&& f, Arg&& arg) {
     return DecomposeValue(std::forward<F>(f), std::forward<Arg>(arg));
 }
 
 template<class F, class Arg>
-const char* DecomposeValueImpl(char, F&&, Arg&&)
-{
+const char* DecomposeValueImpl(char, F&&, Arg&&) {
     return "not decomposable";
 }
 
 template<class F, class Arg>
-decltype(DecomposeValueImpl(0, std::declval<F>(), std::declval<Arg>())) TryDecomposeValue(F&&   f,
-                                                                                          Arg&& arg)
-{
+decltype(DecomposeValueImpl(0, std::declval<F>(), std::declval<Arg>())) TryDecomposeValue(F&& f, Arg&& arg) {
     return DecomposeValueImpl(0, std::forward<F>(f), std::forward<Arg>(arg));
 }
 
-TEST(DecomposeValue, Decomposable)
-{
+TEST(DecomposeValue, Decomposable) {
     auto f = [](const int& x, int&& y) {
         EXPECT_EQ(&x, &y);
         EXPECT_EQ(42, x);
@@ -146,8 +122,7 @@ TEST(DecomposeValue, Decomposable)
     EXPECT_EQ('A', TryDecomposeValue(f, 42));
 }
 
-TEST(DecomposeValue, NotDecomposable)
-{
+TEST(DecomposeValue, NotDecomposable) {
     auto f = [](void*) {
         ADD_FAILURE() << "Must not be called";
         return 'A';
@@ -156,52 +131,40 @@ TEST(DecomposeValue, NotDecomposable)
 }
 
 template<class F, class... Args>
-decltype(DecomposePair(std::declval<F>(), std::declval<Args>()...))
-DecomposePairImpl(int, F&& f, Args&&... args)
-{
+decltype(DecomposePair(std::declval<F>(), std::declval<Args>()...)) DecomposePairImpl(int, F&& f, Args&&... args) {
     return DecomposePair(std::forward<F>(f), std::forward<Args>(args)...);
 }
 
 template<class F, class... Args>
-const char* DecomposePairImpl(char, F&&, Args&&...)
-{
+const char* DecomposePairImpl(char, F&&, Args&&...) {
     return "not decomposable";
 }
 
 template<class F, class... Args>
-decltype(DecomposePairImpl(0, std::declval<F>(), std::declval<Args>()...)) TryDecomposePair(
-    F&& f,
-    Args&&... args)
-{
+decltype(DecomposePairImpl(0, std::declval<F>(), std::declval<Args>()...)) TryDecomposePair(F&& f, Args&&... args) {
     return DecomposePairImpl(0, std::forward<F>(f), std::forward<Args>(args)...);
 }
 
-TEST(DecomposePair, Decomposable)
-{
-    auto f =
-        [](const int& x, std::piecewise_construct_t, std::tuple<int&&> k, std::tuple<double>&& v) {
-            EXPECT_EQ(&x, &std::get<0>(k));
-            EXPECT_EQ(42, x);
-            EXPECT_EQ(0.5, std::get<0>(v));
-            return 'A';
-        };
+TEST(DecomposePair, Decomposable) {
+    auto f = [](const int& x, std::piecewise_construct_t, std::tuple<int&&> k, std::tuple<double>&& v) {
+        EXPECT_EQ(&x, &std::get<0>(k));
+        EXPECT_EQ(42, x);
+        EXPECT_EQ(0.5, std::get<0>(v));
+        return 'A';
+    };
     EXPECT_EQ('A', TryDecomposePair(f, 42, 0.5));
     EXPECT_EQ('A', TryDecomposePair(f, std::make_pair(42, 0.5)));
-    EXPECT_EQ(
-        'A',
-        TryDecomposePair(f, std::piecewise_construct, std::make_tuple(42), std::make_tuple(0.5)));
+    EXPECT_EQ('A', TryDecomposePair(f, std::piecewise_construct, std::make_tuple(42), std::make_tuple(0.5)));
 }
 
-TEST(DecomposePair, NotDecomposable)
-{
+TEST(DecomposePair, NotDecomposable) {
     auto f = [](...) {
         ADD_FAILURE() << "Must not be called";
         return 'A';
     };
     EXPECT_STREQ("not decomposable", TryDecomposePair(f));
-    EXPECT_STREQ(
-        "not decomposable",
-        TryDecomposePair(f, std::piecewise_construct, std::make_tuple(), std::make_tuple(0.5)));
+    EXPECT_STREQ("not decomposable",
+                 TryDecomposePair(f, std::piecewise_construct, std::make_tuple(), std::make_tuple(0.5)));
 }
 
 } // namespace

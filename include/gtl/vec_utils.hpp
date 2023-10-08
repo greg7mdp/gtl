@@ -34,8 +34,7 @@ concept VectorLike = requires(T v) {
 // returns a new vector which is the concatenation of the vectors passed as arguments
 // ----------------------------------------------------------------------------------
 template<VectorLike... Vs>
-auto cat(Vs&&... vs)
-{
+auto cat(Vs&&... vs) {
     std::common_type_t<Vs...> res;
     res.reserve((0 + ... + vs.size()));
     (..., (res.insert(res.end(), std::begin(std::forward<Vs>(vs)), std::end(std::forward<Vs>(vs)))));
@@ -46,8 +45,7 @@ auto cat(Vs&&... vs)
 // implements python-like slicing for vectors, negative indices start from the end
 // -------------------------------------------------------------------------------
 template<VectorLike V>
-auto slice(V&& v, int first = 0, int last = -1, int stride = 1)
-{
+auto slice(V&& v, int first = 0, int last = -1, int stride = 1) {
     std::remove_const_t<std::remove_reference_t<V>> res;
     auto                                            first_iter =
         (first >= 0 ? std::begin(std::forward<V>(v)) + first : std::end(std::forward<V>(v)) + (first + 1));
@@ -68,8 +66,7 @@ template<class F, class T, class A, template<class, class> class V>
 #ifndef _LIBCPP_VERSION // until this is available
     requires std::invocable<F&, T>
 #endif
-auto map(F&& f, const V<T, A>& v)
-{
+auto map(F&& f, const V<T, A>& v) {
     using result_type = std::invoke_result_t<F, T>;
     V<result_type, std::allocator<result_type>> res;
     res.reserve(v.size());

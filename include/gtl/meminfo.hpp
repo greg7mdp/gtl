@@ -46,8 +46,7 @@ uint64_t GetTotalMemoryUsed();
 uint64_t GetProcessMemoryUsed();
 uint64_t GetPhysicalMemory();
 
-uint64_t GetSystemMemory()
-{
+uint64_t GetSystemMemory() {
 #ifdef GTL_WIN
     MEMORYSTATUSEX memInfo;
     memInfo.dwLength = sizeof(MEMORYSTATUSEX);
@@ -85,8 +84,7 @@ uint64_t GetSystemMemory()
 #endif
 }
 
-uint64_t GetTotalMemoryUsed()
-{
+uint64_t GetTotalMemoryUsed() {
 #ifdef GTL_WIN
     MEMORYSTATUSEX memInfo;
     memInfo.dwLength = sizeof(MEMORYSTATUSEX);
@@ -127,8 +125,7 @@ uint64_t GetTotalMemoryUsed()
 #endif
 }
 
-uint64_t GetProcessMemoryUsed()
-{
+uint64_t GetProcessMemoryUsed() {
 #ifdef GTL_WIN
     PROCESS_MEMORY_COUNTERS_EX pmc;
     GetProcessMemoryInfo(GetCurrentProcess(), reinterpret_cast<PPROCESS_MEMORY_COUNTERS>(&pmc), sizeof(pmc));
@@ -171,8 +168,7 @@ uint64_t GetProcessMemoryUsed()
 #endif
 }
 
-uint64_t GetPhysicalMemory()
-{
+uint64_t GetPhysicalMemory() {
 #ifdef GTL_WIN
     MEMORYSTATUSEX memInfo;
     memInfo.dwLength = sizeof(MEMORYSTATUSEX);

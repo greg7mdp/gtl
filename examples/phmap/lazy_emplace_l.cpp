@@ -9,8 +9,7 @@
 #include <ppl.h>
 #include <vector>
 
-class srwlock
-{
+class srwlock {
     SRWLOCK _lock;
 
 public:
@@ -27,20 +26,16 @@ using Map = gtl::parallel_flat_hash_map<std::string,
                                         8,
                                         srwlock>;
 
-class Dict
-{
+class Dict {
     Map m_stringsMap;
 
 public:
-    int addParallel(std::string&& str, volatile long* curIdx)
-    {
+    int addParallel(std::string&& str, volatile long* curIdx) {
         int newIndex = -1;
         m_stringsMap.lazy_emplace_l(
             std::move(str),
-            [&](Map::value_type& p) {
-                newIndex = p.second;
-            },                                // called only when key was already present
-            [&](const Map::constructor& ctor) // construct value_type in place when key not present
+            [&](Map::value_type& p) { newIndex = p.second; }, // called only when key was already present
+            [&](const Map::constructor& ctor)                 // construct value_type in place when key not present
             {
                 newIndex = InterlockedIncrement(curIdx);
                 ctor(std::move(str), newIndex);
@@ -50,8 +45,7 @@ public:
     }
 };
 
-int main()
-{
+int main() {
     size_t           totalSize = 6000000;
     std::vector<int> values(totalSize);
     Dict             dict;

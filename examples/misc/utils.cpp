@@ -1,28 +1,24 @@
 #include <cassert>
 #include <gtl/utils.hpp>
 
-struct A : public gtl::timestamp
-{
+struct A : public gtl::timestamp {
     bool set_x(int v) { return set_with_ts(x_, v); }
     int  x_{ 0 };
 };
 
-struct B : public gtl::timestamp
-{
+struct B : public gtl::timestamp {
     bool set_y(int v) { return set_with_ts(y_, v); }
     int  y_{ 0 };
 };
 
-struct C : public gtl::provides_timestamp<C>
-{
+struct C : public gtl::provides_timestamp<C> {
     gtl::timestamp get_timestamp() const { return a_ | b_; }
 
     A a_;
     B b_;
 };
 
-int main()
-{
+int main() {
     // gtl::timestamp
     // --------------
     A a;

@@ -27,8 +27,7 @@ template<class K,
          class Hash  = gtl::Hash<K>,
          class Eq    = std::equal_to<K>,
          class Mutex = std::mutex>
-class lru_cache_impl
-{
+class lru_cache_impl {
 public:
     using key_type    = K;
     using result_type = V;
@@ -51,20 +50,17 @@ public:
     // because the cache is sharded (multiple submaps and sublists)
     // the max_size is an approximation.
     // ------------------------------------------------------------
-    lru_cache_impl(size_t max_size = 65536)
-    {
+    lru_cache_impl(size_t max_size = 65536) {
         reserve(max_size);
         set_cache_size(max_size);
         assert(_max_size > 2);
     }
 
-    bool exists(const K& k)
-    {
+    bool exists(const K& k) {
         return _cache.if_contains(k, [&](const auto&, list_type&) {});
     }
 
-    std::optional<result_type> get(const K& k)
-    {
+    std::optional<result_type> get(const K& k) {
         if (result_type res; _cache.if_contains(k, [&](const auto& v, list_type& l) {
                 res = v.second->second;
                 l.splice(l.begin(), l, v.second);
@@ -74,8 +70,7 @@ public:
     }
 
     template<class Val>
-    void insert(const K& key, Val&& value)
-    {
+    void insert(const K& key, Val&& value) {
         _cache.lazy_emplace_l(
             key,
             [&](typename map_type::value_type& v, list_type& l) {

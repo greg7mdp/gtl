@@ -65,8 +65,7 @@ static constexpr size_t jemallocMinInPlaceExpandable = 4096;
 
 inline size_t goodMallocSize(size_t minSize) noexcept { return minSize; }
 
-inline void* checkedMalloc(size_t size)
-{
+inline void* checkedMalloc(size_t size) {
     void* p = malloc(size);
     if (!p) {
         throw std::bad_alloc();
@@ -97,16 +96,14 @@ inline void* thunk_return_nullptr() { return nullptr; }
 } // namespace detail
 
 template<class T, class Allocator>
-class vector
-{
+class vector {
     //===========================================================================
     //---------------------------------------------------------------------------
     // implementation
 private:
     typedef std::allocator_traits<Allocator> A;
 
-    struct Impl : public Allocator
-    {
+    struct Impl : public Allocator {
         // typedefs
         typedef typename A::pointer   pointer;
         typedef typename A::size_type size_type;
@@ -119,27 +116,20 @@ private:
             : Allocator()
             , b_(nullptr)
             , e_(nullptr)
-            , z_(nullptr)
-        {
-        }
+            , z_(nullptr) {}
         /* implicit */ Impl(const Allocator& alloc)
             : Allocator(alloc)
             , b_(nullptr)
             , e_(nullptr)
-            , z_(nullptr)
-        {
-        }
+            , z_(nullptr) {}
         /* implicit */ Impl(Allocator&& alloc)
             : Allocator(std::move(alloc))
             , b_(nullptr)
             , e_(nullptr)
-            , z_(nullptr)
-        {
-        }
+            , z_(nullptr) {}
 
         /* implicit */ Impl(size_type n, const Allocator& alloc = Allocator())
-            : Allocator(alloc)
-        {
+            : Allocator(alloc) {
             init(n);
         }
 
@@ -147,8 +137,7 @@ private:
             : Allocator(std::move(other))
             , b_(other.b_)
             , e_(other.e_)
-            , z_(other.z_)
-        {
+            , z_(other.z_) {
             other.b_ = other.e_ = other.z_ = nullptr;
         }
 
@@ -157,8 +146,7 @@ private:
 
         // allocation
         // note that 'allocate' and 'deallocate' are inherited from Allocator
-        T* D_allocate(size_type n)
-        {
+        T* D_allocate(size_type n) {
             if constexpr (usingStdAllocator) {
                 return static_cast<T*>(checkedMalloc(n * sizeof(T)));
             } else {
@@ -166,8 +154,7 @@ private:
             }
         }
 
-        void D_deallocate(T* p, size_type n) noexcept
-        {
+        void D_deallocate(T* p, size_type n) noexcept {
             if constexpr (usingStdAllocator) {
                 free(p);
             } else {
@@ -176,16 +163,14 @@ private:
         }
 
         // helpers
-        void swapData(Impl& other)
-        {
+        void swapData(Impl& other) {
             std::swap(b_, other.b_);
             std::swap(e_, other.e_);
             std::swap(z_, other.z_);
         }
 
         // data ops
-        inline void destroy() noexcept
-        {
+        inline void destroy() noexcept {
             if (b_) {
                 // THIS DISPATCH CODE IS DUPLICATED IN vector::D_destroy_range_a.
                 // It has been inlined here for speed. It calls the static vector
@@ -200,8 +185,7 @@ private:
             }
         }
 
-        void init(size_type n)
-        {
+        void init(size_type n) {
             if (UNLIKELY(n == 0)) {
                 b_ = e_ = z_ = nullptr;
             } else {
@@ -212,8 +196,7 @@ private:
             }
         }
 
-        void set(pointer newB, size_type newSize, size_type newCap)
-        {
+        void set(pointer newB, size_type newSize, size_type newCap) {
             z_ = newB + newCap;
             e_ = newB + newSize;
             b_ = newB;
@@ -221,22 +204,19 @@ private:
 
         pointer data() const { return z_; }
 
-        void reset(size_type newCap)
-        {
+        void reset(size_type newCap) {
             destroy();
             scoped_guard rollback([&] { init(0); });
             init(newCap);
             rollback.dismiss();
         }
-        void reset()
-        { // same as reset(0)
+        void reset() { // same as reset(0)
             destroy();
             b_ = e_ = z_ = nullptr;
         }
     } impl_;
 
-    static void swap(Impl& a, Impl& b)
-    {
+    static void swap(Impl& a, Impl& b) {
         using std::swap;
         if constexpr (!usingStdAllocator) {
             swap(static_cast<Allocator&>(a), static_cast<Allocator&>(b));
@@ -291,8 +271,7 @@ private:
     //  that reason there are several different specializations of construct.
 
     template<typename U, typename... Args>
-    void M_construct(U* p, Args&&... args)
-    {
+    void M_construct(U* p, Args&&... args) {
         if constexpr (usingStdAllocator) {
             new (p) U(std::forward<Args>(args)...);
         } else {
@@ -301,22 +280,19 @@ private:
     }
 
     template<typename U, typename... Args>
-    static void S_construct(U* p, Args&&... args)
-    {
+    static void S_construct(U* p, Args&&... args) {
         new (p) U(std::forward<Args>(args)...);
     }
 
     template<typename U, typename... Args>
-    static void S_construct_a(Allocator& a, U* p, Args&&... args)
-    {
+    static void S_construct_a(Allocator& a, U* p, Args&&... args) {
         std::allocator_traits<Allocator>::construct(a, p, std::forward<Args>(args)...);
     }
 
     // scalar optimization
     // TODO we can expand this optimization to: default copyable and assignable
     template<typename U, typename Enable = typename std::enable_if<std::is_scalar<U>::value>::type>
-    void M_construct(U* p, U arg)
-    {
+    void M_construct(U* p, U arg) {
         if constexpr (usingStdAllocator) {
             *p = arg;
         } else {
@@ -325,21 +301,18 @@ private:
     }
 
     template<typename U, typename Enable = typename std::enable_if<std::is_scalar<U>::value>::type>
-    static void S_construct(U* p, U arg)
-    {
+    static void S_construct(U* p, U arg) {
         *p = arg;
     }
 
     template<typename U, typename Enable = typename std::enable_if<std::is_scalar<U>::value>::type>
-    static void S_construct_a(Allocator& a, U* p, U arg)
-    {
+    static void S_construct_a(Allocator& a, U* p, U arg) {
         std::allocator_traits<Allocator>::construct(a, p, arg);
     }
 
     // const& optimization
     template<typename U, typename Enable = typename std::enable_if<!std::is_scalar<U>::value>::type>
-    void M_construct(U* p, const U& value)
-    {
+    void M_construct(U* p, const U& value) {
         if constexpr (usingStdAllocator) {
             new (p) U(value);
         } else {
@@ -348,22 +321,19 @@ private:
     }
 
     template<typename U, typename Enable = typename std::enable_if<!std::is_scalar<U>::value>::type>
-    static void S_construct(U* p, const U& value)
-    {
+    static void S_construct(U* p, const U& value) {
         new (p) U(value);
     }
 
     template<typename U, typename Enable = typename std::enable_if<!std::is_scalar<U>::value>::type>
-    static void S_construct_a(Allocator& a, U* p, const U& value)
-    {
+    static void S_construct_a(Allocator& a, U* p, const U& value) {
         std::allocator_traits<Allocator>::construct(a, p, value);
     }
 
     //---------------------------------------------------------------------------
     // destroy
 
-    void M_destroy(T* p) noexcept
-    {
+    void M_destroy(T* p) noexcept {
         if constexpr (usingStdAllocator) {
             if constexpr (!std::is_trivially_destructible_v<T>) {
                 p->~T();
@@ -381,16 +351,14 @@ private:
     // destroy_range
 
     // wrappers
-    void M_destroy_range_e(T* pos) noexcept
-    {
+    void M_destroy_range_e(T* pos) noexcept {
         D_destroy_range_a(pos, impl_.e_);
         impl_.e_ = pos;
     }
 
     // dispatch
     // THIS DISPATCH CODE IS DUPLICATED IN IMPL. SEE IMPL FOR DETAILS.
-    void D_destroy_range_a(T* first, T* last) noexcept
-    {
+    void D_destroy_range_a(T* first, T* last) noexcept {
         if constexpr (usingStdAllocator) {
             S_destroy_range(first, last);
         } else {
@@ -399,16 +367,14 @@ private:
     }
 
     // allocator
-    static void S_destroy_range_a(Allocator& a, T* first, T* last) noexcept
-    {
+    static void S_destroy_range_a(Allocator& a, T* first, T* last) noexcept {
         for (; first != last; ++first) {
             std::allocator_traits<Allocator>::destroy(a, first);
         }
     }
 
     // optimized
-    static void S_destroy_range(T* first, T* last) noexcept
-    {
+    static void S_destroy_range(T* first, T* last) noexcept {
         if constexpr (!std::is_trivially_destructible_v<T>) {
             for (; first != last; ++first)
                 first->~T();
@@ -419,21 +385,18 @@ private:
     // uninitialized_fill_n
 
     // wrappers
-    void M_uninitialized_fill_n_e(size_type sz)
-    {
+    void M_uninitialized_fill_n_e(size_type sz) {
         D_uninitialized_fill_n_a(impl_.e_, sz);
         impl_.e_ += sz;
     }
 
-    void M_uninitialized_fill_n_e(size_type sz, VT value)
-    {
+    void M_uninitialized_fill_n_e(size_type sz, VT value) {
         D_uninitialized_fill_n_a(impl_.e_, sz, value);
         impl_.e_ += sz;
     }
 
     // dispatch
-    void D_uninitialized_fill_n_a(T* dest, size_type sz)
-    {
+    void D_uninitialized_fill_n_a(T* dest, size_type sz) {
         if constexpr (usingStdAllocator) {
             S_uninitialized_fill_n(dest, sz);
         } else {
@@ -441,8 +404,7 @@ private:
         }
     }
 
-    void D_uninitialized_fill_n_a(T* dest, size_type sz, VT value)
-    {
+    void D_uninitialized_fill_n_a(T* dest, size_type sz, VT value) {
         if constexpr (usingStdAllocator) {
             S_uninitialized_fill_n(dest, sz, value);
         } else {
@@ -452,8 +414,7 @@ private:
 
     // allocator
     template<typename... Args>
-    static void S_uninitialized_fill_n_a(Allocator& a, T* dest, size_type sz, Args&&... args)
-    {
+    static void S_uninitialized_fill_n_a(Allocator& a, T* dest, size_type sz, Args&&... args) {
         auto         b = dest;
         auto         e = dest + sz;
         scoped_guard rollback([&] { S_destroy_range_a(a, dest, b); });
@@ -464,8 +425,7 @@ private:
     }
 
     // optimized
-    static void S_uninitialized_fill_n(T* dest, size_type n)
-    {
+    static void S_uninitialized_fill_n(T* dest, size_type n) {
         if constexpr (!std::is_class_v<T>) {
             if (LIKELY(n != 0)) {
                 std::memset((void*)dest, 0, sizeof(T) * n);
@@ -486,8 +446,7 @@ private:
         }
     }
 
-    static void S_uninitialized_fill_n(T* dest, size_type n, const T& value)
-    {
+    static void S_uninitialized_fill_n(T* dest, size_type n, const T& value) {
         auto         b = dest;
         auto         e = dest + n;
         scoped_guard rollback([&] { S_destroy_range(dest, b); });
@@ -505,23 +464,20 @@ private:
 
     // wrappers
     template<typename It>
-    void M_uninitialized_copy_e(It first, It last)
-    {
+    void M_uninitialized_copy_e(It first, It last) {
         D_uninitialized_copy_a(impl_.e_, first, last);
         impl_.e_ += std::distance(first, last);
     }
 
     template<typename It>
-    void M_uninitialized_move_e(It first, It last)
-    {
+    void M_uninitialized_move_e(It first, It last) {
         D_uninitialized_move_a(impl_.e_, first, last);
         impl_.e_ += std::distance(first, last);
     }
 
     // dispatch
     template<typename It>
-    void D_uninitialized_copy_a(T* dest, It first, It last)
-    {
+    void D_uninitialized_copy_a(T* dest, It first, It last) {
         if constexpr (usingStdAllocator) {
             if constexpr (std::is_trivially_copyable_v<T>) {
                 S_uninitialized_copy_bits(dest, first, last);
@@ -534,15 +490,13 @@ private:
     }
 
     template<typename It>
-    void D_uninitialized_move_a(T* dest, It first, It last)
-    {
+    void D_uninitialized_move_a(T* dest, It first, It last) {
         D_uninitialized_copy_a(dest, std::make_move_iterator(first), std::make_move_iterator(last));
     }
 
     // allocator
     template<typename It>
-    static void S_uninitialized_copy_a(Allocator& a, T* dest, It first, It last)
-    {
+    static void S_uninitialized_copy_a(Allocator& a, T* dest, It first, It last) {
         auto         b = dest;
         scoped_guard rollback([&] { S_destroy_range_a(a, dest, b); });
         for (; first != last; ++first, ++b) {
@@ -553,8 +507,7 @@ private:
 
     // optimized
     template<typename It>
-    static void S_uninitialized_copy(T* dest, It first, It last)
-    {
+    static void S_uninitialized_copy(T* dest, It first, It last) {
         auto         b = dest;
         scoped_guard rollback([&] { S_destroy_range(dest, b); });
         for (; first != last; ++first, ++b) {
@@ -563,15 +516,13 @@ private:
         rollback.dismiss();
     }
 
-    static void S_uninitialized_copy_bits(T* dest, const T* first, const T* last)
-    {
+    static void S_uninitialized_copy_bits(T* dest, const T* first, const T* last) {
         if (last != first) {
             std::memcpy((void*)dest, (const void*)first, (last - first) * sizeof(T));
         }
     }
 
-    static void S_uninitialized_copy_bits(T* dest, std::move_iterator<T*> first, std::move_iterator<T*> last)
-    {
+    static void S_uninitialized_copy_bits(T* dest, std::move_iterator<T*> first, std::move_iterator<T*> last) {
         T* bFirst = first.base();
         T* bLast  = last.base();
         if (bLast != bFirst) {
@@ -580,8 +531,7 @@ private:
     }
 
     template<typename It>
-    static void S_uninitialized_copy_bits(T* dest, It first, It last)
-    {
+    static void S_uninitialized_copy_bits(T* dest, It first, It last) {
         S_uninitialized_copy(dest, first, last);
     }
 
@@ -593,8 +543,7 @@ private:
     //  wholly by vector itself.
 
     template<typename It>
-    static It S_copy_n(T* dest, It first, size_type n)
-    {
+    static It S_copy_n(T* dest, It first, size_type n) {
         auto e = dest + n;
         for (; dest != e; ++dest, ++first) {
             *dest = *first;
@@ -602,8 +551,7 @@ private:
         return first;
     }
 
-    static const T* S_copy_n(T* dest, const T* first, size_type n)
-    {
+    static const T* S_copy_n(T* dest, const T* first, size_type n) {
         if constexpr (std::is_trivially_copyable_v<T>) {
             std::memcpy((void*)dest, (const void*)first, n * sizeof(T));
             return first + n;
@@ -612,8 +560,7 @@ private:
         }
     }
 
-    static std::move_iterator<T*> S_copy_n(T* dest, std::move_iterator<T*> mIt, size_type n)
-    {
+    static std::move_iterator<T*> S_copy_n(T* dest, std::move_iterator<T*> mIt, size_type n) {
         if constexpr (std::is_trivially_copyable_v<T>) {
             T* first = mIt.base();
             std::memcpy((void*)dest, (void*)first, n * sizeof(T));
@@ -663,8 +610,7 @@ private:
     //  move, which is required to leave the source in a valid state.
 
     // wrappers
-    void M_relocate(T* newB)
-    {
+    void M_relocate(T* newB) {
         relocate_move(newB, impl_.b_, impl_.e_);
         relocate_done(newB, impl_.b_, impl_.e_);
     }
@@ -677,36 +623,30 @@ private:
         relocate_use_move;
 
     // move
-    void relocate_move(T* dest, T* first, T* last)
-    {
+    void relocate_move(T* dest, T* first, T* last) {
         relocate_move_or_memcpy(dest, first, last, relocate_use_memcpy());
     }
 
-    void relocate_move_or_memcpy(T* dest, T* first, T* last, std::true_type)
-    {
+    void relocate_move_or_memcpy(T* dest, T* first, T* last, std::true_type) {
         if (first != nullptr) {
             std::memcpy((void*)dest, (void*)first, (last - first) * sizeof(T));
         }
     }
 
-    void relocate_move_or_memcpy(T* dest, T* first, T* last, std::false_type)
-    {
+    void relocate_move_or_memcpy(T* dest, T* first, T* last, std::false_type) {
         relocate_move_or_copy(dest, first, last, relocate_use_move());
     }
 
-    void relocate_move_or_copy(T* dest, T* first, T* last, std::true_type)
-    {
+    void relocate_move_or_copy(T* dest, T* first, T* last, std::true_type) {
         D_uninitialized_move_a(dest, first, last);
     }
 
-    void relocate_move_or_copy(T* dest, T* first, T* last, std::false_type)
-    {
+    void relocate_move_or_copy(T* dest, T* first, T* last, std::false_type) {
         D_uninitialized_copy_a(dest, first, last);
     }
 
     // done
-    void relocate_done(T* /*dest*/, T* first, T* last) noexcept
-    {
+    void relocate_done(T* /*dest*/, T* first, T* last) noexcept {
         if constexpr (std::is_trivially_copyable_v<T> && usingStdAllocator) {
             // used memcpy; data has been relocated, do not call destructor
         } else {
@@ -715,8 +655,7 @@ private:
     }
 
     // undo
-    void relocate_undo(T* dest, T* first, T* last) noexcept
-    {
+    void relocate_undo(T* dest, T* first, T* last) noexcept {
         if constexpr (std::is_trivially_copyable_v<T> && usingStdAllocator) {
             // used memcpy, old data is still valid, nothing to do
         } else if constexpr (std::is_nothrow_move_constructible<T>::value && usingStdAllocator) {
@@ -738,47 +677,35 @@ public:
     vector() = default;
 
     explicit vector(const Allocator& a)
-        : impl_(a)
-    {
-    }
+        : impl_(a) {}
 
     explicit vector(size_type n, const Allocator& a = Allocator())
-        : impl_(n, a)
-    {
+        : impl_(n, a) {
         M_uninitialized_fill_n_e(n);
     }
 
     vector(size_type n, VT value, const Allocator& a = Allocator())
-        : impl_(n, a)
-    {
+        : impl_(n, a) {
         M_uninitialized_fill_n_e(n, value);
     }
 
     template<class It, class Category = typename std::iterator_traits<It>::iterator_category>
     vector(It first, It last, const Allocator& a = Allocator())
-        : vector(first, last, a, Category())
-    {
-    }
+        : vector(first, last, a, Category()) {}
 
     vector(const vector& other)
-        : impl_(other.size(), A::select_on_container_copy_construction(other.impl_))
-    {
+        : impl_(other.size(), A::select_on_container_copy_construction(other.impl_)) {
         M_uninitialized_copy_e(other.begin(), other.end());
     }
 
     vector(vector&& other) noexcept
-        : impl_(std::move(other.impl_))
-    {
-    }
+        : impl_(std::move(other.impl_)) {}
 
     vector(const vector& other, const Allocator& a)
-        : vector(other.begin(), other.end(), a)
-    {
-    }
+        : vector(other.begin(), other.end(), a) {}
 
     /* may throw */ vector(vector&& other, const Allocator& a)
-        : impl_(a)
-    {
+        : impl_(a) {
         if (impl_ == other.impl_) {
             impl_.swapData(other.impl_);
         } else {
@@ -788,20 +715,16 @@ public:
     }
 
     vector(std::initializer_list<T> il, const Allocator& a = Allocator())
-        : vector(il.begin(), il.end(), a)
-    {
-    }
+        : vector(il.begin(), il.end(), a) {}
 
     // ------------------- gtl extensions -------------------------------------------------------
     vector(std::unique_ptr<T> data, size_type sz, size_type cap, const Allocator& a = Allocator())
-        : impl_(a)
-    {
+        : impl_(a) {
         impl_.set(data.release(), sz, cap);
     }
 
     // return value to be used in accordance with vector's allocator
-    std::unique_ptr<T> steal_data()
-    {
+    std::unique_ptr<T> steal_data() {
         std::unique_ptr<T> res(impl_.data());
         impl_.set(nullptr, nullptr, nullptr); // don't deallocate the buffer!!
         return res;
@@ -811,8 +734,7 @@ public:
 
     ~vector() = default; // the cleanup occurs in impl_
 
-    vector& operator=(const vector& other)
-    {
+    vector& operator=(const vector& other) {
         if (UNLIKELY(this == &other)) {
             return *this;
         }
@@ -829,8 +751,7 @@ public:
         return *this;
     }
 
-    vector& operator=(vector&& other) noexcept
-    {
+    vector& operator=(vector&& other) noexcept {
         if (UNLIKELY(this == &other)) {
             return *this;
         }
@@ -838,20 +759,17 @@ public:
         return *this;
     }
 
-    vector& operator=(std::initializer_list<T> il)
-    {
+    vector& operator=(std::initializer_list<T> il) {
         assign(il.begin(), il.end());
         return *this;
     }
 
     template<class It, class Category = typename std::iterator_traits<It>::iterator_category>
-    void assign(It first, It last)
-    {
+    void assign(It first, It last) {
         assign(first, last, Category());
     }
 
-    void assign(size_type n, VT value)
-    {
+    void assign(size_type n, VT value) {
         if (n > capacity()) {
             // Not enough space. Do not reserve in place, since we will
             // discard the old values anyways.
@@ -881,15 +799,13 @@ private:
     // contract dispatch for iterator types vector(It first, It last)
     template<class ForwardIterator>
     vector(ForwardIterator first, ForwardIterator last, const Allocator& a, std::forward_iterator_tag)
-        : impl_(size_type(std::distance(first, last)), a)
-    {
+        : impl_(size_type(std::distance(first, last)), a) {
         M_uninitialized_copy_e(first, last);
     }
 
     template<class InputIterator>
     vector(InputIterator first, InputIterator last, const Allocator& a, std::input_iterator_tag)
-        : impl_(a)
-    {
+        : impl_(a) {
         for (; first != last; ++first) {
             emplace_back(*first);
         }
@@ -897,8 +813,7 @@ private:
 
     // contract dispatch for allocator movement in operator=(vector&&)
     void moveFrom(vector&& other, std::true_type) { swap(impl_, other.impl_); }
-    void moveFrom(vector&& other, std::false_type)
-    {
+    void moveFrom(vector&& other, std::false_type) {
         if (impl_ == other.impl_) {
             impl_.swapData(other.impl_);
         } else {
@@ -909,8 +824,7 @@ private:
 
     // contract dispatch for iterator types in assign(It first, It last)
     template<class ForwardIterator>
-    void assign(ForwardIterator first, ForwardIterator last, std::forward_iterator_tag)
-    {
+    void assign(ForwardIterator first, ForwardIterator last, std::forward_iterator_tag) {
         const auto newSize = size_type(std::distance(first, last));
         if (newSize > capacity()) {
             impl_.reset(newSize);
@@ -925,8 +839,7 @@ private:
     }
 
     template<class InputIterator>
-    void assign(InputIterator first, InputIterator last, std::input_iterator_tag)
-    {
+    void assign(InputIterator first, InputIterator last, std::input_iterator_tag) {
         auto p = impl_.b_;
         for (; first != last && p != impl_.e_; ++first, ++p) {
             *p = *first;
@@ -941,8 +854,7 @@ private:
     }
 
     // contract dispatch for aliasing under VT optimization
-    bool dataIsInternalAndNotVT(const T& t)
-    {
+    bool dataIsInternalAndNotVT(const T& t) {
         if (should_pass_by_value) {
             return false;
         }
@@ -974,14 +886,12 @@ public:
 public:
     size_type size() const noexcept { return size_type(impl_.e_ - impl_.b_); }
 
-    size_type max_size() const noexcept
-    {
+    size_type max_size() const noexcept {
         // good luck gettin' there
         return ~size_type(0);
     }
 
-    void resize(size_type n)
-    {
+    void resize(size_type n) {
         if (n <= size()) {
             M_destroy_range_e(impl_.b_ + n);
         } else {
@@ -990,8 +900,7 @@ public:
         }
     }
 
-    void resize(size_type n, VT t)
-    {
+    void resize(size_type n, VT t) {
         if (n <= size()) {
             M_destroy_range_e(impl_.b_ + n);
         } else if (dataIsInternalAndNotVT(t) && n > capacity()) {
@@ -1008,8 +917,7 @@ public:
 
     bool empty() const noexcept { return impl_.b_ == impl_.e_; }
 
-    void reserve(size_type n)
-    {
+    void reserve(size_type n) {
         if (n <= capacity()) {
             return;
         }
@@ -1032,8 +940,7 @@ public:
         impl_.b_ = newB;
     }
 
-    void shrink_to_fit() noexcept
-    {
+    void shrink_to_fit() noexcept {
         if (empty()) {
             impl_.reset();
             return;
@@ -1051,7 +958,8 @@ public:
         // xallocx() will shrink to precisely newCapacityBytes (which was generated
         // by goodMallocSize()) if it successfully shrinks in place.
         if constexpr ((usingJEMalloc() && usingStdAllocator) && newCapacityBytes >= gtl::jemallocMinInPlaceExpandable &&
-                      xallocx(p, newCapacityBytes, 0, 0) == newCapacityBytes) {
+                      xallocx(p, newCapacityBytes, 0, 0) == newCapacityBytes)
+        {
             impl_.z_ += newCap - oldCap;
         } else {
             T* newB = nullptr;
@@ -1082,8 +990,7 @@ public:
     }
 
 private:
-    bool reserve_in_place(size_type n)
-    {
+    bool reserve_in_place(size_type n) {
         if constexpr (usingStdAllocator && usingJEMalloc()) {
 
             // jemalloc can never grow in place blocks smaller than 4096 bytes.
@@ -1105,45 +1012,37 @@ private:
     //---------------------------------------------------------------------------
     // element access
 public:
-    reference operator[](size_type n)
-    {
+    reference operator[](size_type n) {
         assert(n < size());
         return impl_.b_[n];
     }
-    const_reference operator[](size_type n) const
-    {
+    const_reference operator[](size_type n) const {
         assert(n < size());
         return impl_.b_[n];
     }
-    const_reference at(size_type n) const
-    {
+    const_reference at(size_type n) const {
         if (UNLIKELY(n >= size())) {
             throw std::out_of_range("vector: index is greater than size.");
         }
         return (*this)[n];
     }
-    reference at(size_type n)
-    {
+    reference at(size_type n) {
         auto const& cThis = *this;
         return const_cast<reference>(cThis.at(n));
     }
-    reference front()
-    {
+    reference front() {
         assert(!empty());
         return *impl_.b_;
     }
-    const_reference front() const
-    {
+    const_reference front() const {
         assert(!empty());
         return *impl_.b_;
     }
-    reference back()
-    {
+    reference back() {
         assert(!empty());
         return impl_.e_[-1];
     }
-    const_reference back() const
-    {
+    const_reference back() const {
         assert(!empty());
         return impl_.e_[-1];
     }
@@ -1160,8 +1059,7 @@ public:
     // modifiers (common)
 public:
     template<class... Args>
-    reference emplace_back(Args&&... args)
-    {
+    reference emplace_back(Args&&... args) {
         if (impl_.e_ != impl_.z_) {
             M_construct(impl_.e_, std::forward<Args>(args)...);
             ++impl_.e_;
@@ -1171,8 +1069,7 @@ public:
         return back();
     }
 
-    void push_back(const T& value)
-    {
+    void push_back(const T& value) {
         if (impl_.e_ != impl_.z_) {
             M_construct(impl_.e_, value);
             ++impl_.e_;
@@ -1181,8 +1078,7 @@ public:
         }
     }
 
-    void push_back(T&& value)
-    {
+    void push_back(T&& value) {
         if (impl_.e_ != impl_.z_) {
             M_construct(impl_.e_, std::move(value));
             ++impl_.e_;
@@ -1191,15 +1087,13 @@ public:
         }
     }
 
-    void pop_back()
-    {
+    void pop_back() {
         assert(!empty());
         --impl_.e_;
         M_destroy(impl_.e_);
     }
 
-    void swap(vector& other) noexcept
-    {
+    void swap(vector& other) noexcept {
         if constexpr (!usingStdAllocator && A::propagate_on_container_swap::value) {
             swap(impl_, other.impl_);
         } else {
@@ -1228,8 +1122,7 @@ private:
     //     defined growth strategy, probably as part of the allocator.
     //
 
-    size_type computePushBackCapacity() const
-    {
+    size_type computePushBackCapacity() const {
         if (capacity() == 0) {
             return std::max(64 / sizeof(T), size_type(1));
         }
@@ -1243,11 +1136,11 @@ private:
     }
 
     template<class... Args>
-    void emplace_back_aux(Args&&... args)
-    {
+    void emplace_back_aux(Args&&... args) {
         size_type byte_sz = gtl::goodMallocSize(computePushBackCapacity() * sizeof(T));
         if constexpr (usingStdAllocator && usingJEMalloc() &&
-                      ((impl_.z_ - impl_.b_) * sizeof(T) >= gtl::jemallocMinInPlaceExpandable)) {
+                      ((impl_.z_ - impl_.b_) * sizeof(T) >= gtl::jemallocMinInPlaceExpandable))
+        {
             // Try to reserve in place.
             // Ask xallocx to allocate in place at least size()+1 and at most sz
             //  space.
@@ -1312,8 +1205,7 @@ private:
 public:
     iterator erase(const_iterator position) { return erase(position, position + 1); }
 
-    iterator erase(const_iterator first, const_iterator last)
-    {
+    iterator erase(const_iterator first, const_iterator last) {
         assert(isValid(first) && isValid(last));
         assert(first <= last);
         if (first != last) {
@@ -1350,8 +1242,7 @@ public:
 private: // we have the private section first because it defines some macros
     bool isValid(const_iterator it) { return cbegin() <= it && it <= cend(); }
 
-    size_type computeInsertCapacity(size_type n)
-    {
+    size_type computeInsertCapacity(size_type n) {
         size_type nc = std::max(computePushBackCapacity(), size() + n);
         size_type ac = gtl::goodMallocSize(nc * sizeof(T)) / sizeof(T);
         return ac;
@@ -1410,8 +1301,7 @@ private: // we have the private section first because it defines some macros
     //---------------------------------------------------------------------------
     // window
 
-    void make_window(iterator position, size_type n)
-    {
+    void make_window(iterator position, size_type n) {
         // The result is guaranteed to be non-negative, so use an unsigned type:
         size_type tail = size_type(std::distance(position, impl_.e_));
 
@@ -1422,7 +1312,7 @@ private: // we have the private section first because it defines some macros
         } else {
             if constexpr (std::is_trivially_copyable_v<T> && usingStdAllocator) {
 #pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wnonnull" // disable erroneous warning 
+#pragma GCC diagnostic ignored "-Wnonnull" // disable erroneous warning
                 std::memmove((void*)(position + n), (void*)position, tail * sizeof(T));
 #pragma GCC diagnostic pop
                 impl_.e_ += n;
@@ -1443,8 +1333,7 @@ private: // we have the private section first because it defines some macros
         }
     }
 
-    void undo_window(iterator position, size_type n) noexcept
-    {
+    void undo_window(iterator position, size_type n) noexcept {
         D_destroy_range_a(position + n, impl_.e_);
         impl_.e_ = position;
     }
@@ -1452,8 +1341,7 @@ private: // we have the private section first because it defines some macros
     //---------------------------------------------------------------------------
     // frame
 
-    void wrap_frame(T* ledge, size_type idx, size_type n)
-    {
+    void wrap_frame(T* ledge, size_type idx, size_type n) {
         assert(size() >= idx);
         assert(n != 0);
 
@@ -1472,8 +1360,7 @@ private: // we have the private section first because it defines some macros
     //---------------------------------------------------------------------------
     // use fresh?
 
-    bool insert_use_fresh(bool at_end, size_type n)
-    {
+    bool insert_use_fresh(bool at_end, size_type n) {
         if (at_end) {
             if (size() + n <= capacity()) {
                 return false;
@@ -1500,8 +1387,7 @@ private: // we have the private section first because it defines some macros
                             IsInternalFunc&&     isInternalFunc,
                             InsertInternalFunc&& insertInternalFunc,
                             ConstructFunc&&      constructFunc,
-                            DestroyFunc&&        destroyFunc)
-    {
+                            DestroyFunc&&        destroyFunc) {
         if (n == 0) {
             return const_cast<iterator>(cpos);
         }
@@ -1571,8 +1457,7 @@ private: // we have the private section first because it defines some macros
 
 public:
     template<class... Args>
-    iterator emplace(const_iterator cpos, Args&&... args)
-    {
+    iterator emplace(const_iterator cpos, Args&&... args) {
         return do_real_insert(
             cpos,
             1,
@@ -1582,8 +1467,7 @@ public:
             [&](iterator start) { M_destroy(start); });
     }
 
-    iterator insert(const_iterator cpos, const T& value)
-    {
+    iterator insert(const_iterator cpos, const T& value) {
         return do_real_insert(
             cpos,
             1,
@@ -1593,8 +1477,7 @@ public:
             [&](iterator start) { M_destroy(start); });
     }
 
-    iterator insert(const_iterator cpos, T&& value)
-    {
+    iterator insert(const_iterator cpos, T&& value) {
         return do_real_insert(
             cpos,
             1,
@@ -1604,8 +1487,7 @@ public:
             [&](iterator start) { M_destroy(start); });
     }
 
-    iterator insert(const_iterator cpos, size_type n, VT value)
-    {
+    iterator insert(const_iterator cpos, size_type n, VT value) {
         return do_real_insert(
             cpos,
             n,
@@ -1616,8 +1498,7 @@ public:
     }
 
     template<class It, class Category = typename std::iterator_traits<It>::iterator_category>
-    iterator insert(const_iterator cpos, It first, It last)
-    {
+    iterator insert(const_iterator cpos, It first, It last) {
         return insert(cpos, first, last, Category());
     }
 
@@ -1627,8 +1508,7 @@ public:
     // insert dispatch for iterator types
 private:
     template<class FIt>
-    iterator insert(const_iterator cpos, FIt first, FIt last, std::forward_iterator_tag)
-    {
+    iterator insert(const_iterator cpos, FIt first, FIt last, std::forward_iterator_tag) {
         size_type n = size_type(std::distance(first, last));
         return do_real_insert(
             cpos,
@@ -1640,8 +1520,7 @@ private:
     }
 
     template<class IIt>
-    iterator insert(const_iterator cpos, IIt first, IIt last, std::input_iterator_tag)
-    {
+    iterator insert(const_iterator cpos, IIt first, IIt last, std::input_iterator_tag) {
         T* position = const_cast<T*>(cpos);
         assert(isValid(position));
         size_type idx = std::distance(begin(), position);
@@ -1661,15 +1540,13 @@ private:
     //---------------------------------------------------------------------------
     // lexicographical functions
 public:
-    bool operator==(const vector& other) const
-    {
+    bool operator==(const vector& other) const {
         return size() == other.size() && std::equal(begin(), end(), other.begin());
     }
 
     bool operator!=(const vector& other) const { return !(*this == other); }
 
-    bool operator<(const vector& other) const
-    {
+    bool operator<(const vector& other) const {
         return std::lexicographical_compare(begin(), end(), other.begin(), other.end());
     }
 
@@ -1696,8 +1573,7 @@ private:
 // specialized functions
 
 template<class T, class A>
-void swap(vector<T, A>& lhs, vector<T, A>& rhs) noexcept
-{
+void swap(vector<T, A>& lhs, vector<T, A>& rhs) noexcept {
     lhs.swap(rhs);
 }
 
@@ -1706,8 +1582,7 @@ void swap(vector<T, A>& lhs, vector<T, A>& rhs) noexcept
 // other
 
 template<class T, class A>
-void compactResize(vector<T, A>* v, size_t sz)
-{
+void compactResize(vector<T, A>* v, size_t sz) {
     v->resize(sz);
     v->shrink_to_fit();
 }
@@ -1736,16 +1611,14 @@ void compactResize(vector<T, A>* v, size_t sz)
 //
 
 template<class T, class A>
-T* relinquish(vector<T, A>& v)
-{
+T* relinquish(vector<T, A>& v) {
     T* ret     = v.data();
     v.impl_.b_ = v.impl_.e_ = v.impl_.z_ = nullptr;
     return ret;
 }
 
 template<class T, class A>
-void attach(vector<T, A>& v, T* data, size_t sz, size_t cap)
-{
+void attach(vector<T, A>& v, T* data, size_t sz, size_t cap) {
     assert(v.data() == nullptr);
     v.impl_.b_ = data;
     v.impl_.e_ = data + sz;
@@ -1759,14 +1632,12 @@ vector(InputIt, InputIt, Allocator = Allocator())
 #endif
 
 template<class T, class A, class U>
-void erase(vector<T, A>& v, U value)
-{
+void erase(vector<T, A>& v, U value) {
     v.erase(std::remove(v.begin(), v.end(), value), v.end());
 }
 
 template<class T, class A, class Predicate>
-void erase_if(vector<T, A>& v, Predicate predicate)
-{
+void erase_if(vector<T, A>& v, Predicate predicate) {
     v.erase(std::remove_if(v.begin(), v.end(), std::ref(predicate)), v.end());
 }
 } // namespace gtl

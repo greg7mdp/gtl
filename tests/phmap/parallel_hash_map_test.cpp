@@ -9,8 +9,7 @@ namespace gtl {
 namespace priv {
 namespace {
 
-TEST(THIS_TEST_NAME, Swap)
-{
+TEST(THIS_TEST_NAME, Swap) {
     using Map  = ThisMap<int, int>;
     using MapB = ThisMap_NullMutex<int, int>;
 
@@ -27,8 +26,7 @@ TEST(THIS_TEST_NAME, Swap)
     EXPECT_TRUE(u[0] == 1);
 }
 
-TEST(THIS_TEST_NAME, IfContains)
-{
+TEST(THIS_TEST_NAME, IfContains) {
     // ----------------
     // test if_contains
     // ----------------
@@ -48,8 +46,7 @@ TEST(THIS_TEST_NAME, IfContains)
     EXPECT_FALSE(m.if_contains(3, get_value));
 }
 
-TEST(THIS_TEST_NAME, ModifyIf)
-{
+TEST(THIS_TEST_NAME, ModifyIf) {
     // --------------
     // test modify_if
     // --------------
@@ -66,8 +63,7 @@ TEST(THIS_TEST_NAME, ModifyIf)
     EXPECT_FALSE(m.modify_if(3, set_value)); // because m[3] does not exist
 }
 
-TEST(THIS_TEST_NAME, TryEmplaceL)
-{
+TEST(THIS_TEST_NAME, TryEmplaceL) {
     // ------------------
     // test try_emplace_l
     // ------------------
@@ -95,8 +91,7 @@ TEST(THIS_TEST_NAME, TryEmplaceL)
     EXPECT_EQ(m[4], 999);
 }
 
-TEST(THIS_TEST_NAME, LazyEmplaceL)
-{
+TEST(THIS_TEST_NAME, LazyEmplaceL) {
     // --------------------
     // test lazy_emplace_l
     // --------------------
@@ -122,8 +117,7 @@ TEST(THIS_TEST_NAME, LazyEmplaceL)
     EXPECT_EQ(m[5], 6);
 }
 
-TEST(THIS_TEST_NAME, EraseIf)
-{
+TEST(THIS_TEST_NAME, EraseIf) {
     // -------------
     // test erase_if
     // -------------
@@ -148,8 +142,7 @@ TEST(THIS_TEST_NAME, EraseIf)
     EXPECT_EQ(m[5], 0);
 }
 
-TEST(THIS_TEST_NAME, ForEach)
-{
+TEST(THIS_TEST_NAME, ForEach) {
     // -------------
     // test for_each
     // -------------
@@ -185,8 +178,7 @@ TEST(THIS_TEST_NAME, ForEach)
     EXPECT_EQ(counter, 3);
 }
 
-TEST(THIS_TEST_NAME, EmplaceSingle)
-{
+TEST(THIS_TEST_NAME, EmplaceSingle) {
     // --------------------
     // test emplace_single
     // --------------------

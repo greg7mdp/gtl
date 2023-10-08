@@ -58,10 +58,8 @@ std::pair<T, T> binary_search(Middle&& middle, Pred&& pred, T l, T r)
     if (!m)
         return { l, r };
     return std::forward<Pred>(pred)(*m)
-               ? binary_search<T, Pred, Middle>(
-                     std::forward<Middle>(middle), std::forward<Pred>(pred), l, *m)
-               : binary_search<T, Pred, Middle>(
-                     std::forward<Middle>(middle), std::forward<Pred>(pred), *m, r);
+               ? binary_search<T, Pred, Middle>(std::forward<Middle>(middle), std::forward<Pred>(pred), l, *m)
+               : binary_search<T, Pred, Middle>(std::forward<Middle>(middle), std::forward<Pred>(pred), *m, r);
 }
 
 // ---------------------------------------------------------------------------
@@ -74,35 +72,30 @@ concept is_double = std::same_as<T, double>;
 // ------------------------------------------
 template<class T>
     requires std::integral<T> || is_double<T>
-struct middle
-{};
+struct middle {};
 
 template<std::integral T>
-struct middle<T>
-{
-    std::optional<T> operator()(T l, T r)
-    {
+struct middle<T> {
+    std::optional<T> operator()(T l, T r) {
         if (r - l > 1)
-            return std::optional<T>{ std::midpoint(l, r) };
-        return std::optional<T>{};
+            return std::midpoint(l, r);
+        return {};
     }
 };
 
 // Compare doubles using the binary representation
 // -----------------------------------------------
 template<is_double T>
-struct middle<T>
-{
-    std::optional<T> operator()(T l, T r)
-    {
-        uint64_t* il = (uint64_t*)&l;
-        uint64_t* ir = (uint64_t*)&r;
+struct middle<T> {
+    std::optional<T> operator()(T l, T r) {
+        uint64_t* il = reinterpret_cast<uint64_t*>(&l);
+        uint64_t* ir = reinterpret_cast<uint64_t*>(&r);
         auto      m  = middle<uint64_t>()(*il, *ir);
         if (m) {
             uint64_t med = *m;
-            return std::optional<T>{ *(T*)&med };
+            return *(T*)&med;
         }
-        return std::optional<T>{};
+        return {};
     }
 };
 

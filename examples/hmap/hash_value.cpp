@@ -3,8 +3,7 @@
 #include <gtl/phmap.hpp>
 #include <iostream>
 
-int main()
-{
+int main() {
     // As we have defined a specialization of std::hash() for Person,
     // we can now create sparse_hash_set or sparse_hash_map of Persons
     // ----------------------------------------------------------------

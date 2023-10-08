@@ -21,8 +21,7 @@ namespace gtl {
 namespace priv {
 namespace {
 
-TEST(_, Hash)
-{
+TEST(_, Hash) {
     StatefulTestingHash h1;
     EXPECT_EQ(1u, h1.id());
     StatefulTestingHash h2;

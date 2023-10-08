@@ -16,8 +16,7 @@
 
     #include <gtl/vec_utils.hpp>
 
-int main()
-{
+int main() {
     using vec = std::vector<char>;
 
     // vector concatenation
@@ -50,13 +49,9 @@ int main()
     // map
     // ---
     auto v2 = gtl::map(
-        [v1](const auto& e) -> std::vector<int> {
-            return gtl::cat(gtl::slice(v1, 0, 1), std::vector<int>({ e }));
-        },
-        l);
+        [v1](const auto& e) -> std::vector<int> { return gtl::cat(gtl::slice(v1, 0, 1), std::vector<int>({ e })); }, l);
 
-    assert(gtl::map([](int e) { return e + 1; }, std::vector<int>({ 1, 2, 3 })) ==
-           std::vector<int>({ 2, 3, 4 }));
+    assert(gtl::map([](int e) { return e + 1; }, std::vector<int>({ 1, 2, 3 })) == std::vector<int>({ 2, 3, 4 }));
 
     return 0;
 }

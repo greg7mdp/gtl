@@ -2,8 +2,7 @@
 
 using std::string;
 
-int main()
-{
+int main() {
     {
         // allocate small bit_vector on the stack, do very basic operations on it
         // ----------------------------------------------------------------------
@@ -93,7 +92,7 @@ int main()
         gtl::bit_vector bv{ 0x0321 };
         assert((string)bv == "0x0000000000000321");
 
-        bv.view(0, 4) = 0xf; // create a view on bv, and assign a value to its bits
+        bv.view(0, 4) = 0xf;                        // create a view on bv, and assign a value to its bits
         assert((string)bv == "0x000000000000032f"); // modifies underlying bit_vector
 
         bv.view(4, 12) = 0xde;
@@ -105,8 +104,7 @@ int main()
         bv.view(4, 20) >>= 8; // you can bit-shift a view, changing only the "viewed" bits
         assert((string)bv == "0x70000000000de00f");
 
-        bv.view(4, 12) =
-            bv.view(12, 20); // or assign a view to another one - they have to be the same size
+        bv.view(4, 12) = bv.view(12, 20); // or assign a view to another one - they have to be the same size
         assert((string)bv == "0x70000000000dedef");
 
         assert(bv.view(0, 4).count() == 4); // count set bits in a view
@@ -116,8 +114,7 @@ int main()
         assert((string)bv == "0x77000000000dedef");
 
         // anything you can do on a gtl::bit_vector also works on a gtl::bit_view.
-        assert((string)bv.view(4, 12) ==
-               "0xde"); // it can also be converted to a string or output on a stream
+        assert((string)bv.view(4, 12) == "0xde"); // it can also be converted to a string or output on a stream
     }
 
     return 0;

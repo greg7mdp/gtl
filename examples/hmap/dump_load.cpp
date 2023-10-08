@@ -1,8 +1,7 @@
 #include <gtl/phmap_dump.hpp>
 #include <iostream>
 
-void dump_load_uint64_uint32()
-{
+void dump_load_uint64_uint32() {
     gtl::flat_hash_map<uint64_t, uint32_t> mp1 = {
         {100,  99 },
         { 300, 299}
@@ -26,8 +25,7 @@ void dump_load_uint64_uint32()
         std::cout << n.first << "'s value is: " << n.second << "\n";
 }
 
-void dump_load_parallel_flat_hash_map()
-{
+void dump_load_parallel_flat_hash_map() {
     gtl::parallel_flat_hash_map<uint64_t, uint32_t> mp1 = {
         {100,  99 },
         { 300, 299},
@@ -52,8 +50,7 @@ void dump_load_parallel_flat_hash_map()
         std::cout << "key: " << n.first << ", value: " << n.second << "\n";
 }
 
-int main()
-{
+int main() {
     dump_load_uint64_uint32();
     dump_load_parallel_flat_hash_map();
     return 0;

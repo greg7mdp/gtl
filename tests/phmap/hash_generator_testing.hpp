@@ -39,26 +39,20 @@ namespace hash_internal {
 namespace generator_internal {
 
 template<class Container, class = void>
-struct IsMap : std::false_type
-{
-};
+struct IsMap : std::false_type {};
 
 template<class Map>
-struct IsMap<Map, std::void_t<typename Map::mapped_type>> : std::true_type
-{
-};
+struct IsMap<Map, std::void_t<typename Map::mapped_type>> : std::true_type {};
 
 } // namespace generator_internal
 
 namespace {
-class RandomDeviceSeedSeq
-{
+class RandomDeviceSeedSeq {
 public:
     using result_type = typename std::random_device::result_type;
 
     template<class Iterator>
-    void generate(Iterator start, Iterator end)
-    {
+    void generate(Iterator start, Iterator end) {
         while (start != end) {
             *start = gen_();
             ++start;
@@ -72,48 +66,38 @@ private:
 
 std::mt19937_64* GetSharedRng(); // declaration
 
-std::mt19937_64* GetSharedRng()
-{
+std::mt19937_64* GetSharedRng() {
     RandomDeviceSeedSeq seed_seq;
     static auto*        rng = new std::mt19937_64(seed_seq);
     return rng;
 }
 
-enum Enum
-{
+enum Enum {
     kEnumEmpty,
     kEnumDeleted,
 };
 
-enum class EnumClass : uint64_t
-{
+enum class EnumClass : uint64_t {
     kEmpty,
     kDeleted,
 };
 
-inline std::ostream& operator<<(std::ostream& o, const EnumClass& ec)
-{
-    return o << static_cast<uint64_t>(ec);
-}
+inline std::ostream& operator<<(std::ostream& o, const EnumClass& ec) { return o << static_cast<uint64_t>(ec); }
 
 template<class T, class E = void>
 struct Generator;
 
 template<class T>
-struct Generator<T, typename std::enable_if<std::is_integral<T>::value>::type>
-{
-    T operator()() const
-    {
+struct Generator<T, typename std::enable_if<std::is_integral<T>::value>::type> {
+    T operator()() const {
         std::uniform_int_distribution<T> dist;
         return dist(*GetSharedRng());
     }
 };
 
 template<>
-struct Generator<Enum>
-{
-    Enum operator()() const
-    {
+struct Generator<Enum> {
+    Enum operator()() const {
         std::uniform_int_distribution<typename std::underlying_type<Enum>::type> dist;
 
         while (true) {
@@ -125,10 +109,8 @@ struct Generator<Enum>
 };
 
 template<>
-struct Generator<EnumClass>
-{
-    EnumClass operator()() const
-    {
+struct Generator<EnumClass> {
+    EnumClass operator()() const {
         std::uniform_int_distribution<typename std::underlying_type<EnumClass>::type> dist;
         while (true) {
             EnumClass variate = static_cast<EnumClass>(dist(*GetSharedRng()));
@@ -139,10 +121,8 @@ struct Generator<EnumClass>
 };
 
 template<>
-struct Generator<std::string>
-{
-    std::string operator()() const
-    {
+struct Generator<std::string> {
+    std::string operator()() const {
         // NOLINTNEXTLINE(runtime/int)
         std::uniform_int_distribution<short> chars(0x20, 0x7E);
         std::string                          res;
@@ -153,10 +133,8 @@ struct Generator<std::string>
 };
 
 template<>
-struct Generator<std::string_view>
-{
-    std::string_view operator()() const
-    {
+struct Generator<std::string_view> {
+    std::string_view operator()() const {
         static auto* arena = new std::deque<std::string>();
         // NOLINTNEXTLINE(runtime/int)
         std::uniform_int_distribution<short> chars(0x20, 0x7E);
@@ -169,45 +147,33 @@ struct Generator<std::string_view>
 };
 
 template<>
-struct Generator<NonStandardLayout>
-{
+struct Generator<NonStandardLayout> {
     NonStandardLayout operator()() const { return NonStandardLayout(Generator<std::string>()()); }
 };
 
 template<class K, class V>
-struct Generator<std::pair<K, V>>
-{
-    std::pair<K, V> operator()() const
-    {
+struct Generator<std::pair<K, V>> {
+    std::pair<K, V> operator()() const {
         return std::pair<K, V>(Generator<typename std::decay<K>::type>()(),
                                Generator<typename std::decay<V>::type>()());
     }
 };
 
 template<class... Ts>
-struct Generator<std::tuple<Ts...>>
-{
-    std::tuple<Ts...> operator()() const
-    {
-        return std::tuple<Ts...>(Generator<typename std::decay<Ts>::type>()()...);
-    }
+struct Generator<std::tuple<Ts...>> {
+    std::tuple<Ts...> operator()() const { return std::tuple<Ts...>(Generator<typename std::decay<Ts>::type>()()...); }
 };
 
 template<class U>
-struct Generator<
-    U,
-    std::void_t<decltype(std::declval<U&>().key()), decltype(std::declval<U&>().value())>>
+struct Generator<U, std::void_t<decltype(std::declval<U&>().key()), decltype(std::declval<U&>().value())>>
     : Generator<std::pair<typename std::decay<decltype(std::declval<U&>().key())>::type,
-                          typename std::decay<decltype(std::declval<U&>().value())>::type>>
-{
-};
+                          typename std::decay<decltype(std::declval<U&>().value())>::type>> {};
 
 template<class Container>
 using GeneratedType =
-    decltype(std::declval<
-             const Generator<typename std::conditional<generator_internal::IsMap<Container>::value,
-                                                       typename Container::value_type,
-                                                       typename Container::key_type>::type>&>()());
+    decltype(std::declval<const Generator<typename std::conditional<generator_internal::IsMap<Container>::value,
+                                                                    typename Container::value_type,
+                                                                    typename Container::key_type>::type>&>()());
 
 } // namespace hash_internal
 } // namespace priv
@@ -218,13 +184,11 @@ using gtl::priv::hash_internal::Enum;
 using gtl::priv::hash_internal::EnumClass;
 
 template<>
-struct hash<EnumClass>
-{
+struct hash<EnumClass> {
     std::size_t operator()(EnumClass const& p) const { return (std::size_t)p; }
 };
 template<>
-struct hash<Enum>
-{
+struct hash<Enum> {
     std::size_t operator()(Enum const& p) const { return (std::size_t)p; }
 };
 }

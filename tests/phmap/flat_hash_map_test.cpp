@@ -57,11 +57,8 @@ using ::testing::Pair;
 using ::testing::UnorderedElementsAre;
 
 template<class K, class V>
-using Map = THIS_HASH_MAP<K,
-                          V,
-                          StatefulTestingHash,
-                          StatefulTestingEqual,
-                          Alloc<std::pair<const K, V>> THIS_EXTRA_TPL_PARAMS>;
+using Map =
+    THIS_HASH_MAP<K, V, StatefulTestingHash, StatefulTestingEqual, Alloc<std::pair<const K, V>> THIS_EXTRA_TPL_PARAMS>;
 
 template<class K,
          class V,
@@ -91,22 +88,16 @@ INSTANTIATE_TYPED_TEST_SUITE_P(THIS_TEST_NAME, LookupTest, MapTypes);
 INSTANTIATE_TYPED_TEST_SUITE_P(THIS_TEST_NAME, MembersTest, MapTypes);
 INSTANTIATE_TYPED_TEST_SUITE_P(THIS_TEST_NAME, ModifiersTest, MapTypes);
 
-TEST(THIS_TEST_NAME, StandardLayout)
-{
-    struct Int
-    {
+TEST(THIS_TEST_NAME, StandardLayout) {
+    struct Int {
         explicit Int(size_t val)
-            : value(val)
-        {
-        }
+            : value(val) {}
         Int()
-            : value(0)
-        {
+            : value(0) {
             ADD_FAILURE();
         }
         Int(const Int& other)
-            : value(other.value)
-        {
+            : value(other.value) {
             ADD_FAILURE();
         }
         Int(Int&&) = default;
@@ -115,8 +106,7 @@ TEST(THIS_TEST_NAME, StandardLayout)
     };
     static_assert(std::is_standard_layout<Int>(), "");
 
-    struct Hash
-    {
+    struct Hash {
         size_t operator()(const Int& obj) const { return obj.value; }
     };
 
@@ -139,11 +129,9 @@ TEST(THIS_TEST_NAME, StandardLayout)
 }
 
 // gcc becomes unhappy if this is inside the method, so pull it out here.
-struct balast
-{};
+struct balast {};
 
-TEST(THIS_TEST_NAME, IteratesMsan)
-{
+TEST(THIS_TEST_NAME, IteratesMsan) {
     // Because SwissTable randomizes on pointer addresses, we keep old tables
     // around to ensure we don't reuse old memory.
     std::vector<ThisMap<int, balast>> garbage;
@@ -161,16 +149,12 @@ TEST(THIS_TEST_NAME, IteratesMsan)
 // Demonstration of the "Lazy Key" pattern.  This uses heterogeneous insert to
 // avoid creating expensive key elements when the item is already present in the
 // map.
-struct LazyInt
-{
+struct LazyInt {
     explicit LazyInt(size_t val, int* tracker_)
         : value(val)
-        , tracker(tracker_)
-    {
-    }
+        , tracker(tracker_) {}
 
-    explicit operator size_t() const
-    {
+    explicit operator size_t() const {
         ++*tracker;
         return value;
     }
@@ -179,31 +163,26 @@ struct LazyInt
     int*   tracker;
 };
 
-struct Hash
-{
+struct Hash {
     using is_transparent = void;
     int*   tracker;
-    size_t operator()(size_t obj) const
-    {
+    size_t operator()(size_t obj) const {
         ++*tracker;
         return obj;
     }
-    size_t operator()(const LazyInt& obj) const
-    {
+    size_t operator()(const LazyInt& obj) const {
         ++*tracker;
         return obj.value;
     }
 };
 
-struct Eq
-{
+struct Eq {
     using is_transparent = void;
     bool operator()(size_t lhs, size_t rhs) const { return lhs == rhs; }
     bool operator()(size_t lhs, const LazyInt& rhs) const { return lhs == rhs.value; }
 };
 
-TEST(THIS_TEST_NAME, PtrKet)
-{
+TEST(THIS_TEST_NAME, PtrKet) {
     using H = ThisMap<void*, bool>;
     H   hash;
     int a, b;
@@ -211,8 +190,7 @@ TEST(THIS_TEST_NAME, PtrKet)
     hash.insert(H::value_type(&b, false));
 }
 
-TEST(THIS_TEST_NAME, LazyKeyPattern)
-{
+TEST(THIS_TEST_NAME, LazyKeyPattern) {
     // hashes are only guaranteed in opt mode, we use assertions to track internal
     // state that can cause extra calls to hash.
     int                               conversions = 0;
@@ -253,10 +231,8 @@ TEST(THIS_TEST_NAME, LazyKeyPattern)
 #endif
 }
 
-TEST(THIS_TEST_NAME, BitfieldArgument)
-{
-    union
-    {
+TEST(THIS_TEST_NAME, BitfieldArgument) {
+    union {
         int n : 1;
     };
     n = 0;
@@ -275,8 +251,7 @@ TEST(THIS_TEST_NAME, BitfieldArgument)
     m[n];
 }
 
-TEST(THIS_TEST_NAME, MergeExtractInsert)
-{
+TEST(THIS_TEST_NAME, MergeExtractInsert) {
     // We can't test mutable keys, or non-copyable keys with ThisMap.
     // Test that the nodes have the proper API.
     ThisMap<int, int> m = {
@@ -294,8 +269,7 @@ TEST(THIS_TEST_NAME, MergeExtractInsert)
     EXPECT_THAT(m, UnorderedElementsAre(Pair(1, 17), Pair(2, 9)));
 }
 
-#if 0 && !defined(__ANDROID__) && !defined(__APPLE__) && !defined(__EMSCRIPTEN__) &&               \
-    defined(GTL_HAVE_STD_ANY)
+#if 0 && !defined(__ANDROID__) && !defined(__APPLE__) && !defined(__EMSCRIPTEN__) && defined(GTL_HAVE_STD_ANY)
 TEST(THIS_TEST_NAME, Any) {
   ThisMap<int, std::any> m;
   m.emplace(1, 7);

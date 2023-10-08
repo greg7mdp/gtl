@@ -33,17 +33,13 @@ using ::testing::Field;
 using ::testing::Pair;
 using ::testing::UnorderedElementsAre;
 
-using MapTypes =
-    ::testing::Types<gtl::THIS_HASH_MAP<int,
-                                        int,
-                                        StatefulTestingHash,
-                                        StatefulTestingEqual,
-                                        Alloc<std::pair<const int, int>>>,
-                     gtl::THIS_HASH_MAP<std::string,
-                                        std::string,
-                                        StatefulTestingHash,
-                                        StatefulTestingEqual,
-                                        Alloc<std::pair<const std::string, std::string>>>>;
+using MapTypes = ::testing::Types<
+    gtl::THIS_HASH_MAP<int, int, StatefulTestingHash, StatefulTestingEqual, Alloc<std::pair<const int, int>>>,
+    gtl::THIS_HASH_MAP<std::string,
+                       std::string,
+                       StatefulTestingHash,
+                       StatefulTestingEqual,
+                       Alloc<std::pair<const std::string, std::string>>>>;
 
 INSTANTIATE_TYPED_TEST_SUITE_P(THIS_TEST_NAME, ConstructorTest, MapTypes);
 INSTANTIATE_TYPED_TEST_SUITE_P(THIS_TEST_NAME, LookupTest, MapTypes);
@@ -52,8 +48,7 @@ INSTANTIATE_TYPED_TEST_SUITE_P(THIS_TEST_NAME, ModifiersTest, MapTypes);
 
 using M = gtl::THIS_HASH_MAP<std::string, Tracked<int>>;
 
-TEST(THIS_TEST_NAME, Emplace)
-{
+TEST(THIS_TEST_NAME, Emplace) {
     M            m;
     Tracked<int> t(53);
     m.emplace("a", t);
@@ -114,17 +109,13 @@ TEST(THIS_TEST_NAME, Emplace)
     ASSERT_EQ(0, t.num_moves());
     ASSERT_EQ(7, t.num_copies());
 
-    m.emplace(std::piecewise_construct,
-              std::forward_as_tuple(std::string("a")),
-              std::forward_as_tuple(t));
+    m.emplace(std::piecewise_construct, std::forward_as_tuple(std::string("a")), std::forward_as_tuple(t));
     ASSERT_EQ(0, t.num_moves());
     ASSERT_EQ(7, t.num_copies());
 }
 
-TEST(THIS_TEST_NAME, AssignRecursive)
-{
-    struct Tree
-    {
+TEST(THIS_TEST_NAME, AssignRecursive) {
+    struct Tree {
         // Verify that unordered_map<K, IncompleteType> can be instantiated.
         gtl::THIS_HASH_MAP<int, Tree> children;
     };
@@ -134,50 +125,40 @@ TEST(THIS_TEST_NAME, AssignRecursive)
     root = child;
 }
 
-TEST(FlatHashMap, MoveOnlyKey)
-{
-    struct Key
-    {
+TEST(FlatHashMap, MoveOnlyKey) {
+    struct Key {
         Key()                 = default;
         Key(Key&&)            = default;
         Key& operator=(Key&&) = default;
     };
-    struct Eq
-    {
+    struct Eq {
         bool operator()(const Key&, const Key&) const { return true; }
     };
-    struct Hash
-    {
+    struct Hash {
         size_t operator()(const Key&) const { return 0; }
     };
     gtl::THIS_HASH_MAP<Key, int, Hash, Eq> m;
     m[Key()];
 }
 
-struct NonMovableKey
-{
+struct NonMovableKey {
     explicit NonMovableKey(int i_)
-        : i(i_)
-    {
-    }
+        : i(i_) {}
     NonMovableKey(NonMovableKey&&) = delete;
     int i;
 };
-struct NonMovableKeyHash
-{
+struct NonMovableKeyHash {
     using is_transparent = void;
     size_t operator()(const NonMovableKey& k) const { return k.i; }
     size_t operator()(int k) const { return k; }
 };
-struct NonMovableKeyEq
-{
+struct NonMovableKeyEq {
     using is_transparent = void;
     bool operator()(const NonMovableKey& a, const NonMovableKey& b) const { return a.i == b.i; }
     bool operator()(const NonMovableKey& a, int b) const { return a.i == b; }
 };
 
-TEST(THIS_TEST_NAME, MergeExtractInsert)
-{
+TEST(THIS_TEST_NAME, MergeExtractInsert) {
     gtl::THIS_HASH_MAP<NonMovableKey, int, NonMovableKeyHash, NonMovableKeyEq> set1, set2;
     set1.emplace(std::piecewise_construct, std::make_tuple(7), std::make_tuple(-7));
     set1.emplace(std::piecewise_construct, std::make_tuple(17), std::make_tuple(-17));

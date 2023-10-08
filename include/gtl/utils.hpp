@@ -26,19 +26,20 @@ namespace gtl {
 //          scoped_set_unset rollback(...); // good
 // ---------------------------------------------------------------------------
 template<class Unset>
-class scoped_set_unset
-{
+class scoped_set_unset {
 public:
     template<class Set>
     scoped_set_unset(Set&& set, Unset&& unset, bool do_it = true)
         : do_it_(do_it)
-        , unset_(std::move(unset))
-    {
+        , unset_(std::move(unset)) {
         if (do_it_)
             std::forward<Set>(set)();
     }
 
-    ~scoped_set_unset() { if (do_it_) unset_(); }
+    ~scoped_set_unset() {
+        if (do_it_)
+            unset_();
+    }
 
     void dismiss() noexcept { do_it_ = false; }
 
@@ -62,16 +63,16 @@ private:
 //          scoped_guard rollback(...); // good
 // ---------------------------------------------------------------------------
 template<class F>
-class scoped_guard
-{
+class scoped_guard {
 public:
     scoped_guard(F&& unset, bool do_it = true) noexcept(std::is_nothrow_move_constructible_v<F>)
         : do_it_(do_it)
-        , unset_(std::move(unset))
-    {
-    }
+        , unset_(std::move(unset)) {}
 
-    ~scoped_guard() { if (do_it_) unset_(); }
+    ~scoped_guard() {
+        if (do_it_)
+            unset_();
+    }
 
     void dismiss() noexcept { do_it_ = false; }
 
@@ -96,8 +97,7 @@ private:
 //        scoped_set_value rollback(retries, 7); // good
 // ---------------------------------------------------------------------------
 template<class T>
-class scoped_set_value
-{
+class scoped_set_value {
 public:
     template<class V>
     scoped_set_value(T& var, V&& val, bool do_it = true) noexcept(std::is_nothrow_copy_constructible_v<T> &&
@@ -105,15 +105,17 @@ public:
                                                                   std::is_nothrow_move_assignable_v<V> &&
                                                                   std::is_nothrow_copy_assignable_v<V>)
         : v_(var)
-        , do_it_(do_it)
-    {
+        , do_it_(do_it) {
         if (do_it_) {
             old_value_ = std::move(v_);
             v_         = std::forward<V>(val);
         }
     }
 
-    ~scoped_set_value() { if (do_it_) v_ = std::move(old_value_); }
+    ~scoped_set_value() {
+        if (do_it_)
+            v_ = std::move(old_value_);
+    }
 
     void dismiss() noexcept { do_it_ = false; }
 
@@ -130,8 +132,7 @@ public:
 // assigns val to var, and returns true if the value changed
 // ---------------------------------------------------------------------------
 template<class T, class V>
-bool change(T& var, V&& val) noexcept(std::is_nothrow_move_assignable_v<T> && std::is_nothrow_copy_assignable_v<T>)
-{
+bool change(T& var, V&& val) noexcept(std::is_nothrow_move_assignable_v<T> && std::is_nothrow_copy_assignable_v<T>) {
     if (var != val) {
         var = std::forward<V>(val);
         return true;
@@ -143,8 +144,7 @@ bool change(T& var, V&& val) noexcept(std::is_nothrow_move_assignable_v<T> && st
 // assigns val to var, and returns the previous value
 // ---------------------------------------------------------------------------
 template<class T, class V>
-T replace(T& var, V&& val) noexcept(std::is_nothrow_move_assignable_v<T> && std::is_nothrow_copy_assignable_v<T>)
-{
+T replace(T& var, V&& val) noexcept(std::is_nothrow_move_assignable_v<T> && std::is_nothrow_copy_assignable_v<T>) {
     T old = std::move(var);
     var   = std::forward<V>(val);
     return old;
@@ -153,23 +153,18 @@ T replace(T& var, V&& val) noexcept(std::is_nothrow_move_assignable_v<T> && std:
 // ---------------------------------------------------------------------------
 // ---------------------------------------------------------------------------
 template<class... T>
-struct always_false : std::false_type
-{
-};
+struct always_false : std::false_type {};
 
 // ---------------------------------------------------------------------------
 // A baseclass to keep track of modifications.
 // Change member `x_` using `set_with_ts`
 // ---------------------------------------------------------------------------
-class timestamp
-{
+class timestamp {
 public:
     timestamp() noexcept { stamp_ = ++clock_; }
 
     timestamp(uint64_t stamp) noexcept
-        : stamp_(stamp)
-    {
-    }
+        : stamp_(stamp) {}
 
     void touch() noexcept { stamp_ = ++clock_; }
     void touch(const timestamp& o) noexcept { stamp_ = o.stamp_; }
@@ -186,8 +181,7 @@ public:
 
     // returns most recent
     timestamp  operator|(const timestamp& o) const noexcept { return stamp_ > o.stamp_ ? stamp_ : o.stamp_; }
-    timestamp& operator|=(const timestamp& o) noexcept
-    {
+    timestamp& operator|=(const timestamp& o) noexcept {
         *this = *this | o;
         return *this;
     }
@@ -197,8 +191,7 @@ public:
     timestamp get_timestamp() const noexcept { return *this; }
 
     template<class T, class V>
-    bool set_with_ts(T& var, V&& val)
-    {
+    bool set_with_ts(T& var, V&& val) {
         if (gtl::change(var, std::forward<V>(val))) {
             this->touch();
             return true;
@@ -215,25 +208,21 @@ private:
 // A baseclass (using CRTP) for classes providing get_timestamp()
 // ---------------------------------------------------------------------------
 template<class T>
-class provides_timestamp
-{
+class provides_timestamp {
 public:
     template<class TS>
-    bool is_newer_than(const TS& o) const
-    {
+    bool is_newer_than(const TS& o) const {
         return static_cast<const T*>(this)->get_timestamp() > o.get_timestamp();
     }
 
     template<class TS>
-    bool is_older_than(const TS& o) const
-    {
+    bool is_older_than(const TS& o) const {
         return static_cast<const T*>(this)->get_timestamp() < o.get_timestamp();
     }
 
     // returns most recent
     template<class TS>
-    timestamp operator|(const TS& o) const
-    {
+    timestamp operator|(const TS& o) const {
         return static_cast<const T*>(this)->get_timestamp() | o.get_timestamp();
     }
 };

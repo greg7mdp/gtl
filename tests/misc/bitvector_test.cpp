@@ -10,30 +10,26 @@
 #include "gtest/gtest.h"
 #include <gtl/bit_vector.hpp>
 
-void set_bits_naive(gtl::bit_vector& v, size_t first, size_t last)
-{
+void set_bits_naive(gtl::bit_vector& v, size_t first, size_t last) {
     for (size_t i = first; i < last; ++i) {
         v.set(i);
         // EXPECT_TRUE(v[i]);
     }
 }
 
-void flip_bits_naive(gtl::bit_vector& v, size_t first, size_t last)
-{
+void flip_bits_naive(gtl::bit_vector& v, size_t first, size_t last) {
     for (size_t i = first; i < last; ++i)
         v.flip(i);
 }
 
-void reset_bits_naive(gtl::bit_vector& v, size_t first, size_t last)
-{
+void reset_bits_naive(gtl::bit_vector& v, size_t first, size_t last) {
     for (size_t i = first; i < last; ++i) {
         v.reset(i);
         // EXPECT_FALSE(v[i]);
     }
 }
 
-const std::vector<gtl::bit_vector>& get_test_vector()
-{
+const std::vector<gtl::bit_vector>& get_test_vector() {
     static std::vector<gtl::bit_vector> res;
     if (res.empty()) {
         res.push_back(gtl::bit_vector(0));
@@ -94,8 +90,7 @@ const std::vector<gtl::bit_vector>& get_test_vector()
     return res;
 }
 
-TEST(BitVectorTest, resize)
-{
+TEST(BitVectorTest, resize) {
     gtl::bit_vector v1(128), v2(100);
     v1.set();
     v2.set();
@@ -115,8 +110,7 @@ TEST(BitVectorTest, resize)
     EXPECT_TRUE(v1 == v2);
 }
 
-TEST(BitVectorTest, bit_view_change)
-{
+TEST(BitVectorTest, bit_view_change) {
     static constexpr size_t sz = 500;
     gtl::bit_vector         tv1(sz), tv2(sz);
 
@@ -154,8 +148,7 @@ TEST(BitVectorTest, bit_view_change)
     bv_change_test(tv1, tv2, sz - 130);
 }
 
-TEST(BitVectorTest, bitwise_op_on_bv)
-{
+TEST(BitVectorTest, bitwise_op_on_bv) {
     {
         static constexpr size_t sz = 500;
         gtl::bit_vector         v1(sz), v2(sz), v3(sz);
@@ -188,8 +181,7 @@ TEST(BitVectorTest, bitwise_op_on_bv)
     }
 }
 
-TEST(BitVectorTest, bitwise_assign_op_on_full_bit_vector)
-{
+TEST(BitVectorTest, bitwise_assign_op_on_full_bit_vector) {
     const std::vector<gtl::bit_vector>& testv = get_test_vector();
     for (auto v1 : testv) {
         auto v2 = v1;
@@ -206,13 +198,8 @@ TEST(BitVectorTest, bitwise_assign_op_on_full_bit_vector)
     }
 }
 
-TEST(BitVectorTest, bit_shift)
-{
-    auto check = [](const gtl::bit_vector& v_orig,
-                    const gtl::bit_vector& v2,
-                    int                    i_shift,
-                    size_t                 first,
-                    size_t                 last) {
+TEST(BitVectorTest, bit_shift) {
+    auto check = [](const gtl::bit_vector& v_orig, const gtl::bit_vector& v2, int i_shift, size_t first, size_t last) {
         size_t shift = (i_shift >= 0) ? (size_t)i_shift : (size_t)-i_shift;
         last         = std::min(last, v2.size());
         if (shift <= last - first) {
@@ -226,25 +213,22 @@ TEST(BitVectorTest, bit_shift)
         }
     };
 
-    auto bitshift_check = [&](const gtl::bit_vector& v_orig,
-                              int                    shift,
-                              size_t                 first = 0,
-                              size_t                 last  = gtl::bit_vector::npos) {
-        if (last == gtl::bit_vector::npos)
-            last = v_orig.size();
-        if (first == 0 && last == v_orig.size()) {
-            gtl::bit_vector v = (shift >= 0) ? (v_orig >> (size_t)shift)
-                                             : (v_orig << (size_t)-shift);
-            check(v_orig, v, shift, first, last);
-        } else {
-            gtl::bit_vector v(v_orig);
-            if (shift >= 0)
-                v.view(first, last) >>= (size_t)shift;
-            else
-                v.view(first, last) <<= (size_t)-shift;
-            check(v_orig, v, shift, first, last);
-        }
-    };
+    auto bitshift_check =
+        [&](const gtl::bit_vector& v_orig, int shift, size_t first = 0, size_t last = gtl::bit_vector::npos) {
+            if (last == gtl::bit_vector::npos)
+                last = v_orig.size();
+            if (first == 0 && last == v_orig.size()) {
+                gtl::bit_vector v = (shift >= 0) ? (v_orig >> (size_t)shift) : (v_orig << (size_t)-shift);
+                check(v_orig, v, shift, first, last);
+            } else {
+                gtl::bit_vector v(v_orig);
+                if (shift >= 0)
+                    v.view(first, last) >>= (size_t)shift;
+                else
+                    v.view(first, last) <<= (size_t)-shift;
+                check(v_orig, v, shift, first, last);
+            }
+        };
 
     auto check_range = [&](const gtl::bit_vector& v, int shift, size_t width) {
         if (v.size() > width) {
@@ -273,15 +257,13 @@ TEST(BitVectorTest, bit_shift)
     }
 }
 
-TEST(BitVectorTest, view_assignment)
-{
+TEST(BitVectorTest, view_assignment) {
     auto check_va = [](const gtl::bit_vector& v2, size_t div, const size_t incr = 3) {
         size_t sz = v2.size();
         if (sz) {
             gtl::bit_vector v(sz, false), v1(sz);
             for (size_t i = 0; i < div; ++i)
-                v.view((i * sz) / div, ((i + 1) * sz) / div) =
-                    v2.view((i * sz) / div, ((i + 1) * sz) / div);
+                v.view((i * sz) / div, ((i + 1) * sz) / div) = v2.view((i * sz) / div, ((i + 1) * sz) / div);
             EXPECT_TRUE(v == v2);
 
             for (size_t i = 0; i < sz - 1; ++i) {
@@ -332,8 +314,7 @@ TEST(BitVectorTest, view_assignment)
     }
 }
 
-TEST(BitVectorTest, unary_predicates_on_full_bit_vector)
-{
+TEST(BitVectorTest, unary_predicates_on_full_bit_vector) {
     auto check_sz = [](size_t sz) {
         gtl::bit_vector v(sz);
 
@@ -352,8 +333,7 @@ TEST(BitVectorTest, unary_predicates_on_full_bit_vector)
     check_sz(199);
 }
 
-TEST(BitVectorTest, binary_predicates_on_full_bit_vector)
-{
+TEST(BitVectorTest, binary_predicates_on_full_bit_vector) {
     const std::vector<gtl::bit_vector>& testv = get_test_vector();
     for (auto v1 : testv) {
         auto v1_copy = v1;
@@ -374,18 +354,16 @@ TEST(BitVectorTest, binary_predicates_on_full_bit_vector)
     }
 }
 
-TEST(BitVectorTest, count)
-{
-    auto count_naive =
-        [](const gtl::bit_vector& v, size_t first = 0, size_t last = gtl::bit_vector::npos) {
-            size_t n = 0;
-            if (last == gtl::bit_vector::npos)
-                last = v.size();
-            for (size_t i = first; i < last; ++i)
-                if (v[i])
-                    ++n;
-            return n;
-        };
+TEST(BitVectorTest, count) {
+    auto count_naive = [](const gtl::bit_vector& v, size_t first = 0, size_t last = gtl::bit_vector::npos) {
+        size_t n = 0;
+        if (last == gtl::bit_vector::npos)
+            last = v.size();
+        for (size_t i = first; i < last; ++i)
+            if (v[i])
+                ++n;
+        return n;
+    };
 
     const std::vector<gtl::bit_vector>& testv = get_test_vector();
     for (auto v : testv) {
@@ -410,8 +388,7 @@ TEST(BitVectorTest, count)
     }
 }
 
-TEST(BitVectorTest, find_first)
-{
+TEST(BitVectorTest, find_first) {
     gtl::bit_vector v{ 0, 0, 0x020202 };
     EXPECT_TRUE(v.find_first() == 129);
     EXPECT_TRUE(v.view(10).find_first() == 119); // returns the index from start of view
@@ -425,8 +402,7 @@ TEST(BitVectorTest, find_first)
     EXPECT_TRUE(v2.view(67).find_next(191) == 198);
 }
 
-TEST(BitVectorTest, hash)
-{
+TEST(BitVectorTest, hash) {
     gtl::bit_vector v{ 0xfafafaull, 0ull, 0x4444444444444444ull };
     auto            x = std::hash<gtl::bit_vector>()(v);
 
@@ -439,8 +415,7 @@ TEST(BitVectorTest, hash)
     EXPECT_TRUE(z != y);
 }
 
-TEST(BitVectorTest, conversions)
-{
+TEST(BitVectorTest, conversions) {
     static constexpr size_t sz = 100;
     gtl::bit_vector         v(sz);
     for (size_t i = 0; i < sz; i += 4)

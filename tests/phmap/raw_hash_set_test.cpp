@@ -16,8 +16,8 @@
 #define GTL_NON_DETERMINISTIC 1
 
 #include "gtl/phmap.hpp"
-//#include "container_memory.h"
-//#include "hash_function_defaults.h"
+// #include "container_memory.h"
+// #include "hash_function_defaults.h"
 #include "hash_policy_testing.hpp"
 #include "hashtable_debug.hpp"
 
@@ -42,11 +42,9 @@
 namespace gtl {
 namespace priv {
 
-struct RawHashSetTestOnlyAccess
-{
+struct RawHashSetTestOnlyAccess {
     template<typename C>
-    static auto GetSlots(const C& c) -> decltype(c.slots_)
-    {
+    static auto GetSlots(const C& c) -> decltype(c.slots_) {
         return c.slots_;
     }
 };
@@ -61,8 +59,7 @@ using ::testing::Optional;
 using ::testing::Pair;
 using ::testing::UnorderedElementsAre;
 
-TEST(Util, NormalizeCapacity)
-{
+TEST(Util, NormalizeCapacity) {
     EXPECT_EQ(1u, NormalizeCapacity(0));
     EXPECT_EQ(1u, NormalizeCapacity(1));
     EXPECT_EQ(3u, NormalizeCapacity(2));
@@ -75,8 +72,7 @@ TEST(Util, NormalizeCapacity)
     EXPECT_EQ(15u * 2 + 1, NormalizeCapacity(15 + 2));
 }
 
-TEST(Util, GrowthAndCapacity)
-{
+TEST(Util, GrowthAndCapacity) {
     // Verify that GrowthToCapacity gives the minimum capacity that has enough
     // growth.
     for (size_t growth = 0; growth < 10000; ++growth) {
@@ -99,8 +95,7 @@ TEST(Util, GrowthAndCapacity)
     }
 }
 
-TEST(Util, probe_seq)
-{
+TEST(Util, probe_seq) {
     probe_seq<16> seq(0, 127);
     auto          gen = [&]() {
         size_t res = seq.offset();
@@ -115,8 +110,7 @@ TEST(Util, probe_seq)
     EXPECT_THAT(offsets, ElementsAre(0, 16, 48, 96, 32, 112, 80, 64));
 }
 
-TEST(BitMask, Smoke)
-{
+TEST(BitMask, Smoke) {
     EXPECT_FALSE((BitMask<uint8_t, 8>(0)));
     EXPECT_TRUE((BitMask<uint8_t, 8>(5)));
 
@@ -130,8 +124,7 @@ TEST(BitMask, Smoke)
     EXPECT_THAT((BitMask<uint8_t, 8>(0xAA)), ElementsAre(1, 3, 5, 7));
 }
 
-TEST(BitMask, WithShift)
-{
+TEST(BitMask, WithShift) {
     // See the non-SSE version of Group for details on what this math is for.
     uint64_t           ctrl = 0x1716151413121110;
     uint64_t           hash = 0x12;
@@ -145,8 +138,7 @@ TEST(BitMask, WithShift)
     EXPECT_EQ(*b, 2u);
 }
 
-TEST(BitMask, LeadingTrailing)
-{
+TEST(BitMask, LeadingTrailing) {
     EXPECT_EQ((BitMask<uint32_t, 16>(0x00001a40).LeadingZeros()), 3u);
     EXPECT_EQ((BitMask<uint32_t, 16>(0x00001a40).TrailingZeros()), 6u);
 
@@ -166,18 +158,14 @@ TEST(BitMask, LeadingTrailing)
     EXPECT_EQ((BitMask<uint64_t, 8, 3>(0x8000000000000000).TrailingZeros()), 7u);
 }
 
-TEST(Group, EmptyGroup)
-{
+TEST(Group, EmptyGroup) {
     for (h2_t h = 0; h != 128; ++h)
         EXPECT_FALSE(Group{ EmptyGroup() }.Match(h));
 }
 
-TEST(Group, Match)
-{
+TEST(Group, Match) {
     if constexpr (Group::kWidth == 16) {
-        ctrl_t group[] = {
-            kEmpty, 1, kDeleted, 3, kEmpty, 5, kSentinel, 7, 7, 5, 3, 1, 1, 1, 1, 1
-        };
+        ctrl_t group[] = { kEmpty, 1, kDeleted, 3, kEmpty, 5, kSentinel, 7, 7, 5, 3, 1, 1, 1, 1, 1 };
         EXPECT_THAT(Group{ group }.Match(0), ElementsAre());
         EXPECT_THAT(Group{ group }.Match(1), ElementsAre(1, 11, 12, 13, 14, 15));
         EXPECT_THAT(Group{ group }.Match(3), ElementsAre(3, 10));
@@ -193,12 +181,9 @@ TEST(Group, Match)
     }
 }
 
-TEST(Group, MatchEmpty)
-{
+TEST(Group, MatchEmpty) {
     if constexpr (Group::kWidth == 16) {
-        ctrl_t group[] = {
-            kEmpty, 1, kDeleted, 3, kEmpty, 5, kSentinel, 7, 7, 5, 3, 1, 1, 1, 1, 1
-        };
+        ctrl_t group[] = { kEmpty, 1, kDeleted, 3, kEmpty, 5, kSentinel, 7, 7, 5, 3, 1, 1, 1, 1, 1 };
         EXPECT_THAT(Group{ group }.MatchEmpty(), ElementsAre(0, 4));
     } else if constexpr (Group::kWidth == 8) {
         ctrl_t group[] = { kEmpty, 1, 2, kDeleted, 2, 1, kSentinel, 1 };
@@ -208,12 +193,9 @@ TEST(Group, MatchEmpty)
     }
 }
 
-TEST(Group, MatchEmptyOrDeleted)
-{
+TEST(Group, MatchEmptyOrDeleted) {
     if constexpr (Group::kWidth == 16) {
-        ctrl_t group[] = {
-            kEmpty, 1, kDeleted, 3, kEmpty, 5, kSentinel, 7, 7, 5, 3, 1, 1, 1, 1, 1
-        };
+        ctrl_t group[] = { kEmpty, 1, kDeleted, 3, kEmpty, 5, kSentinel, 7, 7, 5, 3, 1, 1, 1, 1, 1 };
         EXPECT_THAT(Group{ group }.MatchEmptyOrDeleted(), ElementsAre(0, 2, 4));
     } else if constexpr (Group::kWidth == 8) {
         ctrl_t group[] = { kEmpty, 1, 2, kDeleted, 2, 1, kSentinel, 1 };
@@ -223,8 +205,7 @@ TEST(Group, MatchEmptyOrDeleted)
     }
 }
 
-TEST(Batch, DropDeletes)
-{
+TEST(Batch, DropDeletes) {
     constexpr size_t    kCapacity   = 63;
     constexpr size_t    kGroupWidth = priv::Group::kWidth;
     std::vector<ctrl_t> ctrl(kCapacity + 1 + kGroupWidth);
@@ -249,8 +230,7 @@ TEST(Batch, DropDeletes)
     }
 }
 
-TEST(Group, CountLeadingEmptyOrDeleted)
-{
+TEST(Group, CountLeadingEmptyOrDeleted) {
     const std::vector<ctrl_t> empty_examples = { kEmpty, kDeleted };
     const std::vector<ctrl_t> full_examples  = { 0, 1, 2, 3, 5, 9, 127, kSentinel };
 
@@ -271,12 +251,11 @@ TEST(Group, CountLeadingEmptyOrDeleted)
     }
 }
 
-struct IntPolicy
-{
+struct IntPolicy {
     using slot_type = int64_t;
     using key_type  = int64_t;
     using init_type = int64_t;
-    using is_flat = std::false_type;
+    using is_flat   = std::false_type;
 
     static void construct(void*, int64_t* slot, int64_t v) { *slot = v; }
     static void destroy(void*, int64_t*) {}
@@ -285,65 +264,52 @@ struct IntPolicy
     static int64_t& element(slot_type* slot) { return *slot; }
 
     template<class F>
-    static auto apply(F&& f, int64_t x) -> decltype(std::forward<F>(f)(x, x))
-    {
+    static auto apply(F&& f, int64_t x) -> decltype(std::forward<F>(f)(x, x)) {
         return std::forward<F>(f)(x, x);
     }
 };
 
-class StringPolicy
-{
+class StringPolicy {
     template<class F,
              class K,
              class V,
-             class = typename std::enable_if<
-                 std::is_convertible<const K&, std::string_view>::value>::type>
+             class = typename std::enable_if<std::is_convertible<const K&, std::string_view>::value>::type>
     decltype(std::declval<F>()(std::declval<const std::string_view&>(),
                                std::piecewise_construct,
                                std::declval<std::tuple<K>>(),
-                               std::declval<V>())) static apply_impl(F&&                         f,
-                                                                     std::pair<std::tuple<K>, V> p)
-    {
+                               std::declval<V>())) static apply_impl(F&& f, std::pair<std::tuple<K>, V> p) {
         const std::string_view& key = std::get<0>(p.first);
-        return std::forward<F>(f)(
-            key, std::piecewise_construct, std::move(p.first), std::move(p.second));
+        return std::forward<F>(f)(key, std::piecewise_construct, std::move(p.first), std::move(p.second));
     }
 
 public:
-    struct slot_type
-    {
-        struct ctor
-        {};
+    struct slot_type {
+        struct ctor {};
 
         template<class... Ts>
         slot_type(ctor, Ts&&... ts)
-            : pair(std::forward<Ts>(ts)...)
-        {
-        }
+            : pair(std::forward<Ts>(ts)...) {}
 
         std::pair<std::string, std::string> pair;
     };
 
     using key_type  = std::string;
     using init_type = std::pair<std::string, std::string>;
-    using is_flat = std::false_type;
+    using is_flat   = std::false_type;
 
     template<class allocator_type, class... Args>
-    static void construct(allocator_type* alloc, slot_type* slot, Args... args)
-    {
+    static void construct(allocator_type* alloc, slot_type* slot, Args... args) {
         std::allocator_traits<allocator_type>::construct(
             *alloc, slot, typename slot_type::ctor(), std::forward<Args>(args)...);
     }
 
     template<class allocator_type>
-    static void destroy(allocator_type* alloc, slot_type* slot)
-    {
+    static void destroy(allocator_type* alloc, slot_type* slot) {
         std::allocator_traits<allocator_type>::destroy(*alloc, slot);
     }
 
     template<class allocator_type>
-    static void transfer(allocator_type* alloc, slot_type* new_slot, slot_type* old_slot)
-    {
+    static void transfer(allocator_type* alloc, slot_type* new_slot, slot_type* old_slot) {
         construct(alloc, new_slot, std::move(old_slot->pair));
         destroy(alloc, old_slot);
     }
@@ -352,84 +318,64 @@ public:
 
     template<class F, class... Args>
     static auto apply(F&& f, Args&&... args)
-        -> decltype(apply_impl(std::forward<F>(f), PairArgs(std::forward<Args>(args)...)))
-    {
+        -> decltype(apply_impl(std::forward<F>(f), PairArgs(std::forward<Args>(args)...))) {
         return apply_impl(std::forward<F>(f), PairArgs(std::forward<Args>(args)...));
     }
 };
 
-struct StringHash : gtl::Hash<std::string_view>
-{
+struct StringHash : gtl::Hash<std::string_view> {
     using is_transparent = void;
 };
-struct StringEq : std::equal_to<std::string_view>
-{
+struct StringEq : std::equal_to<std::string_view> {
     using is_transparent = void;
 };
 
-struct StringTable : raw_hash_set<StringPolicy, StringHash, StringEq, std::allocator<int>>
-{
+struct StringTable : raw_hash_set<StringPolicy, StringHash, StringEq, std::allocator<int>> {
     using Base = typename StringTable::raw_hash_set;
     StringTable() {}
     using Base::Base;
 };
 
 struct IntTable
-    : raw_hash_set<IntPolicy,
-                   priv::hash_default_hash<int64_t>,
-                   std::equal_to<int64_t>,
-                   std::allocator<int64_t>>
-{
+    : raw_hash_set<IntPolicy, priv::hash_default_hash<int64_t>, std::equal_to<int64_t>, std::allocator<int64_t>> {
     using Base = typename IntTable::raw_hash_set;
     IntTable() {}
     using Base::Base;
 };
 
 template<typename T>
-struct CustomAlloc : std::allocator<T>
-{
+struct CustomAlloc : std::allocator<T> {
     CustomAlloc() {}
 
     template<typename U>
-    CustomAlloc(const CustomAlloc<U>&)
-    {
-    }
+    CustomAlloc(const CustomAlloc<U>&) {}
 
     template<class U>
-    struct rebind
-    {
+    struct rebind {
         using other = CustomAlloc<U>;
     };
 };
 
 struct CustomAllocIntTable
-    : raw_hash_set<IntPolicy,
-                   priv::hash_default_hash<int64_t>,
-                   std::equal_to<int64_t>,
-                   CustomAlloc<int64_t>>
-{
+    : raw_hash_set<IntPolicy, priv::hash_default_hash<int64_t>, std::equal_to<int64_t>, CustomAlloc<int64_t>> {
     using Base = typename CustomAllocIntTable::raw_hash_set;
     using Base::Base;
 };
 
-struct BadFastHash
-{
+struct BadFastHash {
     template<class T>
-    size_t operator()(const T&) const
-    {
+    size_t operator()(const T&) const {
         return 0;
     }
 };
 
-struct BadTable : raw_hash_set<IntPolicy, BadFastHash, std::equal_to<int>, std::allocator<int>>
-{
+struct BadTable : raw_hash_set<IntPolicy, BadFastHash, std::equal_to<int>, std::allocator<int>> {
     using Base = typename BadTable::raw_hash_set;
     BadTable() {}
     using Base::Base;
 };
 
-TEST(Table, Empty)
-{
+TEST(Table, Empty) {
     IntTable t;
     EXPECT_EQ(0u, t.size());
     EXPECT_TRUE(t.empty());
@@ -437,14 +383,12 @@ TEST(Table, Empty)
 
 #ifdef __GNUC__
 template<class T>
-GTL_ATTRIBUTE_ALWAYS_INLINE inline void DoNotOptimize(const T& v)
-{
+GTL_ATTRIBUTE_ALWAYS_INLINE inline void DoNotOptimize(const T& v) {
     asm volatile("" : : "r,m"(v) : "memory");
 }
 #endif
 
-TEST(Table, Prefetch)
-{
+TEST(Table, Prefetch) {
     IntTable t;
     t.emplace(1);
     // Works for both present and absent keys.
@@ -453,9 +397,9 @@ TEST(Table, Prefetch)
 
     // Do not run in debug mode, when prefetch is not implemented, or when
     // sanitizers are enabled.
-#if 0 && defined(NDEBUG) && defined(__GNUC__) && defined(__x86_64__) &&                            \
-    !defined(ADDRESS_SANITIZER) && !defined(MEMORY_SANITIZER) && !defined(THREAD_SANITIZER) &&     \
-    !defined(UNDEFINED_BEHAVIOR_SANITIZER) && !defined(__EMSCRIPTEN__)
+#if 0 && defined(NDEBUG) && defined(__GNUC__) && defined(__x86_64__) && !defined(ADDRESS_SANITIZER) &&                 \
+    !defined(MEMORY_SANITIZER) && !defined(THREAD_SANITIZER) && !defined(UNDEFINED_BEHAVIOR_SANITIZER) &&              \
+    !defined(__EMSCRIPTEN__)
   const auto now = [] { return gtl::base_internal::CycleClock::Now(); };
 
   // Make size enough to not fit in L2 cache (16.7 Mb)
@@ -483,15 +427,13 @@ TEST(Table, Prefetch)
 #endif
 }
 
-TEST(Table, LookupEmpty)
-{
+TEST(Table, LookupEmpty) {
     IntTable t;
     auto     it = t.find(0);
     EXPECT_TRUE(it == t.end());
 }
 
-TEST(Table, Insert1)
-{
+TEST(Table, Insert1) {
     IntTable t;
     EXPECT_TRUE(t.find(0) == t.end());
     auto res = t.emplace(0);
@@ -501,8 +443,7 @@ TEST(Table, Insert1)
     EXPECT_THAT(*t.find(0), 0);
 }
 
-TEST(Table, Insert2)
-{
+TEST(Table, Insert2) {
     IntTable t;
     EXPECT_TRUE(t.find(0) == t.end());
     auto res = t.emplace(0);
@@ -518,8 +459,7 @@ TEST(Table, Insert2)
     EXPECT_THAT(*t.find(1), 1);
 }
 
-TEST(Table, InsertCollision)
-{
+TEST(Table, InsertCollision) {
     BadTable t;
     EXPECT_TRUE(t.find(1) == t.end());
     auto res = t.emplace(1);
@@ -539,8 +479,7 @@ TEST(Table, InsertCollision)
 
 // Test that we do not add existent element in case we need to search through
 // many groups with deleted elements
-TEST(Table, InsertCollisionAndFindAfterDelete)
-{
+TEST(Table, InsertCollisionAndFindAfterDelete) {
     BadTable t; // all elements go to the same group.
     // Have at least 2 groups with Group::kWidth collisions
     // plus some extra collisions in the last group.
@@ -567,8 +506,7 @@ TEST(Table, InsertCollisionAndFindAfterDelete)
     EXPECT_TRUE(t.empty());
 }
 
-TEST(Table, LazyEmplace)
-{
+TEST(Table, LazyEmplace) {
     StringTable t;
     bool        called = false;
     auto        it     = t.lazy_emplace("abc", [&](const StringTable::constructor& f) {
@@ -586,15 +524,13 @@ TEST(Table, LazyEmplace)
     EXPECT_THAT(*it, Pair("abc", "ABC"));
 }
 
-TEST(Table, ContainsEmpty)
-{
+TEST(Table, ContainsEmpty) {
     IntTable t;
 
     EXPECT_FALSE(t.contains(0));
 }
 
-TEST(Table, Contains1)
-{
+TEST(Table, Contains1) {
     IntTable t;
 
     EXPECT_TRUE(t.insert(0).second);
@@ -605,8 +541,7 @@ TEST(Table, Contains1)
     EXPECT_FALSE(t.contains(0));
 }
 
-TEST(Table, Contains2)
-{
+TEST(Table, Contains2) {
     IntTable t;
 
     EXPECT_TRUE(t.insert(0).second);
@@ -618,63 +553,53 @@ TEST(Table, Contains2)
 }
 
 int decompose_constructed;
-struct DecomposeType
-{
+struct DecomposeType {
     DecomposeType(int i_)
-        : i(i_)
-    { // NOLINT
+        : i(i_) { // NOLINT
         ++decompose_constructed;
     }
 
     explicit DecomposeType(const char* d)
-        : DecomposeType(*d)
-    {
-    }
+        : DecomposeType(*d) {}
 
     int i;
 };
 
-struct DecomposeHash
-{
+struct DecomposeHash {
     using is_transparent = void;
     size_t operator()(DecomposeType a) const { return a.i; }
     size_t operator()(int a) const { return a; }
     size_t operator()(const char* a) const { return *a; }
 };
 
-struct DecomposeEq
-{
+struct DecomposeEq {
     using is_transparent = void;
     bool operator()(DecomposeType a, DecomposeType b) const { return a.i == b.i; }
     bool operator()(DecomposeType a, int b) const { return a.i == b; }
     bool operator()(DecomposeType a, const char* b) const { return a.i == *b; }
 };
 
-struct DecomposePolicy
-{
+struct DecomposePolicy {
     using slot_type = DecomposeType;
     using key_type  = DecomposeType;
     using init_type = DecomposeType;
-    using is_flat = std::false_type;
+    using is_flat   = std::false_type;
 
     template<typename T>
-    static void construct(void*, DecomposeType* slot, T&& v)
-    {
+    static void construct(void*, DecomposeType* slot, T&& v) {
         *slot = DecomposeType(std::forward<T>(v));
     }
     static void           destroy(void*, DecomposeType*) {}
     static DecomposeType& element(slot_type* slot) { return *slot; }
 
     template<class F, class T>
-    static auto apply(F&& f, const T& x) -> decltype(std::forward<F>(f)(x, x))
-    {
+    static auto apply(F&& f, const T& x) -> decltype(std::forward<F>(f)(x, x)) {
         return std::forward<F>(f)(x, x);
     }
 };
 
 template<typename Hash, typename Eq>
-void TestDecompose(bool construct_three)
-{
+void TestDecompose(bool construct_three) {
     DecomposeType elem{ 0 };
     const int     one     = 1;
     const char*   three_p = "3";
@@ -740,17 +665,14 @@ void TestDecompose(bool construct_three)
     }
 }
 
-TEST(Table, Decompose)
-{
+TEST(Table, Decompose) {
     TestDecompose<DecomposeHash, DecomposeEq>(false);
 
-    struct TransparentHashIntOverload
-    {
+    struct TransparentHashIntOverload {
         size_t operator()(DecomposeType a) const { return a.i; }
         size_t operator()(int a) const { return a; }
     };
-    struct TransparentEqIntOverload
-    {
+    struct TransparentEqIntOverload {
         bool operator()(DecomposeType a, DecomposeType b) const { return a.i == b.i; }
         bool operator()(DecomposeType a, int b) const { return a.i == b; }
     };
@@ -761,8 +683,7 @@ TEST(Table, Decompose)
 
 // Returns the largest m such that a table with m elements has the same number
 // of buckets as a table with n elements.
-size_t MaxDensitySize(size_t n)
-{
+size_t MaxDensitySize(size_t n) {
     IntTable t;
     t.reserve(n);
     for (size_t i = 0; i != n; ++i)
@@ -828,8 +749,7 @@ TEST(Table, RehashWithNoResize) {
 }
 #endif
 
-TEST(Table, InsertEraseStressTest)
-{
+TEST(Table, InsertEraseStressTest) {
     IntTable           t;
     const size_t       kMinElementCount = 250;
     std::deque<size_t> keys;
@@ -847,8 +767,7 @@ TEST(Table, InsertEraseStressTest)
     }
 }
 
-TEST(Table, InsertOverloads)
-{
+TEST(Table, InsertOverloads) {
     StringTable t;
     // These should all trigger the insert(init_type) overload.
     t.insert({ {}, {} });
@@ -858,8 +777,7 @@ TEST(Table, InsertOverloads)
     EXPECT_THAT(t, UnorderedElementsAre(Pair("", ""), Pair("ABC", ""), Pair("DEF", "!!!")));
 }
 
-TEST(Table, LargeTable)
-{
+TEST(Table, LargeTable) {
     IntTable t;
     for (int64_t i = 0; i != 100000; ++i)
         t.emplace(i << 40);
@@ -868,8 +786,7 @@ TEST(Table, LargeTable)
 }
 
 // Timeout if copy is quadratic as it was in Rust.
-TEST(Table, EnsureNonQuadraticAsInRust)
-{
+TEST(Table, EnsureNonQuadraticAsInRust) {
     static const size_t kLargeSize = 1 << 15;
 
     IntTable t;
@@ -883,8 +800,7 @@ TEST(Table, EnsureNonQuadraticAsInRust)
         t2.insert(entry);
 }
 
-TEST(Table, ClearBug)
-{
+TEST(Table, ClearBug) {
     IntTable         t;
     constexpr size_t capacity = priv::Group::kWidth - 1;
     constexpr size_t max_size = capacity / 2 + 1;
@@ -906,8 +822,7 @@ TEST(Table, ClearBug)
     EXPECT_LT(std::abs(original - second), capacity * sizeof(IntTable::value_type));
 }
 
-TEST(Table, Erase)
-{
+TEST(Table, Erase) {
     IntTable t;
     EXPECT_TRUE(t.find(0) == t.end());
     auto res = t.emplace(0);
@@ -918,8 +833,7 @@ TEST(Table, Erase)
     EXPECT_TRUE(t.find(0) == t.end());
 }
 
-TEST(Table, EraseMaintainsValidIterator)
-{
+TEST(Table, EraseMaintainsValidIterator) {
     IntTable  t;
     const int kNumElements = 100;
     for (int i = 0; i < kNumElements; i++) {
@@ -944,8 +858,7 @@ TEST(Table, EraseMaintainsValidIterator)
 // 3. Take first Group::kWidth - 1 to bad_keys array.
 // 4. Clear the table without resize.
 // 5. Go to point 2 while N keys not collected
-std::vector<int64_t> CollectBadMergeKeys(size_t N)
-{
+std::vector<int64_t> CollectBadMergeKeys(size_t N) {
     static constexpr int kGroupSize = Group::kWidth - 1;
 
     auto topk_range = [](size_t b, size_t e, IntTable* t) -> std::vector<int64_t> {
@@ -975,45 +888,36 @@ std::vector<int64_t> CollectBadMergeKeys(size_t N)
     return bad_keys;
 }
 
-struct ProbeStats
-{
+struct ProbeStats {
     // Number of elements with specific probe length over all tested tables.
     std::vector<size_t> all_probes_histogram;
     // Ratios total_probe_length/size for every tested table.
     std::vector<double> single_table_ratios;
 
-    [[maybe_unused]] friend ProbeStats operator+(const ProbeStats& a, const ProbeStats& b)
-    {
+    [[maybe_unused]] friend ProbeStats operator+(const ProbeStats& a, const ProbeStats& b) {
         ProbeStats res = a;
-        res.all_probes_histogram.resize(
-            std::max(res.all_probes_histogram.size(), b.all_probes_histogram.size()));
+        res.all_probes_histogram.resize(std::max(res.all_probes_histogram.size(), b.all_probes_histogram.size()));
         std::transform(b.all_probes_histogram.begin(),
                        b.all_probes_histogram.end(),
                        res.all_probes_histogram.begin(),
                        res.all_probes_histogram.begin(),
                        std::plus<size_t>());
-        res.single_table_ratios.insert(res.single_table_ratios.end(),
-                                       b.single_table_ratios.begin(),
-                                       b.single_table_ratios.end());
+        res.single_table_ratios.insert(
+            res.single_table_ratios.end(), b.single_table_ratios.begin(), b.single_table_ratios.end());
         return res;
     }
 
     // Average ratio total_probe_length/size over tables.
-    double AvgRatio() const
-    {
+    double AvgRatio() const {
         return std::accumulate(single_table_ratios.begin(), single_table_ratios.end(), 0.0) /
                single_table_ratios.size();
     }
 
     // Maximum ratio total_probe_length/size over tables.
-    double MaxRatio() const
-    {
-        return *std::max_element(single_table_ratios.begin(), single_table_ratios.end());
-    }
+    double MaxRatio() const { return *std::max_element(single_table_ratios.begin(), single_table_ratios.end()); }
 
     // Percentile ratio total_probe_length/size over tables.
-    double PercentileRatio(double Percentile = 0.95) const
-    {
+    double PercentileRatio(double Percentile = 0.95) const {
         auto r   = single_table_ratios;
         auto mid = r.begin() + static_cast<size_t>(r.size() * Percentile);
         if (mid != r.end()) {
@@ -1028,10 +932,8 @@ struct ProbeStats
     size_t MaxProbe() const { return all_probes_histogram.size(); }
 
     // Fraction of elements with specified probe length.
-    std::vector<double> ProbeNormalizedHistogram() const
-    {
-        double total_elements =
-            (double)std::accumulate(all_probes_histogram.begin(), all_probes_histogram.end(), 0ull);
+    std::vector<double> ProbeNormalizedHistogram() const {
+        double total_elements = (double)std::accumulate(all_probes_histogram.begin(), all_probes_histogram.end(), 0ull);
         std::vector<double> res;
         for (size_t p : all_probes_histogram) {
             res.push_back(p / total_elements);
@@ -1039,8 +941,7 @@ struct ProbeStats
         return res;
     }
 
-    size_t PercentileProbe(double Percentile = 0.99) const
-    {
+    size_t PercentileProbe(double Percentile = 0.99) const {
         size_t idx = 0;
         for (double p : ProbeNormalizedHistogram()) {
             if (Percentile > p) {
@@ -1053,11 +954,9 @@ struct ProbeStats
         return idx;
     }
 
-    friend std::ostream& operator<<(std::ostream& out, const ProbeStats& s)
-    {
+    friend std::ostream& operator<<(std::ostream& out, const ProbeStats& s) {
         out << "{AvgRatio:" << s.AvgRatio() << ", MaxRatio:" << s.MaxRatio()
-            << ", PercentileRatio:" << s.PercentileRatio() << ", MaxProbe:" << s.MaxProbe()
-            << ", Probes=[";
+            << ", PercentileRatio:" << s.PercentileRatio() << ", MaxProbe:" << s.MaxProbe() << ", Probes=[";
         for (double p : s.ProbeNormalizedHistogram()) {
             out << p << ",";
         }
@@ -1067,17 +966,14 @@ struct ProbeStats
     }
 };
 
-struct ExpectedStats
-{
+struct ExpectedStats {
     double                                 avg_ratio;
     double                                 max_ratio;
     std::vector<std::pair<double, double>> pecentile_ratios;
     std::vector<std::pair<double, double>> pecentile_probes;
 
-    [[maybe_unused]] friend std::ostream& operator<<(std::ostream& out, const ExpectedStats& s)
-    {
-        out << "{AvgRatio:" << s.avg_ratio << ", MaxRatio:" << s.max_ratio
-            << ", PercentileRatios: [";
+    [[maybe_unused]] friend std::ostream& operator<<(std::ostream& out, const ExpectedStats& s) {
+        out << "{AvgRatio:" << s.avg_ratio << ", MaxRatio:" << s.max_ratio << ", PercentileRatios: [";
         for (auto el : s.pecentile_ratios) {
             out << el.first << ":" << el.second << ", ";
         }
@@ -1091,18 +987,15 @@ struct ExpectedStats
     }
 };
 
-void VerifyStats(size_t size, const ExpectedStats& exp, const ProbeStats& stats)
-{
+void VerifyStats(size_t size, const ExpectedStats& exp, const ProbeStats& stats) {
     EXPECT_LT(stats.AvgRatio(), exp.avg_ratio) << size << " " << stats;
     EXPECT_LT(stats.MaxRatio(), exp.max_ratio) << size << " " << stats;
     for (auto pr : exp.pecentile_ratios) {
-        EXPECT_LE(stats.PercentileRatio(pr.first), pr.second)
-            << size << " " << pr.first << " " << stats;
+        EXPECT_LE(stats.PercentileRatio(pr.first), pr.second) << size << " " << pr.first << " " << stats;
     }
 
     for (auto pr : exp.pecentile_probes) {
-        EXPECT_LE(stats.PercentileProbe(pr.first), pr.second)
-            << size << " " << pr.first << " " << stats;
+        EXPECT_LE(stats.PercentileProbe(pr.first), pr.second) << size << " " << pr.first << " " << stats;
     }
 }
 
@@ -1112,8 +1005,7 @@ using ProbeStatsPerSize = std::map<size_t, ProbeStats>;
 // 1. Create new table and reserve it to keys.size() * 2
 // 2. Insert all keys xored with seed
 // 3. Collect ProbeStats from final table.
-ProbeStats CollectProbeStatsOnKeysXoredWithSeed(const std::vector<int64_t>& keys, size_t num_iters)
-{
+ProbeStats CollectProbeStatsOnKeysXoredWithSeed(const std::vector<int64_t>& keys, size_t num_iters) {
     const size_t reserve_size = keys.size() * 2;
 
     ProbeStats stats;
@@ -1128,8 +1020,7 @@ ProbeStats CollectProbeStatsOnKeysXoredWithSeed(const std::vector<int64_t>& keys
         }
 
         auto probe_histogram = GetHashtableDebugNumProbesHistogram(t1);
-        stats.all_probes_histogram.resize(
-            std::max(stats.all_probes_histogram.size(), probe_histogram.size()));
+        stats.all_probes_histogram.resize(std::max(stats.all_probes_histogram.size(), probe_histogram.size()));
         std::transform(probe_histogram.begin(),
                        probe_histogram.end(),
                        stats.all_probes_histogram.begin(),
@@ -1151,8 +1042,7 @@ ProbeStats CollectProbeStatsOnKeysXoredWithSeed(const std::vector<int64_t>& keys
     #pragma GCC diagnostic ignored "-Wswitch"
 #endif
 
-ExpectedStats XorSeedExpectedStats()
-{
+ExpectedStats XorSeedExpectedStats() {
     constexpr bool kRandomizesInserts =
 #ifdef NDEBUG
         false;
@@ -1165,33 +1055,25 @@ ExpectedStats XorSeedExpectedStats()
     if constexpr (priv::Group::kWidth == 8) {
         if (kRandomizesInserts) {
             return {
-                0.05,
-                1.0,
-                {{ 0.95, 0.5 }  },
-                { { 0.95, 0 }, { 0.99, 2 }, { 0.999, 4 }, { 0.9999, 10 } }
+                0.05, 1.0, { { 0.95, 0.5 } },
+                  { { 0.95, 0 }, { 0.99, 2 }, { 0.999, 4 }, { 0.9999, 10 } }
             };
         } else {
             return {
-                0.05,
-                2.0,
-                {{ 0.95, 0.1 }  },
-                { { 0.95, 0 }, { 0.99, 2 }, { 0.999, 4 }, { 0.9999, 10 } }
+                0.05, 2.0, { { 0.95, 0.1 } },
+                  { { 0.95, 0 }, { 0.99, 2 }, { 0.999, 4 }, { 0.9999, 10 } }
             };
         }
     } else {
         if (kRandomizesInserts) {
             return {
-                0.1,
-                1.0,
-                {{ 0.95, 0.1 }  },
-                { { 0.95, 0 }, { 0.99, 1 }, { 0.999, 8 }, { 0.9999, 15 } }
+                0.1, 1.0, { { 0.95, 0.1 } },
+                  { { 0.95, 0 }, { 0.99, 1 }, { 0.999, 8 }, { 0.9999, 15 } }
             };
         } else {
             return {
-                0.05,
-                1.0,
-                {{ 0.95, 0.05 } },
-                { { 0.95, 0 }, { 0.99, 1 }, { 0.999, 4 }, { 0.9999, 10 } }
+                0.05, 1.0, { { 0.95, 0.05 } },
+                  { { 0.95, 0 }, { 0.99, 1 }, { 0.999, 4 }, { 0.9999, 10 } }
             };
         }
     }
@@ -1203,8 +1085,7 @@ ExpectedStats XorSeedExpectedStats()
     #pragma GCC diagnostic pop
 #endif
 
-TEST(Table, DISABLED_EnsureNonQuadraticTopNXorSeedByProbeSeqLength)
-{
+TEST(Table, DISABLED_EnsureNonQuadraticTopNXorSeedByProbeSeqLength) {
     ProbeStatsPerSize   stats;
     std::vector<size_t> sizes = { Group::kWidth << 5, Group::kWidth << 10 };
     for (size_t size : sizes) {
@@ -1221,14 +1102,12 @@ TEST(Table, DISABLED_EnsureNonQuadraticTopNXorSeedByProbeSeqLength)
 // 1. Create new table
 // 2. Select 10% of keys and insert 10 elements key * 17 + j * 13
 // 3. Collect ProbeStats from final table
-ProbeStats CollectProbeStatsOnLinearlyTransformedKeys(const std::vector<int64_t>& keys,
-                                                      size_t                      num_iters)
-{
+ProbeStats CollectProbeStatsOnLinearlyTransformedKeys(const std::vector<int64_t>& keys, size_t num_iters) {
     ProbeStats stats;
 
-    std::random_device rd;
-    std::mt19937       rng(rd());
-    auto               linear_transform = [](size_t x, size_t y) { return x * 17 + y * 13; };
+    std::random_device                    rd;
+    std::mt19937                          rng(rd());
+    auto                                  linear_transform = [](size_t x, size_t y) { return x * 17 + y * 13; };
     std::uniform_int_distribution<size_t> dist(0, keys.size() - 1);
     while (num_iters--) {
         IntTable t1;
@@ -1241,8 +1120,7 @@ ProbeStats CollectProbeStatsOnLinearlyTransformedKeys(const std::vector<int64_t>
         }
 
         auto probe_histogram = GetHashtableDebugNumProbesHistogram(t1);
-        stats.all_probes_histogram.resize(
-            std::max(stats.all_probes_histogram.size(), probe_histogram.size()));
+        stats.all_probes_histogram.resize(std::max(stats.all_probes_histogram.size(), probe_histogram.size()));
         std::transform(probe_histogram.begin(),
                        probe_histogram.end(),
                        stats.all_probes_histogram.begin(),
@@ -1264,8 +1142,7 @@ ProbeStats CollectProbeStatsOnLinearlyTransformedKeys(const std::vector<int64_t>
     #pragma GCC diagnostic ignored "-Wswitch"
 #endif
 
-ExpectedStats LinearTransformExpectedStats()
-{
+ExpectedStats LinearTransformExpectedStats() {
     constexpr bool kRandomizesInserts =
 #ifdef NDEBUG
         false;
@@ -1278,33 +1155,25 @@ ExpectedStats LinearTransformExpectedStats()
     if constexpr (priv::Group::kWidth == 8) {
         if (kRandomizesInserts) {
             return {
-                0.1,
-                0.5,
-                {{ 0.95, 0.3 }  },
-                { { 0.95, 0 }, { 0.99, 1 }, { 0.999, 8 }, { 0.9999, 15 } }
+                0.1, 0.5, { { 0.95, 0.3 } },
+                  { { 0.95, 0 }, { 0.99, 1 }, { 0.999, 8 }, { 0.9999, 15 } }
             };
         } else {
             return {
-                0.15,
-                0.5,
-                {{ 0.95, 0.3 }  },
-                { { 0.95, 0 }, { 0.99, 3 }, { 0.999, 15 }, { 0.9999, 25 } }
+                0.15, 0.5, { { 0.95, 0.3 } },
+                  { { 0.95, 0 }, { 0.99, 3 }, { 0.999, 15 }, { 0.9999, 25 } }
             };
         }
     } else {
         if (kRandomizesInserts) {
             return {
-                0.1,
-                0.4,
-                {{ 0.95, 0.3 }  },
-                { { 0.95, 0 }, { 0.99, 1 }, { 0.999, 8 }, { 0.9999, 15 } }
+                0.1, 0.4, { { 0.95, 0.3 } },
+                  { { 0.95, 0 }, { 0.99, 1 }, { 0.999, 8 }, { 0.9999, 15 } }
             };
         } else {
             return {
-                0.05,
-                0.2,
-                {{ 0.95, 0.1 }  },
-                { { 0.95, 0 }, { 0.99, 1 }, { 0.999, 6 }, { 0.9999, 10 } }
+                0.05, 0.2, { { 0.95, 0.1 } },
+                  { { 0.95, 0 }, { 0.99, 1 }, { 0.999, 6 }, { 0.9999, 10 } }
             };
         }
     }
@@ -1316,8 +1185,7 @@ ExpectedStats LinearTransformExpectedStats()
     #pragma GCC diagnostic pop
 #endif
 
-TEST(Table, DISABLED_EnsureNonQuadraticTopNLinearTransformByProbeSeqLength)
-{
+TEST(Table, DISABLED_EnsureNonQuadraticTopNLinearTransformByProbeSeqLength) {
     ProbeStatsPerSize   stats;
     std::vector<size_t> sizes = { Group::kWidth << 5, Group::kWidth << 10 };
     for (size_t size : sizes) {
@@ -1330,8 +1198,7 @@ TEST(Table, DISABLED_EnsureNonQuadraticTopNLinearTransformByProbeSeqLength)
     }
 }
 
-TEST(Table, EraseCollision)
-{
+TEST(Table, EraseCollision) {
     BadTable t;
 
     // 1 2 3
@@ -1365,8 +1232,7 @@ TEST(Table, EraseCollision)
     EXPECT_EQ(0u, t.size());
 }
 
-TEST(Table, EraseInsertProbing)
-{
+TEST(Table, EraseInsertProbing) {
     BadTable t(100);
 
     // 1 2 3 4
@@ -1388,8 +1254,7 @@ TEST(Table, EraseInsertProbing)
     EXPECT_THAT(t, UnorderedElementsAre(1, 10, 3, 11, 12));
 }
 
-TEST(Table, Clear)
-{
+TEST(Table, Clear) {
     IntTable t;
     EXPECT_TRUE(t.find(0) == t.end());
     t.clear();
@@ -1402,8 +1267,7 @@ TEST(Table, Clear)
     EXPECT_TRUE(t.find(0) == t.end());
 }
 
-TEST(Table, Swap)
-{
+TEST(Table, Swap) {
     IntTable t;
     EXPECT_TRUE(t.find(0) == t.end());
     auto res = t.emplace(0);
@@ -1417,8 +1281,7 @@ TEST(Table, Swap)
     EXPECT_THAT(*u.find(0), 0);
 }
 
-TEST(Table, Rehash)
-{
+TEST(Table, Rehash) {
     IntTable t;
     EXPECT_TRUE(t.find(0) == t.end());
     t.emplace(0);
@@ -1430,8 +1293,7 @@ TEST(Table, Rehash)
     EXPECT_THAT(*t.find(1), 1);
 }
 
-TEST(Table, RehashDoesNotRehashWhenNotNecessary)
-{
+TEST(Table, RehashDoesNotRehashWhenNotNecessary) {
     IntTable t;
     t.emplace(0);
     t.emplace(1);
@@ -1440,15 +1302,13 @@ TEST(Table, RehashDoesNotRehashWhenNotNecessary)
     EXPECT_EQ(p, &*t.find(0));
 }
 
-TEST(Table, RehashZeroDoesNotAllocateOnEmptyTable)
-{
+TEST(Table, RehashZeroDoesNotAllocateOnEmptyTable) {
     IntTable t;
     t.rehash(0);
     EXPECT_EQ(0u, t.bucket_count());
 }
 
-TEST(Table, RehashZeroDeallocatesEmptyTable)
-{
+TEST(Table, RehashZeroDeallocatesEmptyTable) {
     IntTable t;
     t.emplace(0);
     t.clear();
@@ -1457,8 +1317,7 @@ TEST(Table, RehashZeroDeallocatesEmptyTable)
     EXPECT_EQ(0u, t.bucket_count());
 }
 
-TEST(Table, RehashZeroForcesRehash)
-{
+TEST(Table, RehashZeroForcesRehash) {
     IntTable t;
     t.emplace(0);
     t.emplace(1);
@@ -1467,21 +1326,18 @@ TEST(Table, RehashZeroForcesRehash)
     EXPECT_NE(p, &*t.find(0));
 }
 
-TEST(Table, ConstructFromInitList)
-{
+TEST(Table, ConstructFromInitList) {
     using P = std::pair<std::string, std::string>;
-    struct Q
-    {
+    struct Q {
         operator P() const { return {}; }
     };
     StringTable t = {
-        P(), Q(), {  },
+        P(), Q(), {},
           { {}, {} }
     };
 }
 
-TEST(Table, CopyConstruct)
-{
+TEST(Table, CopyConstruct) {
     IntTable t;
     t.emplace(0);
     EXPECT_EQ(1u, t.size());
@@ -1502,8 +1358,7 @@ TEST(Table, CopyConstruct)
     }
 }
 
-TEST(Table, CopyConstructWithAlloc)
-{
+TEST(Table, CopyConstructWithAlloc) {
     StringTable t;
     t.emplace("a", "b");
     EXPECT_EQ(1u, t.size());
@@ -1513,22 +1368,16 @@ TEST(Table, CopyConstructWithAlloc)
 }
 
 struct ExplicitAllocIntTable
-    : raw_hash_set<IntPolicy,
-                   priv::hash_default_hash<int64_t>,
-                   std::equal_to<int64_t>,
-                   Alloc<int64_t>>
-{
+    : raw_hash_set<IntPolicy, priv::hash_default_hash<int64_t>, std::equal_to<int64_t>, Alloc<int64_t>> {
     ExplicitAllocIntTable() {}
 };
 
-TEST(Table, AllocWithExplicitCtor)
-{
+TEST(Table, AllocWithExplicitCtor) {
     ExplicitAllocIntTable t;
     EXPECT_EQ(0u, t.size());
 }
 
-TEST(Table, MoveConstruct)
-{
+TEST(Table, MoveConstruct) {
     {
         StringTable t;
         t.emplace("a", "b");
@@ -1558,8 +1407,7 @@ TEST(Table, MoveConstruct)
     }
 }
 
-TEST(Table, MoveConstructWithAlloc)
-{
+TEST(Table, MoveConstructWithAlloc) {
     StringTable t;
     t.emplace("a", "b");
     EXPECT_EQ(1u, t.size());
@@ -1568,8 +1416,7 @@ TEST(Table, MoveConstructWithAlloc)
     EXPECT_THAT(*u.find("a"), Pair("a", "b"));
 }
 
-TEST(Table, CopyAssign)
-{
+TEST(Table, CopyAssign) {
     StringTable t;
     t.emplace("a", "b");
     EXPECT_EQ(1u, t.size());
@@ -1579,8 +1426,7 @@ TEST(Table, CopyAssign)
     EXPECT_THAT(*u.find("a"), Pair("a", "b"));
 }
 
-TEST(Table, CopySelfAssign)
-{
+TEST(Table, CopySelfAssign) {
     StringTable t;
     t.emplace("a", "b");
     EXPECT_EQ(1u, t.size());
@@ -1589,8 +1435,7 @@ TEST(Table, CopySelfAssign)
     EXPECT_THAT(*t.find("a"), Pair("a", "b"));
 }
 
-TEST(Table, MoveAssign)
-{
+TEST(Table, MoveAssign) {
     StringTable t;
     t.emplace("a", "b");
     EXPECT_EQ(1u, t.size());
@@ -1600,8 +1445,7 @@ TEST(Table, MoveAssign)
     EXPECT_THAT(*u.find("a"), Pair("a", "b"));
 }
 
-TEST(Table, Equality)
-{
+TEST(Table, Equality) {
     StringTable                                      t;
     std::vector<std::pair<std::string, std::string>> v = {
         {"a",   "b" },
@@ -1612,8 +1456,7 @@ TEST(Table, Equality)
     EXPECT_EQ(u, t);
 }
 
-TEST(Table, Equality2)
-{
+TEST(Table, Equality2) {
     StringTable                                      t;
     std::vector<std::pair<std::string, std::string>> v1 = {
         {"a",   "b" },
@@ -1629,8 +1472,7 @@ TEST(Table, Equality2)
     EXPECT_NE(u, t);
 }
 
-TEST(Table, Equality3)
-{
+TEST(Table, Equality3) {
     StringTable                                      t;
     std::vector<std::pair<std::string, std::string>> v1 = {
         {"b",   "b" },
@@ -1646,8 +1488,7 @@ TEST(Table, Equality3)
     EXPECT_NE(u, t);
 }
 
-TEST(Table, NumDeletedRegression)
-{
+TEST(Table, NumDeletedRegression) {
     IntTable t;
     t.emplace(0);
     t.erase(t.find(0));
@@ -1656,8 +1497,7 @@ TEST(Table, NumDeletedRegression)
     t.clear();
 }
 
-TEST(Table, FindFullDeletedRegression)
-{
+TEST(Table, FindFullDeletedRegression) {
     IntTable t;
     for (int i = 0; i < 1000; ++i) {
         t.emplace(i);
@@ -1666,8 +1506,7 @@ TEST(Table, FindFullDeletedRegression)
     EXPECT_EQ(0u, t.size());
 }
 
-TEST(Table, ReplacingDeletedSlotDoesNotRehash)
-{
+TEST(Table, ReplacingDeletedSlotDoesNotRehash) {
     size_t n;
     {
         // Compute n such that n is the maximum number of elements before rehash.
@@ -1689,16 +1528,14 @@ TEST(Table, ReplacingDeletedSlotDoesNotRehash)
     EXPECT_EQ(c, t.bucket_count()) << "rehashing threshold = " << n;
 }
 
-TEST(Table, NoThrowMoveConstruct)
-{
+TEST(Table, NoThrowMoveConstruct) {
     ASSERT_TRUE(std::is_nothrow_copy_constructible<gtl::Hash<std::string_view>>::value);
     ASSERT_TRUE(std::is_nothrow_copy_constructible<std::equal_to<std::string_view>>::value);
     ASSERT_TRUE(std::is_nothrow_copy_constructible<std::allocator<int>>::value);
     EXPECT_TRUE(std::is_nothrow_move_constructible<StringTable>::value);
 }
 
-TEST(Table, NoThrowMoveAssign)
-{
+TEST(Table, NoThrowMoveAssign) {
     ASSERT_TRUE(std::is_nothrow_move_assignable<gtl::Hash<std::string_view>>::value);
     ASSERT_TRUE(std::is_nothrow_move_assignable<std::equal_to<std::string_view>>::value);
     ASSERT_TRUE(std::is_nothrow_move_assignable<std::allocator<int>>::value);
@@ -1706,53 +1543,43 @@ TEST(Table, NoThrowMoveAssign)
     EXPECT_TRUE(std::is_nothrow_move_assignable<StringTable>::value);
 }
 
-TEST(Table, NoThrowSwappable)
-{
+TEST(Table, NoThrowSwappable) {
     ASSERT_TRUE(std::is_nothrow_swappable_v<gtl::Hash<std::string_view>>);
     ASSERT_TRUE(std::is_nothrow_swappable_v<std::equal_to<std::string_view>>);
     ASSERT_TRUE(std::is_nothrow_swappable_v<std::allocator<int>>);
     EXPECT_TRUE(std::is_nothrow_swappable_v<StringTable>);
 }
 
-TEST(Table, HeterogeneousLookup)
-{
-    struct Hash
-    {
+TEST(Table, HeterogeneousLookup) {
+    struct Hash {
         size_t operator()(int64_t i) const { return i; }
-        size_t operator()(double i) const
-        {
+        size_t operator()(double i) const {
             ADD_FAILURE();
             return (size_t)i;
         }
     };
-    struct Eq
-    {
+    struct Eq {
         bool operator()(int64_t a, int64_t b) const { return a == b; }
-        bool operator()(double a, int64_t b) const
-        {
+        bool operator()(double a, int64_t b) const {
             ADD_FAILURE();
             return a == b;
         }
-        bool operator()(int64_t a, double b) const
-        {
+        bool operator()(int64_t a, double b) const {
             ADD_FAILURE();
             return a == b;
         }
-        bool operator()(double a, double b) const
-        {
+        bool operator()(double a, double b) const {
             ADD_FAILURE();
             return a == b;
         }
     };
 
-    struct THash
-    {
+    struct THash {
         using is_transparent = void;
         size_t operator()(int64_t i) const { return i; }
         size_t operator()(double i) const { return (size_t)i; }
     };
-    struct TEq
-    {
+    struct TEq {
         using is_transparent = void;
         bool operator()(int64_t a, int64_t b) const { return a == b; }
         bool operator()(double a, int64_t b) const { return a == b; }
@@ -1785,21 +1612,14 @@ template<class Table>
 using CallCount = decltype(std::declval<Table&>().count(17));
 
 template<template<typename> class C, class Table, class = void>
-struct VerifyResultOf : std::false_type
-{
-};
+struct VerifyResultOf : std::false_type {};
 
 template<template<typename> class C, class Table>
-struct VerifyResultOf<C, Table, std::void_t<C<Table>>> : std::true_type
-{
-};
+struct VerifyResultOf<C, Table, std::void_t<C<Table>>> : std::true_type {};
 
-TEST(Table, HeterogeneousLookupOverloads)
-{
-    using NonTransparentTable = raw_hash_set<StringPolicy,
-                                             gtl::Hash<std::string_view>,
-                                             std::equal_to<std::string_view>,
-                                             std::allocator<int>>;
+TEST(Table, HeterogeneousLookupOverloads) {
+    using NonTransparentTable =
+        raw_hash_set<StringPolicy, gtl::Hash<std::string_view>, std::equal_to<std::string_view>, std::allocator<int>>;
 
     EXPECT_FALSE((VerifyResultOf<CallFind, NonTransparentTable>()));
     EXPECT_FALSE((VerifyResultOf<CallErase, NonTransparentTable>()));
@@ -1820,34 +1640,29 @@ TEST(Table, HeterogeneousLookupOverloads)
 }
 
 // TODO(alkis): Expand iterator tests.
-TEST(Iterator, IsDefaultConstructible)
-{
+TEST(Iterator, IsDefaultConstructible) {
     StringTable::iterator i;
     EXPECT_TRUE(i == StringTable::iterator());
 }
 
-TEST(ConstIterator, IsDefaultConstructible)
-{
+TEST(ConstIterator, IsDefaultConstructible) {
     StringTable::const_iterator i;
     EXPECT_TRUE(i == StringTable::const_iterator());
 }
 
-TEST(Iterator, ConvertsToConstIterator)
-{
+TEST(Iterator, ConvertsToConstIterator) {
     StringTable::iterator i;
     EXPECT_TRUE(i == StringTable::const_iterator());
 }
 
-TEST(Iterator, Iterates)
-{
+TEST(Iterator, Iterates) {
     IntTable t;
     for (size_t i = 3; i != 6; ++i)
         EXPECT_TRUE(t.emplace(i).second);
     EXPECT_THAT(t, UnorderedElementsAre(3, 4, 5));
 }
 
-TEST(Table, Merge)
-{
+TEST(Table, Merge) {
     StringTable t1, t2;
     t1.emplace("0", "-0");
     t1.emplace("1", "-1");
@@ -1862,8 +1677,7 @@ TEST(Table, Merge)
     EXPECT_THAT(t2, UnorderedElementsAre(Pair("0", "~0")));
 }
 
-TEST(Nodes, EmptyNodeType)
-{
+TEST(Nodes, EmptyNodeType) {
     using node_type = StringTable::node_type;
     node_type n;
     EXPECT_FALSE(n);
@@ -1872,15 +1686,14 @@ TEST(Nodes, EmptyNodeType)
     EXPECT_TRUE((std::is_same<node_type::allocator_type, StringTable::allocator_type>::value));
 }
 
-TEST(Nodes, ExtractInsert)
-{
+TEST(Nodes, ExtractInsert) {
     constexpr char k0[] = "Very long std::string zero.";
     constexpr char k1[] = "Very long std::string one.";
     constexpr char k2[] = "Very long std::string two.";
     StringTable    t    = {
-              {k0,  ""},
-              { k1, ""},
-              { k2, ""}
+        {k0,  ""},
+        { k1, ""},
+        { k2, ""}
     };
     EXPECT_THAT(t, UnorderedElementsAre(Pair(k0, ""), Pair(k1, ""), Pair(k2, "")));
 
@@ -1920,8 +1733,7 @@ TEST(Nodes, ExtractInsert)
     EXPECT_FALSE(node);
 }
 
-IntTable MakeSimpleTable(size_t size)
-{
+IntTable MakeSimpleTable(size_t size) {
     IntTable t;
     while (t.size() < size)
         t.insert(t.size());
@@ -1937,8 +1749,7 @@ std::vector<int> OrderOfIteration(const IntTable& t) { return { t.begin(), t.end
 // We also need to keep the old tables around to avoid getting the same memory
 // blocks over and over.
 // not randomizing in phmap
-TEST(Table, IterationOrderChangesByInstance)
-{
+TEST(Table, IterationOrderChangesByInstance) {
     for (size_t size : { 2, 6, 12, 20 }) {
         const auto reference_table = MakeSimpleTable(size);
         const auto reference       = OrderOfIteration(reference_table);
@@ -1956,8 +1767,7 @@ TEST(Table, IterationOrderChangesByInstance)
 }
 
 // not randomizing in phmap
-TEST(Table, IterationOrderChangesOnRehash)
-{
+TEST(Table, IterationOrderChangesOnRehash) {
     std::vector<IntTable> garbage;
     for (int i = 0; i < 5000; ++i) {
         auto       t         = MakeSimpleTable(20);
@@ -1976,8 +1786,7 @@ TEST(Table, IterationOrderChangesOnRehash)
 
 // Verify that pointers are invalidated as soon as a second element is inserted.
 // This prevents dependency on pointer stability on small tables.
-TEST(Table, UnstablePointers)
-{
+TEST(Table, UnstablePointers) {
     IntTable table;
 
     const auto addr = [&](int i) { return reinterpret_cast<uintptr_t>(&*table.find(i)); };
@@ -1992,8 +1801,7 @@ TEST(Table, UnstablePointers)
 }
 
 // Confirm that we assert if we try to erase() end().
-TEST(TableDeathTest, EraseOfEndAsserts)
-{
+TEST(TableDeathTest, EraseOfEndAsserts) {
     // Use an assert with side-effects to figure out if they are actually enabled.
     bool assert_enabled = false;
     assert([&]() {
@@ -2010,8 +1818,7 @@ TEST(TableDeathTest, EraseOfEndAsserts)
 }
 
 #ifdef ADDRESS_SANITIZER
-TEST(Sanitizer, PoisoningUnused)
-{
+TEST(Sanitizer, PoisoningUnused) {
     IntTable t;
     t.reserve(5);
     // Insert something to force an allocation.
@@ -2026,8 +1833,7 @@ TEST(Sanitizer, PoisoningUnused)
     }
 }
 
-TEST(Sanitizer, PoisoningOnErase)
-{
+TEST(Sanitizer, PoisoningOnErase) {
     IntTable t;
     int64_t& v = *t.insert(0).first;
 
