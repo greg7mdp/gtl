@@ -113,6 +113,7 @@ void renumber(const std::vector<uint64_t>& vertex_ids, std::vector<std::array<ui
     threadpool pool((supports_parallel_insertion) ? num_threads : 1);
 
     stopwatch.start();
+    new_ids.reserve(vertex_ids.size() * 110 / 100);
     pool.parallel_for(vertex_ids.size(), [&](uint64_t i) {
         auto id                = new_id++;
         new_ids[vertex_ids[i]] = id;
