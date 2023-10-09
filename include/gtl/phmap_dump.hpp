@@ -94,8 +94,10 @@ bool raw_hash_set<Policy, Hash, Eq, Alloc>::phmap_load(InputArchive& ar) {
     }
     if (size_ == 0)
         return true;
-    if (version > 0)
+    if (version > 0) {
+        // growth_left should be restored after calling initialize_slots() which resets it.
         ar.loadBinary(&growth_left(), sizeof(size_t));
+    }
     ar.loadBinary(ctrl_, sizeof(ctrl_t) * (capacity_ + Group::kWidth + 1));
     ar.loadBinary(slots_, sizeof(slot_type) * capacity_);
     return true;

@@ -4,7 +4,7 @@
 #include <tuple>
 #include <utility>
 #include <vector>
-// #include <string_view>
+#include <string_view>
 #include <iostream>
 
 using std::pair;
@@ -17,7 +17,8 @@ namespace std {
 template<>
 struct hash<groupid_t> {
     std::size_t operator()(groupid_t const& g) const {
-        return gtl::Hash<decltype(std::tuple_cat(g))>()(std::tuple_cat(g));
+        const std::string_view bv{ reinterpret_cast<const char*>(g.data()), sizeof(g) };
+        return std::hash<std::string_view>()(bv);
     }
 };
 }

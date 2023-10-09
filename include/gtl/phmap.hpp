@@ -1934,7 +1934,7 @@ public:
     }
 
     size_t bucket_count() const { return capacity_; }
-    float  load_factor() const { return capacity_ ? static_cast<double>(size()) / capacity_ : 0.0; }
+    float  load_factor() const { return capacity_ ? static_cast<float>(static_cast<double>(size()) / capacity_) : 0.0f; }
     float  max_load_factor() const { return 1.0f; }
     void   max_load_factor(float) {
         // Does nothing.
@@ -2380,13 +2380,13 @@ private:
     }
 
     // Reset all ctrl bytes back to kEmpty, except the sentinel.
-    void reset_ctrl(size_t capacity) {
-        std::memset(ctrl_, kEmpty, capacity + Group::kWidth);
-        ctrl_[capacity] = kSentinel;
-        SanitizerPoisonMemoryRegion(slots_, sizeof(slot_type) * capacity);
+    void reset_ctrl(size_t new_capacity) {
+        std::memset(ctrl_, kEmpty, new_capacity + Group::kWidth);
+        ctrl_[new_capacity] = kSentinel;
+        SanitizerPoisonMemoryRegion(slots_, sizeof(slot_type) * new_capacity);
     }
 
-    void reset_growth_left(size_t capacity) { growth_left() = CapacityToGrowth(capacity) - size_; }
+    void reset_growth_left(size_t new_capacity) { growth_left() = CapacityToGrowth(new_capacity) - size_; }
 
     size_t& growth_left() { return std::get<0>(settings_); }
 
@@ -2938,11 +2938,11 @@ public:
 #ifdef ABSL_SYNCHRONIZATION_MUTEX_H_
 
 struct AbslMutex : protected absl::Mutex {
-    void lock() ABSL_EXCLUSIVE_LOCK_FUNCTION() { this->Lock(); }
-    void unlock() ABSL_UNLOCK_FUNCTION() { this->Unlock(); }
-    void try_lock() ABSL_EXCLUSIVE_TRYLOCK_FUNCTION(true) { this->TryLock(); }
-    void lock_shared() ABSL_SHARED_LOCK_FUNCTION() { this->ReaderLock(); }
-    void unlock_shared() ABSL_UNLOCK_FUNCTION() { this->ReaderUnlock(); }
+    void lock()            ABSL_EXCLUSIVE_LOCK_FUNCTION() { this->Lock(); }
+    void unlock()          ABSL_UNLOCK_FUNCTION() { this->Unlock(); }
+    void try_lock()        ABSL_EXCLUSIVE_TRYLOCK_FUNCTION(true) { this->TryLock(); }
+    void lock_shared()     ABSL_SHARED_LOCK_FUNCTION() { this->ReaderLock(); }
+    void unlock_shared()   ABSL_UNLOCK_FUNCTION() { this->ReaderUnlock(); }
     void try_lock_shared() ABSL_SHARED_TRYLOCK_FUNCTION(true) { this->ReaderTryLock(); }
 };
 
@@ -4434,6 +4434,26 @@ public:
                 const_cast<value_type&>(*it)); // in case of the set, non "key" part of value_type can be changed
         }
         return std::get<2>(res);
+    }
+
+    // returns {pointer, bool} instead of {iterator, bool} per try_emplace.
+    // useful for node-based containers, since the pointer is not invalidated by concurrent insert etc.
+    // ------------------------------------------------------------------------------------------------
+    template<class K = key_type, class... Args>
+    std::pair<typename parallel_hash_map::parallel_hash_set::pointer, bool> try_emplace_p(K&& k, Args&&... args) {
+        size_t                hashval = this->hash(k);
+        UniqueLock            m;
+        auto                  res   = this->find_or_prepare_insert_with_hash(hashval, k, m);
+        typename Base::Inner* inner = std::get<0>(res);
+        if (std::get<2>(res)) {
+            inner->set_.emplace_at(std::get<1>(res),
+                                   std::piecewise_construct,
+                                   std::forward_as_tuple(std::forward<K>(k)),
+                                   std::forward_as_tuple(std::forward<Args>(args)...));
+            inner->set_.set_ctrl(std::get<1>(res), H2(hashval));
+        }
+        auto it = this->iterator_at(inner, inner->set_.iterator_at(std::get<1>(res)));
+        return { &*it, std::get<2>(res) };
     }
 
     // ----------- end of phmap extensions --------------------------

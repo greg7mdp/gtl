@@ -967,15 +967,17 @@ inline void SanitizerUnpoisonObject(const T* object) {
 
 namespace {
 #ifdef GTL_HAVE_EXCEPTIONS
-    #define GTL_THROW_IMPL(e) throw e
+  #define GTL_THROW_IMPL_MSG(e, message) throw e(message)
+  #define GTL_THROW_IMPL(e) throw e()
 #else
-    #define GTL_THROW_IMPL(...) std::abort()
+  #define GTL_THROW_IMPL_MSG(e, message) do { (void)(message); std::abort(); } while(0)
+  #define GTL_THROW_IMPL(e) std::abort()
 #endif
 } // namespace
 
 
-static inline void ThrowStdOutOfRange(const std::string& what_arg) { GTL_THROW_IMPL(std::out_of_range(what_arg)); }
-static inline void ThrowStdOutOfRange(const char* what_arg) { GTL_THROW_IMPL(std::out_of_range(what_arg)); }
+static inline void ThrowStdOutOfRange(const std::string& what_arg) { GTL_THROW_IMPL_MSG(std::out_of_range, what_arg); }
+static inline void ThrowStdOutOfRange(const char* what_arg) { GTL_THROW_IMPL_MSG(std::out_of_range, what_arg); }
 
 } // gtl
 
