@@ -4349,7 +4349,7 @@ protected:
                                                                       ReadWriteLock& mutexlock) {
         Inner& inner = sets_[subidx(hashval)];
         auto&  set   = inner.set_;
-        mutexlock    = std::move(typename Lockable::ReadWriteLock(inner));
+        mutexlock    = std::move(ReadWriteLock(inner));
         size_t offset = set._find_key(key, hashval);
         if (offset == (size_t)-1 && mutexlock.switch_to_unique()) {
             // we did an unlock/lock, and another thread could have inserted the same key, so we need to
