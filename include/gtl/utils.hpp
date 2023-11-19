@@ -29,7 +29,7 @@ template<class Unset>
 class scoped_set_unset {
 public:
     template<class Set>
-    scoped_set_unset(Set&& set, Unset&& unset, bool do_it = true)
+    [[nodiscard]] scoped_set_unset(Set&& set, Unset&& unset, bool do_it = true)
         : do_it_(do_it)
         , unset_(std::move(unset)) {
         if (do_it_)
@@ -65,7 +65,7 @@ private:
 template<class F>
 class scoped_guard {
 public:
-    scoped_guard(F&& unset, bool do_it = true) noexcept(std::is_nothrow_move_constructible_v<F>)
+    [[nodiscard]] scoped_guard(F&& unset, bool do_it = true) noexcept(std::is_nothrow_move_constructible_v<F>)
         : do_it_(do_it)
         , unset_(std::move(unset)) {}
 
@@ -100,10 +100,8 @@ template<class T>
 class scoped_set_value {
 public:
     template<class V>
-    scoped_set_value(T& var, V&& val, bool do_it = true) noexcept(std::is_nothrow_copy_constructible_v<T> &&
-                                                                  std::is_nothrow_move_assignable_v<T> &&
-                                                                  std::is_nothrow_move_assignable_v<V> &&
-                                                                  std::is_nothrow_copy_assignable_v<V>)
+    [[nodiscard]] scoped_set_value(T& var, V&& val, bool do_it = true) noexcept(std::is_nothrow_copy_constructible_v<T> &&
+                                                                                std::is_nothrow_move_assignable_v<T>)
         : v_(var)
         , do_it_(do_it) {
         if (do_it_) {
@@ -121,6 +119,8 @@ public:
 
     scoped_set_value(const scoped_set_value&)            = delete;
     scoped_set_value& operator=(const scoped_set_value&) = delete;
+    scoped_set_value(scoped_set_value&&)                 = delete;
+    scoped_set_value& operator=(scoped_set_value&&)      = delete;
     void* operator new(std::size_t)                      = delete;
 
     T&   v_;
@@ -132,7 +132,8 @@ public:
 // assigns val to var, and returns true if the value changed
 // ---------------------------------------------------------------------------
 template<class T, class V>
-bool change(T& var, V&& val) noexcept(std::is_nothrow_move_assignable_v<T> && std::is_nothrow_copy_assignable_v<T>) {
+bool change(T& var, V&& val) noexcept(std::is_nothrow_move_assignable_v<T> &&
+                                      std::is_nothrow_copy_assignable_v<T>) {
     if (var != val) {
         var = std::forward<V>(val);
         return true;
@@ -144,7 +145,8 @@ bool change(T& var, V&& val) noexcept(std::is_nothrow_move_assignable_v<T> && st
 // assigns val to var, and returns the previous value
 // ---------------------------------------------------------------------------
 template<class T, class V>
-T replace(T& var, V&& val) noexcept(std::is_nothrow_move_assignable_v<T> && std::is_nothrow_copy_assignable_v<T>) {
+T replace(T& var, V&& val) noexcept(std::is_nothrow_move_assignable_v<T> &&
+                                    std::is_nothrow_copy_assignable_v<T>) {
     T old = std::move(var);
     var   = std::forward<V>(val);
     return old;
@@ -161,19 +163,19 @@ struct always_false : std::false_type {};
 // ---------------------------------------------------------------------------
 class timestamp {
 public:
-    timestamp() noexcept { stamp_ = ++clock_; }
+    [[nodiscard]] timestamp() noexcept { stamp_ = ++clock_; }
 
-    timestamp(uint64_t stamp) noexcept
+    [[nodiscard]] timestamp(uint64_t stamp) noexcept
         : stamp_(stamp) {}
 
     void touch() noexcept { stamp_ = ++clock_; }
     void touch(const timestamp& o) noexcept { stamp_ = o.stamp_; }
 
     void reset() noexcept { stamp_ = 0; }
-    bool is_set() const noexcept { return !!stamp_; }
-
-    bool is_newer_than(const timestamp& o) const noexcept { return stamp_ > o.stamp_; }
-    bool is_older_than(const timestamp& o) const noexcept { return stamp_ < o.stamp_; }
+   
+    [[nodiscard]] bool is_set() const noexcept { return !!stamp_; }
+    [[nodiscard]] bool is_newer_than(const timestamp& o) const noexcept { return stamp_ > o.stamp_; }
+    [[nodiscard]] bool is_older_than(const timestamp& o) const noexcept { return stamp_ < o.stamp_; }
 
     bool operator==(const timestamp& o) const noexcept { return stamp_ == o.stamp_; }
     bool operator<(const timestamp& o) const noexcept { return stamp_ < o.stamp_; }
@@ -186,9 +188,9 @@ public:
         return *this;
     }
 
-    uint64_t get() const noexcept { return stamp_; }
+    [[nodiscard]] uint64_t get() const noexcept { return stamp_; }
 
-    timestamp get_timestamp() const noexcept { return *this; }
+    [[nodiscard]] timestamp get_timestamp() const noexcept { return *this; }
 
     template<class T, class V>
     bool set_with_ts(T& var, V&& val) {
