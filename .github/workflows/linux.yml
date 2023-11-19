@@ -21,7 +21,8 @@ jobs:
     - name: Create Environment
       run: |
         sudo apt update
-        sudo apt install -y g++-9 g++-10 clang-17
+        sudo apt install -y g++-9 g++-10
+        wget https://apt.llvm.org/llvm.sh; chmod u+x llvm.sh; sudo ./llvm.sh 17
         cmake -E make_directory ${{runner.workspace}}/build
 
     - name: Configure
