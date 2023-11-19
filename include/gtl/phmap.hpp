@@ -1662,12 +1662,13 @@ public:
 
     template<class K = key_type, class F>
     iterator lazy_emplace_with_hash(const key_arg<K>& key, size_t hashval, F&& f) {
-        auto res = find_or_prepare_insert(key, hashval);
-        if (res.second) {
-            lazy_emplace_at(res.first, std::forward<F>(f));
-            this->set_ctrl(res.first, H2(hashval));
+        size_t offset = _find_key(key, hashval);
+        if (offset == (size_t)-1) {
+            offset = prepare_insert(hashval);
+            lazy_emplace_at(offset, std::forward<F>(f));
+            this->set_ctrl(offset, H2(hashval));
         }
-        return iterator_at(res.first);
+        return iterator_at(offset);
     }
 
     template<class K = key_type, class F, class C>
@@ -1685,12 +1686,13 @@ public:
 
     template<class K = key_type, class F>
     void emplace_single_with_hash(const key_arg<K>& key, size_t hashval, F&& f) {
-        auto res = find_or_prepare_insert(key, hashval);
-        if (res.second) {
-            lazy_emplace_at(res.first, std::forward<F>(f));
-            this->set_ctrl(res.first, H2(hashval));
+        size_t offset = _find_key(key, hashval);
+        if (offset == (size_t)-1) {
+            offset = prepare_insert(hashval);
+            lazy_emplace_at(offset, std::forward<F>(f));
+            this->set_ctrl(offset, H2(hashval));
         } else
-            _erase(iterator_at(res.first));
+            _erase(iterator_at(offset));
     }
 
     // Extension API: support for heterogeneous keys.
@@ -2017,12 +2019,14 @@ private:
 
     template<class K, class... Args>
     std::pair<iterator, bool> emplace_decomposable(const K& key, size_t hashval, Args&&... args) {
-        auto res = find_or_prepare_insert(key, hashval);
-        if (res.second) {
-            emplace_at(res.first, std::forward<Args>(args)...);
-            this->set_ctrl(res.first, H2(hashval));
+        size_t offset = _find_key(key, hashval);
+        if (offset == (size_t)-1) {
+            offset = prepare_insert(hashval);
+            emplace_at(offset, std::forward<Args>(args)...);
+            this->set_ctrl(offset, H2(hashval));
+            return {iterator_at(offset), true};
         }
-        return { iterator_at(res.first), res.second };
+        return {iterator_at(offset), false};
     }
 
     struct EmplaceDecomposable {
@@ -2305,24 +2309,32 @@ private:
     }
 
 protected:
-    template<class K>
-    std::pair<size_t, bool> find_or_prepare_insert(const K& key, size_t hashval) {
+    template <class K>
+    size_t _find_key(const K& key, size_t hashval) {
         auto seq = probe(hashval);
         while (true) {
-            Group g{ ctrl_ + seq.offset() };
+            Group g{ctrl_ + seq.offset()};
             for (uint32_t i : g.Match((h2_t)H2(hashval))) {
-                if (GTL_PREDICT_TRUE(PolicyTraits::apply(EqualElement<K>{ key, eq_ref() },
-                                                         PolicyTraits::element(slots_ + seq.offset((size_t)i)))))
-                    return { seq.offset((size_t)i), false };
+                if (GTL_PREDICT_TRUE(PolicyTraits::apply(
+                                          EqualElement<K>{key, eq_ref()},
+                                          PolicyTraits::element(slots_ + seq.offset((size_t)i)))))
+                    return seq.offset((size_t)i);
             }
-            if (GTL_PREDICT_TRUE(g.MatchEmpty()))
-                break;
+            if (GTL_PREDICT_TRUE(g.MatchEmpty())) break;
             seq.next();
         }
-        return { prepare_insert(hashval), true };
+        return (size_t)-1;
     }
 
-    size_t prepare_insert(size_t hashval) GTL_ATTRIBUTE_NOINLINE {
+    template <class K>
+    std::pair<size_t, bool> find_or_prepare_insert(const K& key, size_t hashval) {
+        size_t offset = _find_key(key, hashval);
+        if (offset == (size_t)-1)
+            return {prepare_insert(hashval), true};
+        return {offset, false};
+    }
+
+   size_t prepare_insert(size_t hashval) GTL_ATTRIBUTE_NOINLINE {
         auto target = find_first_non_full(hashval);
         if (GTL_PREDICT_FALSE(growth_left() == 0 && !IsDeleted(ctrl_[target.offset]))) {
             rehash_and_grow_if_necessary();
@@ -2592,27 +2604,30 @@ private:
     template<class K, class V>
     std::pair<iterator, bool> insert_or_assign_impl(K&& k, V&& v) {
         size_t hashval = this->hash(k);
-        auto   res     = this->find_or_prepare_insert(k, hashval);
-        if (res.second) {
-            this->emplace_at(res.first, std::forward<K>(k), std::forward<V>(v));
-            this->set_ctrl(res.first, H2(hashval));
-        } else
-            Policy::value(&*this->iterator_at(res.first)) = std::forward<V>(v);
-        return { this->iterator_at(res.first), res.second };
+        size_t offset = this->_find_key(k, hashval);
+        if (offset == (size_t)-1) {
+            offset = this->prepare_insert(hashval);
+            this->emplace_at(offset, std::forward<K>(k), std::forward<V>(v));
+            this->set_ctrl(offset, H2(hashval));
+            return {this->iterator_at(offset), true};
+        } 
+        Policy::value(&*this->iterator_at(offset)) = std::forward<V>(v);
+        return {this->iterator_at(offset), false};
     }
 
     template<class K = key_type, class... Args>
     std::pair<iterator, bool> try_emplace_impl(K&& k, Args&&... args) {
         size_t hashval = this->hash(k);
-        auto   res     = this->find_or_prepare_insert(k, hashval);
-        if (res.second) {
-            this->emplace_at(res.first,
-                             std::piecewise_construct,
+        size_t offset = this->_find_key(k, hashval);
+        if (offset == (size_t)-1) {
+            offset = this->prepare_insert(hashval);
+            this->emplace_at(offset, std::piecewise_construct,
                              std::forward_as_tuple(std::forward<K>(k)),
                              std::forward_as_tuple(std::forward<Args>(args)...));
-            this->set_ctrl(res.first, H2(hashval));
+            this->set_ctrl(offset, H2(hashval));
+            return {this->iterator_at(offset), true};
         }
-        return { this->iterator_at(res.first), res.second };
+        return {this->iterator_at(offset), false};
     }
 };
 
@@ -2658,8 +2673,13 @@ public:
         explicit DoNothing(T&&) {}
         DoNothing& operator=(const DoNothing&) { return *this; }
         DoNothing& operator=(DoNothing&&) noexcept { return *this; }
-        void       swap(DoNothing&) {}
+        void       swap(DoNothing&) noexcept {}
         bool       owns_lock() const noexcept { return true; }
+        void       lock() {}
+        void       unlock() {}
+        void       lock_shared() {}
+        void       unlock_shared() {}
+        bool       switch_to_unique() { return false; }
     };
 
     // ----------------------------------------------------
@@ -2738,6 +2758,8 @@ public:
         }
 
         mutex_type* mutex() const noexcept { return m_; }
+
+        bool switch_to_unique() { return false; }
 
     private:
         mutex_type* m_;
@@ -2821,8 +2843,98 @@ public:
 
         mutex_type* mutex() const noexcept { return m_; }
 
+        bool switch_to_unique() { return false; }
+
     private:
         mutex_type* m_;
+        bool        locked_;
+    };
+
+    // ----------------------------------------------------
+    class ReadWriteLock
+    {
+    public:
+        using mutex_type = MutexType;
+
+        ReadWriteLock() :  m_(nullptr), locked_(false), locked_shared_(false)  {}
+
+        explicit ReadWriteLock(mutex_type &m) : m_(&m), locked_(false), locked_shared_(true)  {
+            m_->lock_shared(); 
+        }
+
+        ReadWriteLock(mutex_type& m, defer_lock_t) noexcept :
+            m_(&m), locked_(false), locked_shared_(false)
+        {}
+
+        ReadWriteLock(ReadWriteLock &&o) noexcept :
+            m_(std::move(o.m_)), locked_(o.locked_), locked_shared_(o.locked_shared_) {
+            o.locked_        = false;
+            o.locked_shared_ = false;
+            o.m_             = nullptr;
+        }
+
+        ReadWriteLock& operator=(ReadWriteLock&& other) noexcept {
+            ReadWriteLock temp(std::move(other));
+            swap(temp);
+            return *this;
+        }
+
+        ~ReadWriteLock() {
+            if (locked_shared_) 
+                m_->unlock_shared();
+            else if (locked_) 
+                m_->unlock();
+        }
+
+        void lock_shared() { 
+            if (!locked_shared_) { 
+                m_->lock_shared(); 
+                locked_shared_ = true; 
+            }
+        }
+
+        void unlock_shared() { 
+            if (locked_shared_) {
+                m_->unlock_shared(); 
+                locked_shared_ = false;
+            }
+        } 
+
+        void lock() { 
+            if (!locked_) { 
+                m_->lock(); 
+                locked_ = true; 
+            }
+        }
+
+        void unlock() { 
+            if (locked_) {
+                m_->unlock(); 
+                locked_ = false;
+            }
+        } 
+
+        bool owns_lock() const noexcept { return locked_; }
+        bool owns_shared_lock() const noexcept { return locked_shared_; }
+
+        void swap(ReadWriteLock &o) noexcept { 
+            std::swap(m_, o.m_);
+            std::swap(locked_, o.locked_);
+            std::swap(locked_shared_, o.locked_shared_);
+        }
+
+        mutex_type *mutex() const noexcept { return m_; }
+
+        bool switch_to_unique() {
+            assert(locked_shared_);
+            unlock_shared();
+            lock();
+            return true;
+        }
+
+    private:
+        mutex_type *m_;
+        bool        locked_shared_;
         bool        locked_;
     };
 
@@ -2911,6 +3023,7 @@ public:
     using SharedLock      = typename Base::WriteLock;
     using UpgradeLock     = typename Base::WriteLock;
     using UniqueLock      = typename Base::WriteLock;
+    using ReadWriteLock   = typename Base::WriteLock;
     using SharedLocks     = typename Base::WriteLocks;
     using UniqueLocks     = typename Base::WriteLocks;
     using UpgradeToUnique = typename Base::DoNothing; // we already have unique ownership
@@ -2927,6 +3040,7 @@ public:
     using SharedLock      = typename Base::DoNothing;
     using UpgradeLock     = typename Base::DoNothing;
     using UniqueLock      = typename Base::DoNothing;
+    using ReadWriteLock   = typename Base::DoNothing;
     using UpgradeToUnique = typename Base::DoNothing;
     using SharedLocks     = typename Base::DoNothing;
     using UniqueLocks     = typename Base::DoNothing;
@@ -2954,6 +3068,7 @@ public:
     using SharedLock      = typename Base::ReadLock;
     using UpgradeLock     = typename Base::WriteLock;
     using UniqueLock      = typename Base::WriteLock;
+    using ReadWriteLock   = typename Base::ReadWriteLock;
     using SharedLocks     = typename Base::ReadLocks;
     using UniqueLocks     = typename Base::WriteLocks;
     using UpgradeToUnique = typename Base::DoNothing; // we already have unique ownership
@@ -2974,6 +3089,7 @@ public:
     using SharedLock      = boost::shared_lock<mutex_type>;
     using UpgradeLock     = boost::unique_lock<mutex_type>; // assume can't upgrade
     using UniqueLock      = boost::unique_lock<mutex_type>;
+    using ReadWriteLock   = typename Base::ReadWriteLock;
     using SharedLocks     = typename Base::ReadLocks;
     using UniqueLocks     = typename Base::WriteLocks;
     using UpgradeToUnique = typename Base::DoNothing; // we already have unique ownership
@@ -2991,6 +3107,7 @@ public:
     using SharedLock      = std::shared_lock<mutex_type>;
     using UpgradeLock     = std::unique_lock<mutex_type>; // assume can't upgrade
     using UniqueLock      = std::unique_lock<mutex_type>;
+    using ReadWriteLock   = typename Base::ReadWriteLock;
     using SharedLocks     = typename Base::ReadLocks;
     using UniqueLocks     = typename Base::WriteLocks;
     using UpgradeToUnique = typename Base::DoNothing; // we already have unique ownership
@@ -3046,9 +3163,10 @@ public:
     using key_arg = typename KeyArgImpl::template type<K, key_type>;
 
 protected:
-    using Lockable   = LockableImpl<Mtx_>;
-    using UniqueLock = typename Lockable::UniqueLock;
-    using SharedLock = typename Lockable::SharedLock;
+    using Lockable      = LockableImpl<Mtx_>;
+    using UniqueLock    = typename Lockable::UniqueLock;
+    using SharedLock    = typename Lockable::SharedLock;
+    using ReadWriteLock = typename Lockable::ReadWriteLock;
 
     // --------------------------------------------------------------------
     struct alignas(gtl_hardware_destructive_interference_size) Inner : public Lockable {
@@ -3747,10 +3865,10 @@ public:
     // ---------------------------------------------------------------------------------------
     template<class K = key_type, class FExists, class FEmplace>
     bool lazy_emplace_l(const key_arg<K>& key, FExists&& fExists, FEmplace&& fEmplace) {
-        size_t     hashval = this->hash(key);
-        UniqueLock m;
-        auto       res   = this->find_or_prepare_insert_with_hash(hashval, key, m);
-        Inner*     inner = std::get<0>(res);
+        size_t        hashval = this->hash(key);
+        ReadWriteLock m;
+        auto          res   = this->find_or_prepare_insert_with_hash(hashval, key, m);
+        Inner*        inner = std::get<0>(res);
         if (std::get<2>(res)) {
             if constexpr (std::is_same_v<gtl::priv::empty, aux_type>) {
                 inner->set_.lazy_emplace_at(std::get<1>(res), std::forward<FEmplace>(fEmplace));
@@ -4203,16 +4321,30 @@ protected:
     template<class K>
     std::tuple<Inner*, size_t, bool> find_or_prepare_insert_with_hash(size_t      hashval,
                                                                       const K&    key,
-                                                                      UniqueLock& mutexlock) {
+                                                                      ReadWriteLock& mutexlock) {
         Inner& inner = sets_[subidx(hashval)];
         auto&  set   = inner.set_;
-        mutexlock    = std::move(UniqueLock(inner));
-        auto p       = set.find_or_prepare_insert(key, hashval); // std::pair<size_t, bool>
-        return std::make_tuple(&inner, p.first, p.second);
+        mutexlock    = std::move(typename Lockable::ReadWriteLock(inner));
+        size_t offset = set._find_key(key, hashval);
+        if (offset == (size_t)-1) {
+            if (mutexlock.switch_to_unique()) {
+                // we did an unlock/lock, and another thread could have inserted the same key, so we need to
+                // do a find() again.
+                offset = set._find_key(key, hashval);
+                if (offset == (size_t)-1) {
+                    offset = set.prepare_insert(hashval);
+                    return std::make_tuple(&inner, offset, true);
+                }
+            } else {
+                offset = set.prepare_insert(hashval);
+                return std::make_tuple(&inner, offset, true);
+            }
+        }
+        return std::make_tuple(&inner, offset, false);
     }
 
     template<class K>
-    std::tuple<Inner*, size_t, bool> find_or_prepare_insert(const K& key, UniqueLock& mutexlock) {
+    std::tuple<Inner*, size_t, bool> find_or_prepare_insert(const K& key, ReadWriteLock& mutexlock) {
         return find_or_prepare_insert_with_hash<K>(this->hash(key), key, mutexlock);
     }
 
@@ -4274,6 +4406,7 @@ class parallel_hash_map : public parallel_hash_set<N, RefSet, Mtx_, AuxCont, Pol
     using Base       = typename parallel_hash_map::parallel_hash_set;
     using Lockable   = LockableImpl<Mtx_>;
     using UniqueLock = typename Lockable::UniqueLock;
+    using ReadWriteLock = typename Lockable::ReadWriteLock;
 
 public:
     using key_type    = typename Policy::key_type;
@@ -4475,7 +4608,7 @@ private:
     template<class K, class V>
     std::pair<iterator, bool> insert_or_assign_impl(K&& k, V&& v) {
         size_t                hashval = this->hash(k);
-        UniqueLock            m;
+        ReadWriteLock         m;
         auto                  res   = this->find_or_prepare_insert(k, m);
         typename Base::Inner* inner = std::get<0>(res);
         if (std::get<2>(res)) {
@@ -4493,7 +4626,7 @@ private:
 
     template<class K = key_type, class... Args>
     std::pair<iterator, bool> try_emplace_impl_with_hash(size_t hashval, K&& k, Args&&... args) {
-        UniqueLock            m;
+        ReadWriteLock         m;
         auto                  res   = this->find_or_prepare_insert_with_hash(hashval, k, m);
         typename Base::Inner* inner = std::get<0>(res);
         if (std::get<2>(res)) {
