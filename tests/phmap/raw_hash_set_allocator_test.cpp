@@ -65,7 +65,7 @@ public:
     using propagate_on_container_swap = std::integral_constant<bool, (Spec & kPropagateOnSwap) != 0>;
 
     CheckedAlloc select_on_container_copy_construction() const {
-        if (Spec & kPropagateOnCopy)
+        if constexpr (Spec & kPropagateOnCopy)
             return *this;
         return {};
     }
@@ -86,13 +86,13 @@ public:
 
     size_t num_allocs() const { return state_->num_allocs; }
 
-    void swap(CheckedAlloc& that) {
+    void swap(CheckedAlloc& that)  noexcept {
         using std::swap;
         swap(id_, that.id_);
         swap(state_, that.state_);
     }
 
-    friend void swap(CheckedAlloc& a, CheckedAlloc& b) { a.swap(b); }
+    friend void swap(CheckedAlloc& a, CheckedAlloc& b)  noexcept { a.swap(b); }
 
     friend std::ostream& operator<<(std::ostream& o, const CheckedAlloc& a) { return o << "alloc(" << a.id_ << ")"; }
 

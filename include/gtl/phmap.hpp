@@ -3725,12 +3725,15 @@ public:
     template<class K = key_type, class F, class L>
     bool erase_if_impl(const key_arg<K>& key, F&& f) {
         static_assert(std::is_invocable_v<F, value_type&>);
-        L    m;
-        auto it = this->template find<K, L>(key, this->hash(key), m);
-        if (it == this->end())
-            return false;
-        if (std::forward<F>(f)(const_cast<value_type&>(*it))) {
-            this->erase(it);
+        auto hashval = this->hash(key);
+        Inner& inner = sets_[subidx(hashval)];
+        auto& set = inner.set_;
+        L m(inner);
+        auto it = set.find(key, hashval);
+        if (it == set.end()) return false;
+        if (std::forward<F>(f)(const_cast<value_type &>(*it)))
+        {
+            set._erase(it);
             return true;
         }
         return false;
