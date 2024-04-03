@@ -12,8 +12,33 @@
 // ---------------------------------------------------------------------------
 
 #include <chrono>
+#include <iostream>
 
 namespace gtl {
+// -------------------------------------------------------------------------------
+class basic_stopwatch {
+public:
+   basic_stopwatch(std::string msg) : _msg(std::move(msg)) {  start(); }
+
+   ~basic_stopwatch() {
+      if (!_msg.empty())
+         std::cout << _msg << get_time_us()/1000000 << "s\n";
+   }
+
+   void start() { _start = clock::now(); } // overwrite start time if needed
+
+   double get_time_us() const {
+      using duration_t = std::chrono::duration<double, std::micro>;
+      return std::chrono::duration_cast<duration_t>(clock::now() - _start).count();
+   }
+
+   using clock = std::chrono::high_resolution_clock;
+   using point = std::chrono::time_point<clock>;
+
+   std::string _msg;
+   point       _start;
+};
+
 // -------------------------------------------------------------------------------
 template<typename time_unit = std::milli>
 class stopwatch {
