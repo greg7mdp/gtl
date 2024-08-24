@@ -123,6 +123,7 @@ public:
     scoped_set_value& operator=(scoped_set_value&&)      = delete;
     void* operator new(std::size_t)                      = delete;
 
+private:
     T&   v_;
     T    old_value_;
     bool do_it_;
