@@ -712,19 +712,23 @@ struct IsDecomposable<std::void_t<decltype(Policy::apply(RequireUsableKey<typena
 // --------------------------------------------------------------------------
 template<typename T>
 uint32_t TrailingZeros(T x) {
+    uint32_t res;
     if constexpr (sizeof(T) == 8)
-        return gtl::CountTrailingZerosNonZero64(static_cast<uint64_t>(x));
+        res = gtl::CountTrailingZerosNonZero64(static_cast<uint64_t>(x));
     else
-        return gtl::CountTrailingZerosNonZero32(static_cast<uint32_t>(x));
+        res = gtl::CountTrailingZerosNonZero32(static_cast<uint32_t>(x));
+    return res;
 }
 
 // --------------------------------------------------------------------------
 template<typename T>
 uint32_t LeadingZeros(T x) {
+    uint32_t res;
     if constexpr (sizeof(T) == 8)
-        return gtl::CountLeadingZeros64(static_cast<uint64_t>(x));
+        res = gtl::CountLeadingZeros64(static_cast<uint64_t>(x));
     else
-        return gtl::CountLeadingZeros32(static_cast<uint32_t>(x));
+        res = gtl::CountLeadingZeros32(static_cast<uint32_t>(x));
+    return res;
 }
 
 // --------------------------------------------------------------------------
@@ -909,14 +913,14 @@ struct GroupSse2Impl {
     // Returns a bitmask representing the positions of empty or deleted slots.
     // -----------------------------------------------------------------------
     BitMask<uint32_t, kWidth> MatchEmptyOrDeleted() const {
-        auto special = _mm_set1_epi8(static_cast<uint8_t>(kSentinel));
+        auto special = _mm_set1_epi8(static_cast<char>(kSentinel));
         return BitMask<uint32_t, kWidth>(static_cast<uint32_t>(_mm_movemask_epi8(_mm_cmpgt_epi8_fixed(special, ctrl))));
     }
 
     // Returns the number of trailing empty or deleted elements in the group.
     // ----------------------------------------------------------------------
     uint32_t CountLeadingEmptyOrDeleted() const {
-        auto special = _mm_set1_epi8(static_cast<uint8_t>(kSentinel));
+        auto special = _mm_set1_epi8(static_cast<char>(kSentinel));
         return TrailingZeros(static_cast<uint32_t>(_mm_movemask_epi8(_mm_cmpgt_epi8_fixed(special, ctrl)) + 1));
     }
 
