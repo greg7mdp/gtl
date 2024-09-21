@@ -18,7 +18,7 @@
 
 #]===================================================================]
 
-cmake_minimum_required(VERSION 3.8)
+cmake_minimum_required(VERSION 3.13)
 
 list (APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake")
 
@@ -50,21 +50,21 @@ option(GTL_INSTALL "Enable installation" ${GTL_MASTER_PROJECT})
 
 set(GTL_DIR gtl)
 # See CMP0076
-set(GTL_HEADERS ${CMAKE_CURRENT_SOURCE_DIR}/include/${GTL_DIR}/phmap.hpp 
-                ${CMAKE_CURRENT_SOURCE_DIR}/include/${GTL_DIR}/bits.hpp 
-                ${CMAKE_CURRENT_SOURCE_DIR}/include/${GTL_DIR}/btree.hpp 
-                ${CMAKE_CURRENT_SOURCE_DIR}/include/${GTL_DIR}/gtl_base.hpp 
+set(GTL_HEADERS ${CMAKE_CURRENT_SOURCE_DIR}/include/${GTL_DIR}/phmap.hpp
+                ${CMAKE_CURRENT_SOURCE_DIR}/include/${GTL_DIR}/bits.hpp
+                ${CMAKE_CURRENT_SOURCE_DIR}/include/${GTL_DIR}/btree.hpp
+                ${CMAKE_CURRENT_SOURCE_DIR}/include/${GTL_DIR}/gtl_base.hpp
                 ${CMAKE_CURRENT_SOURCE_DIR}/include/${GTL_DIR}/gtl_config.hpp
-                ${CMAKE_CURRENT_SOURCE_DIR}/include/${GTL_DIR}/intrusive.hpp 
-                ${CMAKE_CURRENT_SOURCE_DIR}/include/${GTL_DIR}/lru_cache.hpp 
-                ${CMAKE_CURRENT_SOURCE_DIR}/include/${GTL_DIR}/meminfo.hpp 
-                ${CMAKE_CURRENT_SOURCE_DIR}/include/${GTL_DIR}/memoize.hpp 
-                ${CMAKE_CURRENT_SOURCE_DIR}/include/${GTL_DIR}/bit_vector.hpp 
-                ${CMAKE_CURRENT_SOURCE_DIR}/include/${GTL_DIR}/phmap_dump.hpp 
-                ${CMAKE_CURRENT_SOURCE_DIR}/include/${GTL_DIR}/phmap_fwd_decl.hpp 
-                ${CMAKE_CURRENT_SOURCE_DIR}/include/${GTL_DIR}/phmap_utils.hpp 
-                ${CMAKE_CURRENT_SOURCE_DIR}/include/${GTL_DIR}/soa.hpp 
-                ${CMAKE_CURRENT_SOURCE_DIR}/include/${GTL_DIR}/stopwatch.hpp 
+                ${CMAKE_CURRENT_SOURCE_DIR}/include/${GTL_DIR}/intrusive.hpp
+                ${CMAKE_CURRENT_SOURCE_DIR}/include/${GTL_DIR}/lru_cache.hpp
+                ${CMAKE_CURRENT_SOURCE_DIR}/include/${GTL_DIR}/meminfo.hpp
+                ${CMAKE_CURRENT_SOURCE_DIR}/include/${GTL_DIR}/memoize.hpp
+                ${CMAKE_CURRENT_SOURCE_DIR}/include/${GTL_DIR}/bit_vector.hpp
+                ${CMAKE_CURRENT_SOURCE_DIR}/include/${GTL_DIR}/phmap_dump.hpp
+                ${CMAKE_CURRENT_SOURCE_DIR}/include/${GTL_DIR}/phmap_fwd_decl.hpp
+                ${CMAKE_CURRENT_SOURCE_DIR}/include/${GTL_DIR}/phmap_utils.hpp
+                ${CMAKE_CURRENT_SOURCE_DIR}/include/${GTL_DIR}/soa.hpp
+                ${CMAKE_CURRENT_SOURCE_DIR}/include/${GTL_DIR}/stopwatch.hpp
                 ${CMAKE_CURRENT_SOURCE_DIR}/include/${GTL_DIR}/utils.hpp
                 ${CMAKE_CURRENT_SOURCE_DIR}/include/${GTL_DIR}/adv_utils.hpp)
 
@@ -99,6 +99,10 @@ endif()
 option(GTL_BUILD_TESTS      "Whether or not to build the tests"      ${GTL_MASTER_PROJECT})
 option(GTL_BUILD_EXAMPLES   "Whether or not to build the examples"   ${GTL_MASTER_PROJECT})
 option(GTL_BUILD_BENCHMARKS "Whether or not to build the benchmarks" ${GTL_MASTER_PROJECT})
+
+if(MSVC)
+    add_compile_options("$<$<COMPILE_LANGUAGE:CXX>:/bigobj>")
+endif()
 
 if (GTL_BUILD_TESTS OR GTL_BUILD_EXAMPLES)
     include_directories(${PROJECT_SOURCE_DIR})
@@ -149,6 +153,15 @@ if (GTL_BUILD_TESTS)
 endif()
 
 if (GTL_BUILD_EXAMPLES)
+    if(NOT MSVC)
+        add_compile_options("$<$<COMPILE_LANGUAGE:CXX>:-pedantic;-Wall;-Wextra;-Wcast-align;-Wcast-qual;-Wdisabled-optimization;-Winit-self;-Wlogical-op;-Wmissing-include-dirs;-Woverloaded-virtual;-Wredundant-decls;-Wshadow;-Wstrict-null-sentinel;-Wswitch-default;-Wno-unused>")
+        if (NOT CMAKE_COMPILER_IS_GNUCC OR CMAKE_CXX_COMPILER_VERSION VERSION_GREATER 5.0)
+            add_compile_options("$<$<COMPILE_LANGUAGE:CXX>:-Wno-unknown-warning-option;-Wno-gnu-zero-variadic-macro-arguments>")
+        endif()
+    else()
+        add_compile_options("$<$<COMPILE_LANGUAGE:CXX>:/W4;/Zc:__cplusplus>")
+    endif()
+
     set(THREADS_PREFER_PTHREAD_FLAG ON)
     find_package(Threads REQUIRED)
 
@@ -185,7 +198,7 @@ endif()
     gtl_cc_app(ex_intrusive SRCS examples/misc/intrusive.cpp include/gtl/debug_vis/gtl.natvis)
     gtl_cc_app(ex_utils SRCS "examples/misc/utils.cpp" include/gtl/debug_vis/gtl.natvis)
     #gtl_cc_app(ex_adv_utils SRCS "examples/misc/adv_utils.cpp" include/gtl/debug_vis/gtl.natvis)
-    
+
     ## cache/memoize
     gtl_cc_app(ex_memoize_fib SRCS examples/memoize/memoize_fib.cpp include/gtl/debug_vis/gtl.natvis)
     gtl_cc_app(ex_memoize_primes SRCS examples/memoize/memoize_primes.cpp include/gtl/debug_vis/gtl.natvis)

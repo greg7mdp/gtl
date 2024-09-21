@@ -5577,7 +5577,7 @@ public:
 } // namespace gtl
 
 namespace gtl {
-    
+
 namespace priv {
 template<class C, class Pred>
 std::size_t erase_if(C& c, Pred pred) {
