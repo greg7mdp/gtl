@@ -406,6 +406,7 @@ public:
         }
 
         void lock_shared() {
+            assert(!locked_);
             if (!locked_shared_) {
                 m_->lock_shared();
                 locked_shared_ = true;
@@ -420,6 +421,7 @@ public:
         }
 
         void lock() {
+            assert(!locked_shared_);
             if (!locked_) {
                 m_->lock();
                 locked_ = true;
@@ -524,12 +526,12 @@ public:
 //    using Lockable = gtl::LockableImpl<mutex_type>;
 //    Lockable m;
 //
-//    Lockable::UpgradeLock read_lock(m); // take a upgradable lock
+//    Lockable::ReadWriteLock read_lock(m); // take a lock (read if supported, otherwise write)
+//    ... do something
 //
-//    {
-//        Lockable::UpgradeToUnique unique_lock(read_lock);
-//        // now locked for write
-//    }
+//    m.switch_to_unique(); // returns true if we had a read lock and switched to write
+//    // now locked for write
+//
 //
 // ---------------------------------------------------------------------------
 //         Generic mutex support (always write locks)
@@ -540,12 +542,10 @@ public:
     using mutex_type      = Mtx_;
     using Base            = LockableBaseImpl<Mtx_>;
     using SharedLock      = typename Base::WriteLock;
-    using UpgradeLock     = typename Base::WriteLock;
     using UniqueLock      = typename Base::WriteLock;
     using ReadWriteLock   = typename Base::WriteLock;
     using SharedLocks     = typename Base::WriteLocks;
     using UniqueLocks     = typename Base::WriteLocks;
-    using UpgradeToUnique = typename Base::DoNothing; // we already have unique ownership
 };
 
 // ---------------------------------------------------------------------------
@@ -557,10 +557,8 @@ public:
     using mutex_type      = NullMutex;
     using Base            = LockableBaseImpl<NullMutex>;
     using SharedLock      = typename Base::DoNothing;
-    using UpgradeLock     = typename Base::DoNothing;
     using UniqueLock      = typename Base::DoNothing;
     using ReadWriteLock   = typename Base::DoNothing;
-    using UpgradeToUnique = typename Base::DoNothing;
     using SharedLocks     = typename Base::DoNothing;
     using UniqueLocks     = typename Base::DoNothing;
 };
@@ -586,12 +584,10 @@ public:
     using mutex_type      = AbslMutex;
     using Base            = LockableBaseImpl<AbslMutex>;
     using SharedLock      = typename Base::ReadLock;
-    using UpgradeLock     = typename Base::WriteLock;
     using UniqueLock      = typename Base::WriteLock;
     using ReadWriteLock   = typename Base::ReadWriteLock;
     using SharedLocks     = typename Base::ReadLocks;
     using UniqueLocks     = typename Base::WriteLocks;
-    using UpgradeToUnique = typename Base::DoNothing; // we already have unique ownership
 };
 
 #endif
@@ -623,11 +619,9 @@ public:
     using Base            = LockableBaseImpl<srwlock>;
     using SharedLock      = typename Base::ReadLock;
     using ReadWriteLock   = typename Base::ReadWriteLock;
-    using UpgradeLock     = typename Base::WriteLock;
     using UniqueLock      = typename Base::WriteLock;
     using SharedLocks     = typename Base::ReadLocks;
     using UniqueLocks     = typename Base::WriteLocks;
-    using UpgradeToUnique = typename Base::DoNothing; // we already have unique ownership
 };
 
 #endif
@@ -643,12 +637,10 @@ public:
     using mutex_type      = boost::shared_mutex;
     using Base            = LockableBaseImpl<boost::shared_mutex>;
     using SharedLock      = boost::shared_lock<mutex_type>;
-    using UpgradeLock     = boost::unique_lock<mutex_type>; // assume can't upgrade
     using UniqueLock      = boost::unique_lock<mutex_type>;
     using ReadWriteLock   = typename Base::ReadWriteLock;
     using SharedLocks     = typename Base::ReadLocks;
     using UniqueLocks     = typename Base::WriteLocks;
-    using UpgradeToUnique = typename Base::DoNothing; // we already have unique ownership
 };
 #endif // BOOST_THREAD_SHARED_MUTEX_HPP
 
@@ -661,12 +653,10 @@ public:
     using mutex_type      = std::shared_mutex;
     using Base            = LockableBaseImpl<std::shared_mutex>;
     using SharedLock      = std::shared_lock<mutex_type>;
-    using UpgradeLock     = std::unique_lock<mutex_type>; // assume can't upgrade
     using UniqueLock      = std::unique_lock<mutex_type>;
     using ReadWriteLock   = typename Base::ReadWriteLock;
     using SharedLocks     = typename Base::ReadLocks;
     using UniqueLocks     = typename Base::WriteLocks;
-    using UpgradeToUnique = typename Base::DoNothing; // we already have unique ownership
 };
 
 namespace priv {
@@ -4040,15 +4030,17 @@ public:
     // --------------------------------------------------------------------
     template<class K = key_type>
     size_type erase(const key_arg<K>& key) {
-        auto                           hashval = this->hash(key);
-        Inner&                         inner   = sets_[subidx(hashval)];
-        auto&                          set     = inner.set_;
-        typename Lockable::UpgradeLock m(inner);
-        auto                           it = set.find(key, hashval);
+        auto          hashval = this->hash(key);
+        Inner&        inner   = sets_[subidx(hashval)];
+        auto&         set     = inner.set_;
+        ReadWriteLock m(inner);
+        auto          it = set.find(key, hashval);
         if (it == set.end())
             return 0;
 
-        typename Lockable::UpgradeToUnique unique(m);
+        if (m.switch_to_unique()) {
+            it = set.find(key, hashval);
+        }
         set._erase(it);
         return 1;
     }
