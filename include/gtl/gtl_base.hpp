@@ -74,8 +74,8 @@ namespace priv {
 // ----------------------------------------------------------------------------
 template<class Pair, class = std::true_type>
 struct OffsetOf {
-    static constexpr size_t kFirst  = (size_t)-1;
-    static constexpr size_t kSecond = (size_t)-1;
+    static constexpr size_t kFirst  = static_cast<size_t>(-1);
+    static constexpr size_t kSecond = static_cast<size_t>(-1);
 };
 
 template<class Pair>
