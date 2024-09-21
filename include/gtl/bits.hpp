@@ -266,7 +266,7 @@ GTL_FORCEINLINE uint32_t CountLeadingZeros64Slow(uint64_t n) {
         zeroes -= 8, n >>= 8;
     if (n >> 4)
         zeroes -= 4, n >>= 4;
-    return "\4\3\2\2\1\1\1\1\0\0\0\0\0\0\0"[n] + zeroes;
+    return (uint32_t)("\4\3\2\2\1\1\1\1\0\0\0\0\0\0\0"[n] + zeroes);
 }
 
 GTL_FORCEINLINE uint32_t CountLeadingZeros64(uint64_t n) {
@@ -274,17 +274,17 @@ GTL_FORCEINLINE uint32_t CountLeadingZeros64(uint64_t n) {
     // MSVC does not have __buitin_clzll. Use _BitScanReverse64.
     unsigned long result = 0; // NOLINT(runtime/int)
     if (_BitScanReverse64(&result, n)) {
-        return (uint32_t)(63 - result);
+       return static_cast<uint32_t>(63 - result);
     }
     return 64;
 #elif defined(_MSC_VER) && !defined(__clang__)
     // MSVC does not have __buitin_clzll. Compose two calls to _BitScanReverse
     unsigned long result = 0; // NOLINT(runtime/int)
     if ((n >> 32) && _BitScanReverse(&result, (unsigned long)(n >> 32))) {
-        return 31 - result;
+       return static_cast<uint32_t>(31 - result);
     }
     if (_BitScanReverse(&result, (unsigned long)n)) {
-        return 63 - result;
+       return static_cast<uint32_t>(63 - result);
     }
     return 64;
 #elif defined(__GNUC__) || defined(__clang__)
@@ -299,9 +299,9 @@ GTL_FORCEINLINE uint32_t CountLeadingZeros64(uint64_t n) {
     if (n == 0) {
         return 64;
     }
-    return __builtin_clzll(n);
+    return static_cast<uint32_t>(__builtin_clzll(n));
 #else
-    return CountLeadingZeros64Slow(n);
+    return static_cast<uint32_t>(CountLeadingZeros64Slow(n));
 #endif
 }
 
