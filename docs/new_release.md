@@ -9,8 +9,8 @@
 
 ## conan
 
-- fork and clone [conan-center](https://github.com/conan-io/conan-center-index) repo
-     (or sync +  git pull)
+- use [forked repo](https://github.com/greg7mdp/conan-center-index)
+- sync fork in github
 - git checkout master
 - git checkout -b gtl_1.2.0
 - update: `recipes/greg7mdp-gtl/all/conandata.yml` and `recipes/greg7mdp-gtl/config.yml`
@@ -25,19 +25,12 @@
 
 ## vcpkg
 
-- fork and clone [vcpkg repo](https://github.com/microsoft/vcpkg)
-     (or sync +  git pull)
+- use [forked repo](https://github.com/greg7mdp/vcpkg)
+- sync fork in github
 - git checkout -b gtl_1.2.0
-- update ports/gtl/portfile.cmake and ports/gtl/vcpkg.json
-
-in windows, non-cygwin console
-
-- set VCPKG_ROOT=
-- vcpkg install gtl --triplet x64-windows
-- update sha in `portfile.cmake` - run `sha512sum gtl-1.2.0.tar.gz` on linux
-- git diff
-- git commit -am "[gtl] Bump version to 1.2.0"
+- update ports/gtl/portfile.cmake (the sha512)  and ports/gtl/vcpkg.json
+- commit
 - vcpkg x-add-version --all --overwrite-version ## (or ./vcpkg.exe --no-dry-run upgrade )
-- git diff
-- git commit -am "[gtl] run x-add-version"
-- git push origin gtl_1.2.0 
+- commit
+- push
+- create PR
