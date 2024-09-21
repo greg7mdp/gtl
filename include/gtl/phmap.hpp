@@ -4022,6 +4022,8 @@ public:
     // unsafe, for internal use only
     Inner& get_inner(size_t idx) { return sets_[idx]; }
 
+    const Inner& get_inner(size_t idx) const { return sets_[idx]; }
+
     // Extension API: support for heterogeneous keys.
     //
     //   std::unordered_set<std::string> s;
