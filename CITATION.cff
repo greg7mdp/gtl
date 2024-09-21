@@ -1,0 +1,10 @@
+cff-version: 1.2.0
+message: "If you use this software, please cite it as below."
+authors:
+  - family-names: Popovitch
+    given-names: Gregory
+    orcid: https://orcid.org/0009-0005-7245-5930
+title: "Greg's Template Library of useful classes."
+license: Apache-2.0
+version: 1.2.0
+date-released: 2024-09-20
