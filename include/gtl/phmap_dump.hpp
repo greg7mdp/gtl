@@ -100,6 +100,9 @@ bool raw_hash_set<Policy, Hash, Eq, Alloc>::phmap_load(InputArchive& ar) {
     }
     ar.loadBinary(ctrl_, sizeof(ctrl_t) * (capacity_ + Group::kWidth + 1));
     ar.loadBinary(slots_, sizeof(slot_type) * capacity_);
+    if (version == 0) {
+        drop_deletes_without_resize(); // because we didn't load `&growth_left()`
+    }
     return true;
 }
 
