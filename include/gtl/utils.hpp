@@ -86,6 +86,11 @@ private:
     F    unset_;
 };
 
+#if __cpp_deduction_guides >= 201703
+template<class F>
+scoped_guard(F f) -> scoped_guard<F>;
+#endif
+
 // ---------------------------------------------------------------------------
 // An object which assigns a value to a variable in its constructor, and resets
 // the previous its destructor
