@@ -819,11 +819,15 @@ static_assert(kDeleted == -2,
 // A single block of empty control bytes for tables without any slots allocated.
 // This enables removing a branch in the hot path of find().
 // --------------------------------------------------------------------------
+template <class std_alloc_t>
 inline ctrl_t* EmptyGroup() {
-    alignas(16) static constexpr ctrl_t empty_group[] = { kSentinel, kEmpty, kEmpty, kEmpty, kEmpty, kEmpty,
-                                                          kEmpty,    kEmpty, kEmpty, kEmpty, kEmpty, kEmpty,
-                                                          kEmpty,    kEmpty, kEmpty, kEmpty };
-    return const_cast<ctrl_t*>(empty_group);
+    if constexpr (std_alloc_t::value) {
+        alignas(16) static constexpr ctrl_t empty_group[] = { kSentinel, kEmpty, kEmpty, kEmpty, kEmpty, kEmpty,
+                                                              kEmpty,    kEmpty, kEmpty, kEmpty, kEmpty, kEmpty,
+                                                              kEmpty,    kEmpty, kEmpty, kEmpty };
+        return const_cast<ctrl_t*>(empty_group);
+    }
+    return nullptr;
 }
 
 // --------------------------------------------------------------------------
@@ -1529,6 +1533,8 @@ public:
     template<class K>
     using key_arg = typename KeyArgImpl::template type<K, key_type>;
 
+    using std_alloc_t = std::is_same<typename std::decay<Alloc>::type, gtl::priv::Allocator<value_type>>;
+
 private:
     // Give an early error when key_type is not hashable/eq.
     auto KeyTypeCanBeHashed(const Hash& h, const key_type& k) -> decltype(h(k));
@@ -1635,6 +1641,11 @@ public:
             , slot_(slot) {}
 
         void skip_empty_or_deleted() {
+            if constexpr (!std_alloc_t::value) {
+                // ctrl_ could be nullptr
+                if (!ctrl_)
+                    return;
+            }
             while (IsEmptyOrDeleted(*ctrl_)) {
                 // ctrl is not necessarily aligned to Group::kWidth. It is also likely
                 // to read past the space for ctrl bytes and into slots. This is ok
@@ -1701,7 +1712,7 @@ public:
                           const hasher&         hashfn = hasher(),
                           const key_equal&      eq     = key_equal(),
                           const allocator_type& alloc  = allocator_type())
-        : ctrl_(EmptyGroup())
+        : ctrl_(EmptyGroup<std_alloc_t>())
         , settings_(0, hashfn, eq, alloc) {
         if (bucket_cnt) {
             size_t new_capacity = NormalizeCapacity(bucket_cnt);
@@ -1824,7 +1835,7 @@ public:
     raw_hash_set(raw_hash_set&& that) noexcept(std::is_nothrow_copy_constructible_v<hasher> &&
                                                std::is_nothrow_copy_constructible_v<key_equal> &&
                                                std::is_nothrow_copy_constructible_v<allocator_type>)
-        : ctrl_(std::exchange(that.ctrl_, EmptyGroup()))
+        : ctrl_(std::exchange(that.ctrl_, EmptyGroup<std_alloc_t>()))
         , slots_(std::exchange(that.slots_, nullptr))
         , size_(std::exchange(that.size_, 0))
         , capacity_(std::exchange(that.capacity_, 0))
@@ -1839,7 +1850,7 @@ public:
     }
 
     raw_hash_set(raw_hash_set&& that, const allocator_type& a)
-        : ctrl_(EmptyGroup())
+        : ctrl_(EmptyGroup<std_alloc_t>())
         , slots_(nullptr)
         , size_(0)
         , capacity_(0)
@@ -2366,22 +2377,13 @@ public:
     // NOTE: This is a very low level operation and should not be used without
     // specific benchmarks indicating its importance.
     // -----------------------------------------------------------------------
-    void prefetch_hash(size_t hashval) const {
-        (void)hashval;
-#if defined(_MSC_VER) && (defined(_M_X64) || defined(_M_IX86))
-        auto seq = probe(hashval);
-        _mm_prefetch((const char*)(ctrl_ + seq.offset()), _MM_HINT_NTA);
-        _mm_prefetch((const char*)(slots_ + seq.offset()), _MM_HINT_NTA);
-#elif defined(__GNUC__)
-        auto seq = probe(hashval);
-        __builtin_prefetch(static_cast<const void*>(ctrl_ + seq.offset()));
-        __builtin_prefetch(static_cast<const void*>(slots_ + seq.offset()));
-#endif // __GNUC__
+    void prefetch_hash(size_t) const {
     }
 
     template<class K = key_type>
     void prefetch(const key_arg<K>& key) const {
-        prefetch_hash(this->hash(key));
+        if constexpr (std_alloc_t::value)
+            prefetch_hash(this->hash(key));
     }
 
     // The API of find() has two extensions.
@@ -2490,6 +2492,11 @@ private:
 
     template<class K = key_type>
     bool find_impl(const key_arg<K>& key, size_t hashval, size_t& offset) {
+        if constexpr (!std_alloc_t::value) {
+            // ctrl_ could be nullptr
+            if (!ctrl_)
+                return false;
+        }
         auto seq = probe(hashval);
         while (true) {
             Group g{ ctrl_ + seq.offset() };
@@ -2652,7 +2659,7 @@ private:
         // Unpoison before returning the memory to the allocator.
         SanitizerUnpoisonMemoryRegion(slots_, sizeof(slot_type) * capacity_);
         Deallocate<Layout::Alignment()>(&alloc_ref(), ctrl_, layout.AllocSize());
-        ctrl_         = EmptyGroup();
+        ctrl_         = EmptyGroup<std_alloc_t>();
         slots_        = nullptr;
         size_         = 0;
         capacity_     = 0;
@@ -2761,6 +2768,11 @@ private:
     }
 
     bool has_element(const value_type& elem, size_t hashval) const {
+        if constexpr (!std_alloc_t::value) {
+            // ctrl_ could be nullptr
+            if (!ctrl_)
+                return false;
+        }
         auto seq = probe(hashval);
         while (true) {
             Group g{ ctrl_ + seq.offset() };
@@ -2823,6 +2835,11 @@ private:
 protected:
     template<class K>
     size_t _find_key(const K& key, size_t hashval) {
+        if constexpr (!std_alloc_t::value) {
+            // ctrl_ could be nullptr
+            if (!ctrl_)
+                return  (size_t)-1;
+        }
         auto seq = probe(hashval);
         while (true) {
             Group g{ ctrl_ + seq.offset() };
@@ -2847,6 +2864,11 @@ protected:
     }
 
     size_t prepare_insert(size_t hashval) GTL_ATTRIBUTE_NOINLINE {
+        if constexpr (!std_alloc_t::value) {
+            // ctrl_ could be nullptr
+            if (!ctrl_)
+                rehash_and_grow_if_necessary();
+        }
         auto target = find_first_non_full(hashval);
         if (GTL_PREDICT_FALSE(growth_left() == 0 && !IsDeleted(ctrl_[target.offset]))) {
             rehash_and_grow_if_necessary();
@@ -2966,10 +2988,10 @@ private:
     // - ctrl/slots can be derived from each other
     // - size can be moved into the slot array
     // -------------------------------------------------------------------------
-    ctrl_t*    ctrl_     = EmptyGroup(); // [(capacity + 1) * ctrl_t]
-    slot_type* slots_    = nullptr;      // [capacity * slot_type]
-    size_t     size_     = 0;            // number of full slots
-    size_t     capacity_ = 0;            // total number of slots
+    ctrl_t*    ctrl_     = EmptyGroup<std_alloc_t>(); // [(capacity + 1) * ctrl_t]
+    slot_type* slots_    = nullptr;                   // [capacity * slot_type]
+    size_t     size_     = 0;                         // number of full slots
+    size_t     capacity_ = 0;                         // total number of slots
     std::tuple<size_t /* growth_left */, hasher, key_equal, allocator_type> settings_{ 0,
                                                                                        hasher{},
                                                                                        key_equal{},
@@ -4059,6 +4081,7 @@ public:
     // Do not use erase APIs taking iterators when accessing the map concurrently
     // --------------------------------------------------------------------
     iterator erase(iterator it) {
+        assert(it != end());
         _erase(it++);
         return it;
     }
@@ -4991,6 +5014,8 @@ struct HashtableDebugAccess<Set, std::enable_if_t<has_member_type_raw_hash_set<S
     using Slot   = typename Traits::slot_type;
 
     static size_t GetNumProbes(const Set& set, const typename Set::key_type& key) {
+        if (!set.ctrl_)
+            return 0;
         size_t num_probes = 0;
         size_t hashval    = set.hash(key);
         auto   seq        = set.probe(hashval);
