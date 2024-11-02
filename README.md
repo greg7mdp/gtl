@@ -146,7 +146,7 @@ The four provided parallel hash containers are:
     - `gtl::parallel_node_hash_set`
 
 
-For a full writeup explaining the design and benefits of the parallel hash containers, [click here](https://greg7mdp.github.io/gtl/).
+For a full writeup explaining the design and benefits of the parallel hash containers, [click here](https://greg7mdp.github.io/parallel-hashmap/).
 
 For more information on the implementation, usage and characteristics of the parallel hash containers, please see [gtl parallel hash containers](https://github.com/greg7mdp/gtl/tree/main/docs/phmap.md)
 
