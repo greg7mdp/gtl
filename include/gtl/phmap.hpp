@@ -1574,10 +1574,6 @@ private:
     using IsDecomposable = IsDecomposable<void, PolicyTraits, Hash, Eq, Ts...>;
 
 public:
-    static_assert(std::is_same_v<pointer, value_type*>, "Allocators with custom pointer types are not supported");
-    static_assert(std::is_same_v<const_pointer, const value_type*>,
-                  "Allocators with custom pointer types are not supported");
-
     class iterator {
         friend class raw_hash_set;
 
