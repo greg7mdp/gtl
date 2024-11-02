@@ -903,7 +903,8 @@ void* Allocate(Alloc* alloc, size_t n) {
     using A  = typename std::allocator_traits<Alloc>::template rebind_alloc<M>;
     using AT = typename std::allocator_traits<Alloc>::template rebind_traits<M>;
     A     mem_alloc(*alloc);
-    void* p = AT::allocate(mem_alloc, (n + sizeof(M) - 1) / sizeof(M));
+    // `&*` below to support custom pointers such as boost offset_ptr.
+    void* p = &*AT::allocate(mem_alloc, (n + sizeof(M) - 1) / sizeof(M));
     assert(reinterpret_cast<uintptr_t>(p) % Alignment == 0 && "allocator does not respect alignment");
     return p;
 }
