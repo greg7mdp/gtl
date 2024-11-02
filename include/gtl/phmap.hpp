@@ -2520,7 +2520,11 @@ private:
     struct HashElement {
         template<class K, class... Args>
         size_t operator()(const K& key, Args&&...) const {
+#if GTL_DISABLE_MIX
+            return h(key);
+#else
             return phmap_mix<sizeof(size_t)>()(static_cast<size_t>(h(key)));
+#endif
         }
         const hasher& h;
     };
@@ -4309,7 +4313,11 @@ private:
     struct HashElement {
         template<class K, class... Args>
         size_t operator()(const K& key, Args&&...) const {
+#if GTL_DISABLE_MIX
+            return h(key);
+#else
             return phmap_mix<sizeof(size_t)>()(h(key));
+#endif
         }
         const hasher& h;
     };
