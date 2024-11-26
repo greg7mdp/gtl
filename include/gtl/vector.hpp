@@ -1311,10 +1311,14 @@ private: // we have the private section first because it defines some macros
             impl_.e_ += n;
         } else {
             if constexpr (std::is_trivially_copyable_v<T> && usingStdAllocator) {
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wnonnull" // disable erroneous warning
+#if defined(__GNUC__)
+    #pragma GCC diagnostic push
+    #pragma GCC diagnostic ignored "-Wnonnull" // disable erroneous warning
+#endif
                 std::memmove((void*)(position + n), (void*)position, tail * sizeof(T));
-#pragma GCC diagnostic pop
+#if defined(__GNUC__)
+    #pragma GCC diagnostic pop
+#endif
                 impl_.e_ += n;
             } else {
                 D_uninitialized_move_a(impl_.e_, impl_.e_ - n, impl_.e_);
