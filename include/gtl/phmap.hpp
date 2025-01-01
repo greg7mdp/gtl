@@ -1574,10 +1574,6 @@ private:
     using IsDecomposable = IsDecomposable<void, PolicyTraits, Hash, Eq, Ts...>;
 
 public:
-    static_assert(std::is_same_v<pointer, value_type*>, "Allocators with custom pointer types are not supported");
-    static_assert(std::is_same_v<const_pointer, const value_type*>,
-                  "Allocators with custom pointer types are not supported");
-
     class iterator {
         friend class raw_hash_set;
 
@@ -2524,7 +2520,11 @@ private:
     struct HashElement {
         template<class K, class... Args>
         size_t operator()(const K& key, Args&&...) const {
+#if GTL_DISABLE_MIX
+            return h(key);
+#else
             return phmap_mix<sizeof(size_t)>()(static_cast<size_t>(h(key)));
+#endif
         }
         const hasher& h;
     };
@@ -4313,7 +4313,11 @@ private:
     struct HashElement {
         template<class K, class... Args>
         size_t operator()(const K& key, Args&&...) const {
+#if GTL_DISABLE_MIX
+            return h(key);
+#else
             return phmap_mix<sizeof(size_t)>()(h(key));
+#endif
         }
         const hasher& h;
     };
