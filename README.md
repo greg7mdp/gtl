@@ -41,6 +41,7 @@ FetchContent_Declare(
     GIT_TAG        v1.2.0 # adjust tag/branch/commit as needed
 )
 FetchContent_MakeAvailable(gtl)
+
 ...
 target_link_libraries (my_target PRIVATE gtl)
 ```
