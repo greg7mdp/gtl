@@ -33,17 +33,17 @@ Copy the gtl directory to your project. Update your include path. That's all.
 
 If you are using cmake, you can use FetchContent to integrate gtl to your project, for example:
 
-```
-    include(FetchContent)
-    FetchContent_Declare(
-        gtl
-        GIT_REPOSITORY https://github.com/greg7mdp/gtl.git
-        GIT_TAG        v1.2.0 # adjust tag/branch/commit as needed
-    )
-    FetchContent_MakeAvailable(gtl)
+```cmake
+include(FetchContent)
+FetchContent_Declare(
+    gtl
+    GIT_REPOSITORY https://github.com/greg7mdp/gtl.git
+    GIT_TAG        v1.2.0 # adjust tag/branch/commit as needed
+)
+FetchContent_MakeAvailable(gtl)
 
-    ...
-    target_link_libraries (my_target PRIVATE gtl)
+...
+target_link_libraries (my_target PRIVATE gtl)
 ```
 
 #### Using a package manager
