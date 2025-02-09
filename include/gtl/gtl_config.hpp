@@ -276,6 +276,17 @@
 #endif
 
 // ----------------------------------------------------------------------
+// RESTRICT
+// ----------------------------------------------------------------------
+#if (defined(__GNUC__) && (__GNUC__ > 3)) || defined(__clang__)
+    #define GTL_RESTRICT __restrict__
+#elif defined(_MSC_VER) && _MSC_VER >= 1400
+    #define GTL_RESTRICT __restrict
+#else
+    #define GTL_RESTRICT
+#endif
+
+// ----------------------------------------------------------------------
 // define gtl_hardware_destructive_interference_size
 // ----------------------------------------------------------------------
 #ifdef __cpp_lib_hardware_interference_size

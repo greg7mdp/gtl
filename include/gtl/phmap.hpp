@@ -1032,7 +1032,7 @@ inline bool IsValidCapacity(size_t n) { return ((n + 1) & n) == 0 && n > 0; }
 //   EMPTY -> EMPTY
 //   FULL -> DELETED
 // --------------------------------------------------------------------------
-inline void ConvertDeletedToEmptyAndFullToDeleted(ctrl_t* ctrl, size_t capacity) {
+inline void ConvertDeletedToEmptyAndFullToDeleted(ctrl_t* GTL_RESTRICT ctrl, size_t capacity) {
     assert(ctrl[capacity] == kSentinel);
     assert(IsValidCapacity(capacity));
     for (ctrl_t* pos = ctrl; pos != ctrl + capacity + 1; pos += Group::kWidth) {
@@ -2488,19 +2488,21 @@ private:
     friend struct hashtable_debug_internal::HashtableDebugAccess;
 
     template<class K = key_type>
-    bool find_impl(const key_arg<K>& key, size_t hashval, size_t& offset) {
+    bool find_impl(const key_arg<K>& GTL_RESTRICT key, size_t hashval, size_t& GTL_RESTRICT offset) {
+        auto ctrl_ptr = ctrl_;
         if constexpr (!std_alloc_t::value) {
             // ctrl_ could be nullptr
-            if (!ctrl_)
+            if (!ctrl_ptr)
                 return false;
         }
         auto seq = probe(hashval);
+        auto slots_ptr = slots_;
         while (true) {
-            Group g{ ctrl_ + seq.offset() };
+            Group g{ ctrl_ptr + seq.offset() };
             for (uint32_t i : g.Match((h2_t)H2(hashval))) {
                 offset = seq.offset((size_t)i);
                 if (GTL_PREDICT_TRUE(
-                        PolicyTraits::apply(EqualElement<K>{ key, eq_ref() }, PolicyTraits::element(slots_ + offset))))
+                        PolicyTraits::apply(EqualElement<K>{ key, eq_ref() }, PolicyTraits::element(slots_ptr + offset))))
                     return true;
             }
             if (GTL_PREDICT_TRUE(g.MatchEmpty()))
@@ -2650,9 +2652,11 @@ private:
         if constexpr (!std::is_trivially_destructible<typename PolicyTraits::value_type>::value ||
                       std::is_same<typename Policy::is_flat, std::false_type>::value) {
             // node map or not trivially destructible... we  need to iterate and destroy values one by one
-            for (size_t i = 0; i != capacity_; ++i) {
-                if (IsFull(ctrl_[i])) {
-                    PolicyTraits::destroy(&alloc_ref(), slots_ + i);
+            auto slots_ptr = slots_; // local variable not aliased
+            auto ctrl_ptr  = ctrl_;
+            for (size_t i = 0, cnt = capacity_; i != cnt; ++i) {
+                if (IsFull(ctrl_ptr[i])) {
+                    PolicyTraits::destroy(&alloc_ref(), slots_ptr + i);
                 }
             }
         }
@@ -2768,7 +2772,7 @@ private:
         }
     }
 
-    bool has_element(const value_type& elem, size_t hashval) const {
+    bool has_element(const value_type& GTL_RESTRICT elem, size_t hashval) const {
         if constexpr (!std_alloc_t::value) {
             // ctrl_ could be nullptr
             if (!ctrl_)
@@ -2835,18 +2839,20 @@ private:
 
 protected:
     template<class K>
-    size_t _find_key(const K& key, size_t hashval) {
+    size_t _find_key(const K& GTL_RESTRICT key, size_t hashval) {
+        auto ctrl_ptr = ctrl_;
         if constexpr (!std_alloc_t::value) {
             // ctrl_ could be nullptr
-            if (!ctrl_)
+            if (!ctrl_ptr)
                 return  (size_t)-1;
         }
         auto seq = probe(hashval);
+        auto slots_ptr = slots_;
         while (true) {
-            Group g{ ctrl_ + seq.offset() };
+            Group g{ ctrl_ptr + seq.offset() };
             for (uint32_t i : g.Match((h2_t)H2(hashval))) {
                 if (GTL_PREDICT_TRUE(PolicyTraits::apply(EqualElement<K>{ key, eq_ref() },
-                                                         PolicyTraits::element(slots_ + seq.offset((size_t)i)))))
+                                                         PolicyTraits::element(slots_ptr + seq.offset((size_t)i)))))
                     return seq.offset((size_t)i);
             }
             if (GTL_PREDICT_TRUE(g.MatchEmpty()))
