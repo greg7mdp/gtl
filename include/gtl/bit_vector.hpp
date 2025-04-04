@@ -25,23 +25,23 @@ namespace gtl {
 
 namespace bitv {
 
-static constexpr size_t   stride = 64;
-static constexpr uint64_t ones   = (uint64_t)-1;
+inline constexpr size_t   stride = 64;
+inline constexpr uint64_t ones   = (uint64_t)-1;
 
-static constexpr size_t mod(size_t n) { return (n & 0x3f); }
-static constexpr size_t slot(size_t n) { return n >> 6; }
-static constexpr size_t slot_cnt(size_t n) { return slot(n + 63); }
+inline constexpr size_t mod(size_t n) { return (n & 0x3f); }
+inline constexpr size_t slot(size_t n) { return n >> 6; }
+inline constexpr size_t slot_cnt(size_t n) { return slot(n + 63); }
 
 // a mask for this bit in its slot
-static constexpr uint64_t bitmask(size_t n) { return (uint64_t)1 << mod(n); }
+inline constexpr uint64_t bitmask(size_t n) { return (uint64_t)1 << mod(n); }
 
 // a mask for bits lower than n in slot
-static constexpr uint64_t lowmask(size_t n) { return bitmask(n) - 1; }
+inline constexpr uint64_t lowmask(size_t n) { return bitmask(n) - 1; }
 
 // a mask for bits higher than n-1 in slot
-static constexpr uint64_t himask(size_t n) { return ~lowmask(n); }
+inline constexpr uint64_t himask(size_t n) { return ~lowmask(n); }
 
-static constexpr size_t _popcount64(uint64_t y) {
+inline constexpr size_t _popcount64(uint64_t y) {
     // https://gist.github.com/enjoylife/4091854
     y -= ((y >> 1) & 0x5555555555555555ull);
     y = (y & 0x3333333333333333ull) + (y >> 2 & 0x3333333333333333ull);
@@ -49,7 +49,7 @@ static constexpr size_t _popcount64(uint64_t y) {
 }
 
 // De Bruijn Multiplication With separated LS1B - author Kim Walisch (2012)
-unsigned countr_zero(uint64_t bb) {
+inline constexpr unsigned countr_zero(uint64_t bb) {
     const unsigned index64[64] = { 0,  47, 1,  56, 48, 27, 2,  60, 57, 49, 41, 37, 28, 16, 3,  61,
                                    54, 58, 35, 52, 50, 42, 21, 44, 38, 32, 29, 23, 17, 11, 4,  62,
                                    46, 55, 26, 59, 40, 36, 15, 53, 34, 51, 20, 43, 31, 22, 10, 45,
