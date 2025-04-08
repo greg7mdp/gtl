@@ -54,8 +54,7 @@ private:
 };
 
 // ---------------------------------------------------------------------------
-// An object which calls a lambda in its constructor, and another one in
-// its destructor
+// An object which calls a lambda in its  destructor
 //
 // This object must be captured in a local variable, Otherwise, since it is a
 // temporary, it will be destroyed immediately, thus calling the function.

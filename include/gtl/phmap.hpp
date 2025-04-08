@@ -826,8 +826,9 @@ inline ctrl_t* EmptyGroup() {
                                                               kEmpty,    kEmpty, kEmpty, kEmpty, kEmpty, kEmpty,
                                                               kEmpty,    kEmpty, kEmpty, kEmpty };
         return const_cast<ctrl_t*>(empty_group);
+    } else {
+        return nullptr;
     }
-    return nullptr;
 }
 
 // --------------------------------------------------------------------------
@@ -1031,7 +1032,7 @@ inline bool IsValidCapacity(size_t n) { return ((n + 1) & n) == 0 && n > 0; }
 //   EMPTY -> EMPTY
 //   FULL -> DELETED
 // --------------------------------------------------------------------------
-inline void ConvertDeletedToEmptyAndFullToDeleted(ctrl_t* ctrl, size_t capacity) {
+inline void ConvertDeletedToEmptyAndFullToDeleted(ctrl_t* GTL_RESTRICT ctrl, size_t capacity) {
     assert(ctrl[capacity] == kSentinel);
     assert(IsValidCapacity(capacity));
     for (ctrl_t* pos = ctrl; pos != ctrl + capacity + 1; pos += Group::kWidth) {
@@ -1573,10 +1574,6 @@ private:
     using IsDecomposable = IsDecomposable<void, PolicyTraits, Hash, Eq, Ts...>;
 
 public:
-    static_assert(std::is_same_v<pointer, value_type*>, "Allocators with custom pointer types are not supported");
-    static_assert(std::is_same_v<const_pointer, const value_type*>,
-                  "Allocators with custom pointer types are not supported");
-
     class iterator {
         friend class raw_hash_set;
 
@@ -2491,7 +2488,7 @@ private:
     friend struct hashtable_debug_internal::HashtableDebugAccess;
 
     template<class K = key_type>
-    bool find_impl(const key_arg<K>& key, size_t hashval, size_t& offset) {
+    bool find_impl(const key_arg<K>& GTL_RESTRICT key, size_t hashval, size_t& GTL_RESTRICT offset) {
         if constexpr (!std_alloc_t::value) {
             // ctrl_ could be nullptr
             if (!ctrl_)
@@ -2523,7 +2520,11 @@ private:
     struct HashElement {
         template<class K, class... Args>
         size_t operator()(const K& key, Args&&...) const {
+#if GTL_DISABLE_MIX
+            return h(key);
+#else
             return phmap_mix<sizeof(size_t)>()(static_cast<size_t>(h(key)));
+#endif
         }
         const hasher& h;
     };
@@ -2649,7 +2650,7 @@ private:
         if constexpr (!std::is_trivially_destructible<typename PolicyTraits::value_type>::value ||
                       std::is_same<typename Policy::is_flat, std::false_type>::value) {
             // node map or not trivially destructible... we  need to iterate and destroy values one by one
-            for (size_t i = 0; i != capacity_; ++i) {
+            for (size_t i = 0, cnt = capacity_; i != cnt; ++i) {
                 if (IsFull(ctrl_[i])) {
                     PolicyTraits::destroy(&alloc_ref(), slots_ + i);
                 }
@@ -2767,7 +2768,7 @@ private:
         }
     }
 
-    bool has_element(const value_type& elem, size_t hashval) const {
+    bool has_element(const value_type& GTL_RESTRICT elem, size_t hashval) const {
         if constexpr (!std_alloc_t::value) {
             // ctrl_ could be nullptr
             if (!ctrl_)
@@ -2834,7 +2835,7 @@ private:
 
 protected:
     template<class K>
-    size_t _find_key(const K& key, size_t hashval) {
+    size_t _find_key(const K& GTL_RESTRICT key, size_t hashval) {
         if constexpr (!std_alloc_t::value) {
             // ctrl_ could be nullptr
             if (!ctrl_)
@@ -4312,7 +4313,11 @@ private:
     struct HashElement {
         template<class K, class... Args>
         size_t operator()(const K& key, Args&&...) const {
+#if GTL_DISABLE_MIX
+            return h(key);
+#else
             return phmap_mix<sizeof(size_t)>()(h(key));
+#endif
         }
         const hasher& h;
     };
