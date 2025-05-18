@@ -2143,11 +2143,12 @@ public:
             return *slot_;
         }
 
+        // returns a pointer to the inserted value
         template<class... Args>
-        void operator()(Args&&... args) const {
+        slot_type* operator()(Args&&... args) const {
             assert(*slot_);
             PolicyTraits::construct(alloc_, *slot_, std::forward<Args>(args)...);
-            *slot_ = nullptr;
+            return *slot_;
         }
 
     private:
@@ -2204,7 +2205,6 @@ public:
     void lazy_emplace_at(size_t& idx, F&& f) {
         slot_type* slot = slots_ + idx;
         std::forward<F>(f)(constructor(&alloc_ref(), &slot));
-        assert(!slot);
     }
 
     template<class K = key_type, class F>
