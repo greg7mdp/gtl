@@ -2143,12 +2143,14 @@ public:
             return *slot_;
         }
 
-        // returns a pointer to the inserted value
+        // returns a reference to the inserted `value_type`.
+        // beware that the returned reference is stable only for `node` hash map or sets. When using
+        // a `flat` version, this reference can be used immediately, but we shouldn't store a pointer to it.
         template<class... Args>
-        slot_type* operator()(Args&&... args) const {
+        const auto& operator()(Args&&... args) const {
             assert(*slot_);
             PolicyTraits::construct(alloc_, *slot_, std::forward<Args>(args)...);
-            return *slot_;
+            return PolicyTraits::element(slot());
         }
 
     private:
