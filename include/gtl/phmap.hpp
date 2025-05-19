@@ -2143,7 +2143,9 @@ public:
             return *slot_;
         }
 
-        // returns a pointer to the inserted value
+        // returns a pointer to the inserted value.
+        // beware that the returned pointer is stable only for `node` hash map or sets. When using
+        // a `flat` version, this pointer can be used immediately, but shouldn't be stored.
         template<class... Args>
         slot_type* operator()(Args&&... args) const {
             assert(*slot_);
