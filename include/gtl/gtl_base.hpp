@@ -37,6 +37,7 @@
 #include <algorithm>
 #include <cassert>
 #include <cstddef>
+#include <cstdlib>
 #include <functional>
 #include <initializer_list>
 #include <iterator>
