@@ -3580,7 +3580,7 @@ public:
             UniqueLock m(inner);
             inner.set_.clear();
             if constexpr (!std::is_same_v<gtl::priv::empty, aux_type>)
-                inner->aux_.clear();
+                inner.aux_.clear();
         }
     }
 
@@ -3591,7 +3591,7 @@ public:
         UniqueLock m(inner);
         inner.set_.clear();
         if constexpr (!std::is_same_v<gtl::priv::empty, aux_type>)
-            inner->aux_.clear();
+            inner.aux_.clear();
     }
 
     // This overload kicks in when the argument is an rvalue of insertable and
