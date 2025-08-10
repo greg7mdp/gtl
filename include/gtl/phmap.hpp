@@ -4121,7 +4121,8 @@ public:
 
     template<class K = key_type, typename std::enable_if_t<!std::is_same_v<K, iterator>, int> = 0>
     node_type extract(const key_arg<K>& key) {
-        auto it = find(key);
+        UniqueLock m;
+        auto it = this->template find<K, UniqueLock>(key, this->hash(key), m);
         return it == end() ? node_type() : extract(const_iterator{ it });
     }
 
