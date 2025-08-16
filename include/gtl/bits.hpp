@@ -266,7 +266,7 @@ GTL_FORCEINLINE uint32_t CountLeadingZeros64Slow(uint64_t n) {
         zeroes -= 8, n >>= 8;
     if (n >> 4)
         zeroes -= 4, n >>= 4;
-    return (uint32_t)("\4\3\2\2\1\1\1\1\0\0\0\0\0\0\0"[n] + zeroes);
+    return static_cast<uint32_t>("\4\3\2\2\1\1\1\1\0\0\0\0\0\0\0"[n]) + zeroes;
 }
 
 GTL_FORCEINLINE uint32_t CountLeadingZeros64(uint64_t n) {
@@ -313,7 +313,7 @@ GTL_FORCEINLINE uint32_t CountLeadingZeros32Slow(uint64_t n) {
         zeroes -= 8, n >>= 8;
     if (n >> 4)
         zeroes -= 4, n >>= 4;
-    return "\4\3\2\2\1\1\1\1\0\0\0\0\0\0\0"[n] + zeroes;
+    return static_cast<uint32_t>("\4\3\2\2\1\1\1\1\0\0\0\0\0\0\0"[n]) + zeroes;
 }
 
 GTL_FORCEINLINE uint32_t CountLeadingZeros32(uint32_t n) {
@@ -334,7 +334,7 @@ GTL_FORCEINLINE uint32_t CountLeadingZeros32(uint32_t n) {
     if (n == 0) {
         return 32;
     }
-    return __builtin_clz(n);
+    return static_cast<uint32_t>(__builtin_clz(n));
 #else
     return CountLeadingZeros32Slow(n);
 #endif
@@ -374,7 +374,7 @@ GTL_FORCEINLINE uint32_t CountTrailingZerosNonZero64(uint64_t n) {
 #elif defined(__GNUC__) || defined(__clang__)
     static_assert(sizeof(unsigned long long) == sizeof(n), // NOLINT(runtime/int)
                   "__builtin_ctzll does not take 64-bit arg");
-    return __builtin_ctzll(n);
+    return static_cast<uint32_t>(__builtin_ctzll(n));
 #else
     return CountTrailingZerosNonZero64Slow(n);
 #endif
@@ -403,7 +403,7 @@ GTL_FORCEINLINE uint32_t CountTrailingZerosNonZero32(uint32_t n) {
     return (uint32_t)result;
 #elif defined(__GNUC__) || defined(__clang__)
     static_assert(sizeof(int) == sizeof(n), "__builtin_ctz does not take 32-bit arg");
-    return __builtin_ctz(n);
+    return static_cast<uint32_t>(__builtin_ctz(n));
 #else
     return CountTrailingZerosNonZero32Slow(n);
 #endif
