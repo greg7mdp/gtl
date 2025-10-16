@@ -25,7 +25,10 @@ list (APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake")
 include(DetectVersion)
 
 cmake_policy(SET CMP0048 NEW)              ## set VERSION as documented by the project() command.
-cmake_policy(SET CMP0076 NEW)              ## accept new policy
+cmake_policy(SET CMP0076 NEW)              ## accept new policy for converting relative paths to absolute.
+if(POLICY CMP0167)
+   cmake_policy(SET CMP0167 NEW)           ## accept new policy to search for the upstream ``BoostConfig.cmake``
+endif()
 
 if(NOT CMAKE_CXX_STANDARD)
     set(CMAKE_CXX_STANDARD 20)             ## compile with C++20 support
@@ -99,6 +102,7 @@ endif()
 option(GTL_BUILD_TESTS      "Whether or not to build the tests"      ${GTL_MASTER_PROJECT})
 option(GTL_BUILD_EXAMPLES   "Whether or not to build the examples"   ${GTL_MASTER_PROJECT})
 option(GTL_BUILD_BENCHMARKS "Whether or not to build the benchmarks" ${GTL_MASTER_PROJECT})
+option(GTL_DOWNLOAD_GTEST   "Whether to download gtest or use installed version" ON)
 
 if(MSVC)
     add_compile_options("$<$<COMPILE_LANGUAGE:CXX>:/bigobj>")
@@ -112,12 +116,22 @@ endif()
 if (GTL_BUILD_TESTS)
 
     if (NOT GTL_GTEST_LIBS)
-        include(cmake/DownloadGTest.cmake)
+        if (NOT GTL_DOWNLOAD_GTEST)
+            find_package(GTest CONFIG)
+            if (GTest_FOUND)
+                set(GTL_GTEST_LIBS GTest::gmock_main)
+            else()
+                set(GTL_DOWNLOAD_GTEST ON)
+            endif()
+        endif()
+        if (GTL_DOWNLOAD_GTEST)
+            include(cmake/DownloadGTest.cmake)
 
-        gtl_check_target(gtest)
-        gtl_check_target(gtest_main)
-        gtl_check_target(gmock)
-        set(GTL_GTEST_LIBS gmock_main)
+            gtl_check_target(gtest)
+            gtl_check_target(gtest_main)
+            gtl_check_target(gmock)
+            set(GTL_GTEST_LIBS gmock_main)
+        endif()
     endif()
 
     enable_testing()
@@ -206,7 +220,7 @@ endif()
     gtl_cc_app(ex_mt_memoize SRCS examples/memoize/mt_memoize.cpp ${natvis} LIBS Threads::Threads)
     gtl_cc_app(ex_mt_memoize_lru SRCS examples/memoize/mt_memoize_lru.cpp ${natvis} LIBS Threads::Threads)
 
-    find_package(Boost 1.70.0)
+    find_package(Boost 1.70.0 QUIET)
     if (Boost_FOUND)
        gtl_cc_app(ex_custom_pointer SRCS examples/hmap/custom_pointer.cpp ${natvis})
        target_include_directories(ex_custom_pointer PRIVATE ${Boost_INCLUDE_DIRS})
