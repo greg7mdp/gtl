@@ -8,6 +8,14 @@ function(gtl_set_target_options my_target)
     $<$<CXX_COMPILER_ID:GNU>:-pedantic -Wall -Wextra -Wcast-align -Wcast-qual -Wdisabled-optimization -Winit-self -Wmissing-include-dirs -Woverloaded-virtual -Wredundant-decls -Wshadow -Wswitch-default -Wunused -Wno-interference-size>
     $<$<CXX_COMPILER_ID:MSVC>:/W4 /Zc:__cplusplus /bigobj>
   )
+
+  if (GTL_SANITIZE)
+    set(clang_san_options -g -fsanitize=undefined -fno-sanitize-recover=all -fsanitize=float-divide-by-zero
+                             -fsanitize=float-cast-overflow -fno-sanitize=null -fno-sanitize=alignment -fPIE
+                             -fno-omit-frame-pointer )
+    target_compile_options(${my_target} PUBLIC ${clang_san_options} )
+    target_link_options(${my_target} PUBLIC ${clang_san_options} )
+  endif()
 endfunction()
 
 # -------------------------------------------------------------
