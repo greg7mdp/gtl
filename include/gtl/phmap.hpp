@@ -1259,15 +1259,27 @@ decltype(std::declval<F>()(std::declval<const Arg&>(), std::declval<Arg>())) Dec
 // ----------------------------------------------------------------------------
 template<class Policy, class = void>
 struct hash_policy_traits {
+    // The type of the keys stored in the hashtable.
+    using key_type = typename Policy::key_type;
+
 private:
     struct ReturnKey {
-        // We return `Key` here.
+        template<class Key, std::enable_if_t<std::is_lvalue_reference<Key>::value, int> = 0>
+        static key_type& Impl(Key&& k, int) {
+           return *std::launder(const_cast<key_type*>(std::addressof(std::forward<Key>(k))));
+        }
+
+        template<class Key>
+        static Key Impl(Key&& k, char) {
+            return std::forward<Key>(k);
+        }
+
         // When Key=T&, we forward the lvalue reference.
         // When Key=T, we return by value to avoid a dangling reference.
         // eg, for string_hash_map.
         template<class Key, class... Args>
-        Key operator()(Key&& k, const Args&...) const {
-            return std::forward<Key>(k);
+        auto operator()(Key&& k, const Args&...) const -> decltype(Impl(std::forward<Key>(k), 0)) {
+            return Impl(std::forward<Key>(k), 0);
         }
     };
 
@@ -1279,7 +1291,6 @@ private:
 
 public:
     using slot_type = typename Policy::slot_type; // The actual object stored in the hash table.
-    using key_type  = typename Policy::key_type;  // The type of the keys stored in the hashtable.
 
     // The argument type for insertions into the hashtable. This is different
     // from value_type for increased performance. See initializer_list constructor
@@ -3729,8 +3740,8 @@ public:
         Inner&                                                  inner = sets_[subidx(hashval)];
         auto&                                                   set   = inner.set_;
         UniqueLock                                              m(inner);
-        typename EmbeddedSet::template InsertSlotWithHash<true> f{ inner, std::move(*slot), hashval };
-        return make_rv(PolicyTraits::apply(f, elem));
+        typename EmbeddedSet::template InsertSlotWithHash<true> f{ set, std::move(*slot), hashval };
+        return make_rv(&inner, PolicyTraits::apply(std::move(f), elem));
     }
 
     template<class... Args>
@@ -3794,16 +3805,15 @@ public:
     std::pair<iterator, bool> emplace(Args&&... args) {
         typename gtl::aligned_storage_t<sizeof(slot_type), alignof(slot_type)> raw;
         slot_type* slot    = reinterpret_cast<slot_type*>(&raw);
-        size_t     hashval = this->hash(PolicyTraits::key(slot));
-
         PolicyTraits::construct(&alloc_ref(), slot, std::forward<Args>(args)...);
-        const auto& elem  = PolicyTraits::element(slot);
-        Inner&      inner = sets_[subidx(hashval)];
-        auto&       set   = inner.set_;
+        size_t      hashval = this->hash(PolicyTraits::key(slot));
+        const auto& elem    = PolicyTraits::element(slot);
+        Inner&      inner   = sets_[subidx(hashval)];
+        auto&       set     = inner.set_;
         UniqueLock  m(inner);
 
-        typename EmbeddedSet::template InsertSlotWithHash<true> f{ inner, std::move(*slot), hashval };
-        return make_rv(PolicyTraits::apply(f, elem));
+        typename EmbeddedSet::template InsertSlotWithHash<true> f{ set, std::move(*slot), hashval };
+        return make_rv(&inner, PolicyTraits::apply(std::move(f), elem));
     }
 
     template<class... Args>
