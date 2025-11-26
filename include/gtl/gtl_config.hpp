@@ -116,10 +116,14 @@
 // Checks whether the __int128 compiler extension for a 128-bit
 // integral type is supported.
 // ------------------------------------------------------------
+#if defined(__arm__) && !defined(__aarch64__)
+    #define GTL_ARM_32
+#endif
+
 #ifdef GTL_HAVE_INTRINSIC_INT128
     #error GTL_HAVE_INTRINSIC_INT128 cannot be directly set
 #elif defined(__SIZEOF_INT128__)
-    #if (defined(__clang__) && !defined(_WIN32) && !defined(__aarch64__)) ||                                           \
+    #if (defined(__clang__) && !defined(_WIN32) && !defined(GTL_ARM_32)) ||                                           \
         (defined(__CUDACC__) && __CUDACC_VER_MAJOR__ >= 9) ||                                                          \
         (defined(__GNUC__) && !defined(__clang__) && !defined(__CUDACC__))
         #define GTL_HAVE_INTRINSIC_INT128 1

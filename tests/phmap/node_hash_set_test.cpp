@@ -105,7 +105,7 @@ TEST(THIS_TEST_NAME, Emplace) {
    gtl::THIS_HASH_SET<Thing> hs;
    hs.emplace(Thing(0, 1.25));
    hs.emplace(0, 1.3);
-   assert(hs.find(Thing(0, 1.3)) != hs.end());
+   EXPECT_TRUE(hs.find(Thing(0, 1.3)) != hs.end());
 }
 
 } // namespace
