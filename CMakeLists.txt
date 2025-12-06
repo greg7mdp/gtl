@@ -74,6 +74,7 @@ set(GTL_HEADERS ${CMAKE_CURRENT_SOURCE_DIR}/include/${GTL_DIR}/phmap.hpp
 include(helpers)
 
 add_library(${PROJECT_NAME} INTERFACE)
+add_library(gtl::gtl ALIAS gtl)
 
 target_sources(${PROJECT_NAME} INTERFACE ${GTL_HEADERS})
 
