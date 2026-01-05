@@ -95,6 +95,61 @@
 #endif
 
 // -----------------------------------------------------------------------------
+// C++ architecture constants
+// -----------------------------------------------------------------------------
+namespace gtl {
+
+#if defined(__arm__)
+constexpr bool kIsArchArm = true;
+#else
+constexpr bool kIsArchArm = false;
+#endif
+
+#if defined(__i386__) || defined(__i686__) || defined(__x86__) || defined(_M_IX86)
+constexpr bool kIsArchX86 = true;
+#else
+constexpr bool kIsArchX86 = false;
+#endif
+
+#if defined(__x86_64__) || defined(_M_X64)
+constexpr bool kIsArchAmd64 = true;
+#else
+constexpr bool kIsArchAmd64 = false;
+#endif
+
+#if defined(__aarch64__)
+constexpr bool kIsArchAArch64 = true;
+#else
+constexpr bool kIsArchAArch64 = false;
+#endif
+
+#if defined(__powerpc64__)
+constexpr bool kIsArchPPC64 = true;
+#else
+constexpr bool kIsArchPPC64 = false;
+#endif
+
+#if defined(__s390x__)
+constexpr bool kIsArchS390X = true;
+#else
+constexpr bool kIsArchS390X = false;
+#endif
+
+#if defined(__riscv)
+constexpr bool kIsArchRISCV64 = true;
+#else
+constexpr bool kIsArchRISCV64 = false;
+#endif
+
+#if defined(__wasm__)
+constexpr bool kIsArchWasm = true;
+#else
+constexpr bool kIsArchWasm = false;
+#endif
+
+} // namespace gtl
+
+// -----------------------------------------------------------------------------
 // Compiler Feature Checks
 // -----------------------------------------------------------------------------
 
@@ -293,10 +348,18 @@
 // ----------------------------------------------------------------------
 // define gtl_hardware_destructive_interference_size
 // ----------------------------------------------------------------------
-#ifdef __cpp_lib_hardware_interference_size
-    #define gtl_hardware_destructive_interference_size std::hardware_destructive_interference_size
+namespace gtl {
+
+#if defined(__cpp_lib_hardware_interference_size) && defined(GTL_CPP_LIB_INTERFERENCE_SIZES)
+constexpr std::size_t hardware_destructive_interference_size  = std::hardware_destructive_interference_size;
+constexpr std::size_t hardware_constructive_interference_size = std::hardware_constructive_interference_size;
 #else
-    #define gtl_hardware_destructive_interference_size 64
+// default values as in Folly, see rationale at
+// https://github.com/facebook/folly/blob/561b4f49e95717614bc8c9d9b23c78c077c7566e/folly/lang/Align.h#L172-L185
+constexpr std::size_t hardware_destructive_interference_size  = (kIsArchArm || kIsArchS390X) ? 64 : 128;
+constexpr std::size_t hardware_constructive_interference_size = 64;
 #endif
+
+} // namespace gtl
 
 #endif // gtl_config_hpp_guard_

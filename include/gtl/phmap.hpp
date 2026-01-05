@@ -3245,7 +3245,7 @@ protected:
     using ReadWriteLock = typename Lockable::ReadWriteLock;
 
     // --------------------------------------------------------------------
-    struct alignas(gtl_hardware_destructive_interference_size) Inner : public Lockable {
+   struct alignas(gtl::hardware_destructive_interference_size) Inner : public Lockable {
         struct Params {
             size_t                bucket_cnt;
             const hasher&         hashfn;
