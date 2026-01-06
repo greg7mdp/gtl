@@ -346,20 +346,15 @@ constexpr bool kIsArchWasm = false;
 #endif
 
 // ----------------------------------------------------------------------
-// define gtl_hardware_destructive_interference_size
+// define gtl::hardware_destructive_interference_size
+// gtl defines hard coded values which are stable and do not depend on the compiler used.
+//
+// rationale for these values from folly, see
+// https://github.com/facebook/folly/blob/561b4f49e95717614bc8c9d9b23c78c077c7566e/folly/lang/Align.h#L172-L185
 // ----------------------------------------------------------------------
 namespace gtl {
-
-#if defined(__cpp_lib_hardware_interference_size) && defined(GTL_CPP_LIB_INTERFERENCE_SIZES)
-constexpr std::size_t hardware_destructive_interference_size  = std::hardware_destructive_interference_size;
-constexpr std::size_t hardware_constructive_interference_size = std::hardware_constructive_interference_size;
-#else
-// default values as in Folly, see rationale at
-// https://github.com/facebook/folly/blob/561b4f49e95717614bc8c9d9b23c78c077c7566e/folly/lang/Align.h#L172-L185
 constexpr std::size_t hardware_destructive_interference_size  = (kIsArchArm || kIsArchS390X) ? 64 : 128;
 constexpr std::size_t hardware_constructive_interference_size = 64;
-#endif
-
 } // namespace gtl
 
 #endif // gtl_config_hpp_guard_
