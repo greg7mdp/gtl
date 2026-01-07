@@ -26,7 +26,7 @@ function(gtl_cc_app my_target)
     "SRCS;LIBS"
     ${ARGN}
   )
-  add_executable(${my_target} ${GTL_CC_APP_SRCS})
+  add_executable(${my_target} ${GTL_CC_APP_SRCS} ${natvis})
   target_link_libraries(${my_target} PRIVATE ${PROJECT_NAME} ${GTL_CC_APP_LIBS})
   gtl_set_target_options(${my_target})
 endfunction()
@@ -45,7 +45,7 @@ function(gtl_cc_test)
   )
 
   set(_NAME "test_${GTL_CC_TEST_NAME}")
-  add_executable(${_NAME} ${GTL_CC_TEST_SRCS})
+  add_executable(${_NAME} ${GTL_CC_TEST_SRCS} ${natvis})
   target_link_libraries(${_NAME} PRIVATE ${PROJECT_NAME} ${GTL_CC_TEST_DEPS})
   gtl_set_target_options(${_NAME})
 
