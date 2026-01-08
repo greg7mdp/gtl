@@ -91,7 +91,14 @@
   <!-- parallel flat/node set -->
   <Type            Name="gtl::parallel_flat_hash_set&lt;*,*,*,*,*,*&gt;">
   <AlternativeType Name="gtl::parallel_node_hash_set&lt;*,*,*,*,*,*&gt;" />
-      <DisplayString>{{size = ?}}</DisplayString>
+      <DisplayString Condition="$T5 == 0">{{size = {sets_._Elems[0].set_.size_}}}</DisplayString>
+      <DisplayString Condition="$T5 == 1">{{size = {sets_._Elems[0].set_.size_ + sets_._Elems[1].set_.size_}}}</DisplayString>
+      <DisplayString Condition="$T5 == 2">{{size = {sets_._Elems[0].set_.size_ + sets_._Elems[1].set_.size_ + sets_._Elems[2].set_.size_ + sets_._Elems[3].set_.size_}}}</DisplayString>
+      <DisplayString Condition="$T5 == 3">{{size = {sets_._Elems[0].set_.size_ + sets_._Elems[1].set_.size_ + sets_._Elems[2].set_.size_ + sets_._Elems[3].set_.size_ + sets_._Elems[4].set_.size_ + sets_._Elems[5].set_.size_ + sets_._Elems[6].set_.size_ + sets_._Elems[7].set_.size_}}}</DisplayString>
+      <DisplayString Condition="$T5 == 4">{{size = {sets_._Elems[0].set_.size_ + sets_._Elems[1].set_.size_ + sets_._Elems[2].set_.size_ + sets_._Elems[3].set_.size_ + sets_._Elems[4].set_.size_ + sets_._Elems[5].set_.size_ + sets_._Elems[6].set_.size_ + sets_._Elems[7].set_.size_ + sets_._Elems[8].set_.size_ + sets_._Elems[9].set_.size_ + sets_._Elems[10].set_.size_ + sets_._Elems[11].set_.size_ + sets_._Elems[12].set_.size_ + sets_._Elems[13].set_.size_ + sets_._Elems[14].set_.size_ + sets_._Elems[15].set_.size_}}}</DisplayString>
+      <DisplayString Condition="$T5 == 5">{{size = {sets_._Elems[0].set_.size_ + sets_._Elems[1].set_.size_ + sets_._Elems[2].set_.size_ + sets_._Elems[3].set_.size_ + sets_._Elems[4].set_.size_ + sets_._Elems[5].set_.size_ + sets_._Elems[6].set_.size_ + sets_._Elems[7].set_.size_ + sets_._Elems[8].set_.size_ + sets_._Elems[9].set_.size_ + sets_._Elems[10].set_.size_ + sets_._Elems[11].set_.size_ + sets_._Elems[12].set_.size_ + sets_._Elems[13].set_.size_ + sets_._Elems[14].set_.size_ + sets_._Elems[15].set_.size_ + sets_._Elems[16].set_.size_ + sets_._Elems[17].set_.size_ + sets_._Elems[18].set_.size_ + sets_._Elems[19].set_.size_ + sets_._Elems[20].set_.size_ + sets_._Elems[21].set_.size_ + sets_._Elems[22].set_.size_ + sets_._Elems[23].set_.size_ + sets_._Elems[24].set_.size_ + sets_._Elems[25].set_.size_ + sets_._Elems[26].set_.size_ + sets_._Elems[27].set_.size_ + sets_._Elems[28].set_.size_ + sets_._Elems[29].set_.size_ + sets_._Elems[30].set_.size_ + sets_._Elems[31].set_.size_}}}</DisplayString>
+      <DisplayString Condition="$T5 &gt;= 6">{{size = ? (N={$T5})}}</DisplayString>
+      <DisplayString>{{parallel_flat_hash_set}}</DisplayString>
       <Expand>
         <CustomListItems MaxItemsPerView="1000" ExcludeView="Test">
           <Variable Name="idx" InitialValue="0" />
@@ -100,7 +107,7 @@
           <Variable Name="slot" InitialValue="sets_._Elems[0].set_.slots_" />
           <Variable Name="ctrl_end" InitialValue="sets_._Elems[0].set_.ctrl_" />
           <Variable Name="slot_end" InitialValue="sets_._Elems[0].set_.slots_" />
-          <Exec>maxidx = 2 &lt;&lt; maxidx</Exec>
+          <Exec>maxidx = 1 &lt;&lt; maxidx</Exec>
           <Loop>
                 <Break Condition="idx == maxidx" />
                 <Exec>ctrl = sets_._Elems[idx].set_.ctrl_</Exec>
@@ -122,18 +129,25 @@
   </Type>  
 
   <!-- parallel flat/node map - only difference is $T6 instead of $T5 -->
-  <Type            Name="gtl::parallel_flat_hash_map&lt;*,*,*,*,*,*,*&gt;">  
-  <AlternativeType Name="gtl::parallel_node_hash_map&lt;*,*,*,*,*,*,*&gt;" /> 
-      <DisplayString>{{size = ?}}</DisplayString>  
-      <Expand>  
-        <CustomListItems MaxItemsPerView="1000" ExcludeView="Test">  
-          <Variable Name="idx" InitialValue="0" />  
-          <Variable Name="maxidx" InitialValue="$T6" />  
-          <Variable Name="ctrl" InitialValue="sets_._Elems[0].set_.ctrl_" />  
-          <Variable Name="slot" InitialValue="sets_._Elems[0].set_.slots_" />  
-          <Variable Name="ctrl_end" InitialValue="sets_._Elems[0].set_.ctrl_" />  
-          <Variable Name="slot_end" InitialValue="sets_._Elems[0].set_.slots_" />  
-          <Exec>maxidx = 2 &lt;&lt; maxidx</Exec>
+  <Type            Name="gtl::parallel_flat_hash_map&lt;*,*,*,*,*,*,*&gt;">
+  <AlternativeType Name="gtl::parallel_node_hash_map&lt;*,*,*,*,*,*,*&gt;" />
+      <DisplayString Condition="$T6 == 0">{{size = {sets_._Elems[0].set_.size_}}}</DisplayString>
+      <DisplayString Condition="$T6 == 1">{{size = {sets_._Elems[0].set_.size_ + sets_._Elems[1].set_.size_}}}</DisplayString>
+      <DisplayString Condition="$T6 == 2">{{size = {sets_._Elems[0].set_.size_ + sets_._Elems[1].set_.size_ + sets_._Elems[2].set_.size_ + sets_._Elems[3].set_.size_}}}</DisplayString>
+      <DisplayString Condition="$T6 == 3">{{size = {sets_._Elems[0].set_.size_ + sets_._Elems[1].set_.size_ + sets_._Elems[2].set_.size_ + sets_._Elems[3].set_.size_ + sets_._Elems[4].set_.size_ + sets_._Elems[5].set_.size_ + sets_._Elems[6].set_.size_ + sets_._Elems[7].set_.size_}}}</DisplayString>
+      <DisplayString Condition="$T6 == 4">{{size = {sets_._Elems[0].set_.size_ + sets_._Elems[1].set_.size_ + sets_._Elems[2].set_.size_ + sets_._Elems[3].set_.size_ + sets_._Elems[4].set_.size_ + sets_._Elems[5].set_.size_ + sets_._Elems[6].set_.size_ + sets_._Elems[7].set_.size_ + sets_._Elems[8].set_.size_ + sets_._Elems[9].set_.size_ + sets_._Elems[10].set_.size_ + sets_._Elems[11].set_.size_ + sets_._Elems[12].set_.size_ + sets_._Elems[13].set_.size_ + sets_._Elems[14].set_.size_ + sets_._Elems[15].set_.size_}}}</DisplayString>
+      <DisplayString Condition="$T6 == 5">{{size = {sets_._Elems[0].set_.size_ + sets_._Elems[1].set_.size_ + sets_._Elems[2].set_.size_ + sets_._Elems[3].set_.size_ + sets_._Elems[4].set_.size_ + sets_._Elems[5].set_.size_ + sets_._Elems[6].set_.size_ + sets_._Elems[7].set_.size_ + sets_._Elems[8].set_.size_ + sets_._Elems[9].set_.size_ + sets_._Elems[10].set_.size_ + sets_._Elems[11].set_.size_ + sets_._Elems[12].set_.size_ + sets_._Elems[13].set_.size_ + sets_._Elems[14].set_.size_ + sets_._Elems[15].set_.size_ + sets_._Elems[16].set_.size_ + sets_._Elems[17].set_.size_ + sets_._Elems[18].set_.size_ + sets_._Elems[19].set_.size_ + sets_._Elems[20].set_.size_ + sets_._Elems[21].set_.size_ + sets_._Elems[22].set_.size_ + sets_._Elems[23].set_.size_ + sets_._Elems[24].set_.size_ + sets_._Elems[25].set_.size_ + sets_._Elems[26].set_.size_ + sets_._Elems[27].set_.size_ + sets_._Elems[28].set_.size_ + sets_._Elems[29].set_.size_ + sets_._Elems[30].set_.size_ + sets_._Elems[31].set_.size_}}}</DisplayString>
+      <DisplayString Condition="$T6 &gt;= 6">{{size = ? (N={$T6})}}</DisplayString>
+      <DisplayString>{{parallel_flat_hash_map}}</DisplayString>
+      <Expand>
+        <CustomListItems MaxItemsPerView="1000" ExcludeView="Test">
+          <Variable Name="idx" InitialValue="0" />
+          <Variable Name="maxidx" InitialValue="$T6" />
+          <Variable Name="ctrl" InitialValue="sets_._Elems[0].set_.ctrl_" />
+          <Variable Name="slot" InitialValue="sets_._Elems[0].set_.slots_" />
+          <Variable Name="ctrl_end" InitialValue="sets_._Elems[0].set_.ctrl_" />
+          <Variable Name="slot_end" InitialValue="sets_._Elems[0].set_.slots_" />
+          <Exec>maxidx = 1 &lt;&lt; maxidx</Exec>
           <Loop>  
                 <Break Condition="idx == maxidx" />  
                 <Exec>ctrl = sets_._Elems[idx].set_.ctrl_</Exec>  
