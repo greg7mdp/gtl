@@ -40,25 +40,33 @@ void check_vector() {
 
 
 int main() {
-    // Works just fine
+    // flat and node containers
+   // -------------------------
     check_map<gtl::flat_hash_map<std::string, int>>();
     check_set<gtl::flat_hash_set<int>>();
     check_set<gtl::node_hash_set<int>>();
 
-    // Works partially
+    // parallel flat and node containers
+    // ---------------------------------
     check_map<gtl::parallel_flat_hash_map<std::string, int>>();
     check_map<gtl::parallel_node_hash_map<std::string, int>>();
-
     check_set<gtl::parallel_flat_hash_set<int>>();
     check_set<gtl::parallel_node_hash_set<int>>();
 
-    // Does not work
+    // btree containers
+    // ----------------
     check_map<gtl::btree_map<std::string, int>>();
     check_map<gtl::btree_multimap<std::string, int>>();
     check_set<gtl::btree_set<int>>();
     check_set<gtl::btree_multiset<int>>();
 
-    // Works just fine
+    // vector
+    // ------
     check_vector();
+
+    // bit vector
+    // ----------
+    gtl::bit_vector bv{ 0x04321 };
+    [[maybe_unused]] auto v = bv.view(4, 20);
     return 0;
 }

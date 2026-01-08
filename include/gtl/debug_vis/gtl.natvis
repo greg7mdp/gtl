@@ -2,9 +2,54 @@
 
 <AutoVisualizer xmlns="http://schemas.microsoft.com/vstudio/debugger/natvis/2010">
   <!-- bit_vector  -->
-  <Type            Name="gtl::bitv::vec&lt;*&gt;">  
-      <DisplayString Condition="_sz &gt; 14757395258967641291"> sz=unset {_s}</DisplayString>
-      <DisplayString>sz={_sz,d} {_s}</DisplayString>
+  <Type Name="gtl::bitv::vec&lt;*&gt;">
+    <DisplayString Condition="_sz &gt; 14757395258967641291">sz=unset</DisplayString>
+    <DisplayString>{{size = {_sz,d}}}</DisplayString>
+    <Expand>
+      <Item Name="[size]">_sz</Item>
+      <CustomListItems MaxItemsPerView="1000">
+        <Variable Name="idx" InitialValue="0" />
+        <Variable Name="max_idx" InitialValue="_sz &lt; 1000 ? _sz : 1000" />
+        <Variable Name="slot_idx" InitialValue="0" />
+        <Variable Name="bit_in_slot" InitialValue="0" />
+        <Variable Name="slot_val" InitialValue="0" />
+        <Size>_sz &lt; 1000 ? _sz : 1000</Size>
+        <Loop>
+          <Break Condition="idx == max_idx" />
+          <Exec>slot_idx = idx / 64</Exec>
+          <Exec>bit_in_slot = idx % 64</Exec>
+          <Exec>slot_val = _s._s._Mypair._Myval2._Myfirst[slot_idx]</Exec>
+          <Item Name="[{idx}]">((slot_val &gt;&gt; bit_in_slot) &amp; 1) != 0 ? '1' : '0'</Item>
+          <Exec>++idx</Exec>
+        </Loop>
+      </CustomListItems>
+    </Expand>
+  </Type>
+
+  <!-- bit_view  -->
+  <Type Name="gtl::bitv::_view&lt;*,*&gt;">
+    <DisplayString>{{size = {_last - _first,d}, range = [{_first,d}, {_last,d})}}</DisplayString>
+    <Expand>
+      <Item Name="[size]">_last - _first</Item>
+      <Item Name="[first]">_first</Item>
+      <Item Name="[last]">_last</Item>
+      <CustomListItems MaxItemsPerView="1000">
+        <Variable Name="idx" InitialValue="_first" />
+        <Variable Name="max_idx" InitialValue="_last - _first &lt; 1000 ? _last : _first + 1000" />
+        <Variable Name="slot_idx" InitialValue="0" />
+        <Variable Name="bit_in_slot" InitialValue="0" />
+        <Variable Name="slot_val" InitialValue="0" />
+        <Size>_last - _first &lt; 1000 ? _last - _first : 1000</Size>
+        <Loop>
+          <Break Condition="idx == max_idx" />
+          <Exec>slot_idx = idx / 64</Exec>
+          <Exec>bit_in_slot = idx % 64</Exec>
+          <Exec>slot_val = _bv._s._s._Mypair._Myval2._Myfirst[slot_idx]</Exec>
+          <Item Name="[{idx - _first}]">((slot_val &gt;&gt; bit_in_slot) &amp; 1) != 0 ? '1' : '0'</Item>
+          <Exec>++idx</Exec>
+        </Loop>
+      </CustomListItems>
+    </Expand>
   </Type>  
 
   <!-- bit_vector storage -->
