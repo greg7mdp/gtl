@@ -179,9 +179,41 @@
       <Item Name="[size]">impl_.e_ - impl_.b_</Item>
       <Item Name="[capacity]">impl_.z_ - impl_.b_</Item>
       <ArrayItems>
-        <Size>impl_.e_ - impl_.b_</Size>
+        <Size>impl_.e_ - impl_.b_ > 1000 ? 1000 : impl_.e_ - impl_.b_</Size>
         <ValuePointer>impl_.b_</ValuePointer>
       </ArrayItems>
+    </Expand>
+  </Type>
+
+  <!-- gtl::btree_set -->
+  <Type Name="gtl::btree_set&lt;*,*,*&gt;">
+    <DisplayString>{{size = {tree_.size_}}}</DisplayString>
+    <Expand>
+      <Item Name="[size]">tree_.size_</Item>
+    </Expand>
+  </Type>
+
+  <!-- gtl::btree_multiset -->
+  <Type Name="gtl::btree_multiset&lt;*,*,*&gt;">
+    <DisplayString>{{size = {tree_.size_}}}</DisplayString>
+    <Expand>
+      <Item Name="[size]">tree_.size_</Item>
+    </Expand>
+  </Type>
+
+  <!-- gtl::btree_map -->
+  <Type Name="gtl::btree_map&lt;*,*,*,*&gt;">
+    <DisplayString>{{size = {tree_.size_}}}</DisplayString>
+    <Expand>
+      <Item Name="[size]">tree_.size_</Item>
+    </Expand>
+  </Type>
+
+  <!-- gtl::btree_multimap -->
+  <Type Name="gtl::btree_multimap&lt;*,*,*,*&gt;">
+    <DisplayString>{{size = {tree_.size_}}}</DisplayString>
+    <Expand>
+      <Item Name="[size]">tree_.size_</Item>
     </Expand>
   </Type>
 
