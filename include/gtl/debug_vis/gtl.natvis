@@ -230,6 +230,18 @@
     </Expand>
   </Type>
 
+  <!-- gtl::priv::btree_node - shows node structure -->
+  <Type Name="gtl::priv::btree_node&lt;*&gt;">
+    <DisplayString Condition="((unsigned char*)this + sizeof(void*))[3] != 0">{{leaf node, {((unsigned char*)this + sizeof(void*))[2]} values}}</DisplayString>
+    <DisplayString>{{internal node, {((unsigned char*)this + sizeof(void*))[2]} values}}</DisplayString>
+    <Expand>
+      <ArrayItems>
+        <Size>((unsigned char*)this + sizeof(void*))[2]</Size>
+        <ValuePointer>(typename $T1::slot_type*)((unsigned char*)this + 16) + ((unsigned char*)this + sizeof(void*))[1]</ValuePointer>
+      </ArrayItems>
+    </Expand>
+  </Type>
+
   <!-- gtl::btree_set -->
   <Type Name="gtl::btree_set&lt;*,*,*&gt;">
     <DisplayString>{{size = {tree_.size_}}}</DisplayString>
