@@ -214,6 +214,7 @@ endif()
     gtl_cc_app(ex_intrusive SRCS examples/misc/intrusive.cpp)
     gtl_cc_app(ex_utils SRCS "examples/misc/utils.cpp")
     #gtl_cc_app(ex_adv_utils SRCS "examples/misc/adv_utils.cpp")
+    gtl_cc_app(ex_debuggervis SRCS "examples/misc/debuggervis.cpp")
 
     ## cache/memoize
     gtl_cc_app(ex_memoize_fib SRCS examples/memoize/memoize_fib.cpp)
