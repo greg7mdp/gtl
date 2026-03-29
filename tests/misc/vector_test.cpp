@@ -354,9 +354,49 @@ TEST(vector, stealing_constructor) {
 
     for (int i = 0; i < 3; ++i)
         *(x + i) = i;
-    vec_t v(std::unique_ptr<int>(x), 3, 4);
+
+    typename vec_t::detached_storage_ptr data(x, typename vec_t::detached_storage_deleter(alloc, 4));
+
+    vec_t v(std::move(data), 3);
     ASSERT_EQ(3u, v.size());
+    EXPECT_EQ(4u, v.capacity());
     EXPECT_EQ(0u, v[0]);
     EXPECT_EQ(1u, v[1]);
     EXPECT_EQ(2u, v[2]);
+}
+
+// gtl extension
+TEST(vector, steal_data_round_trip) {
+    using vec_t = gtl::vector<int>;
+
+    vec_t src = { 10, 20, 30 };
+    src.reserve(8);
+    auto const cap = src.capacity();
+
+    auto data = src.steal_data();
+    EXPECT_TRUE(src.empty());
+    EXPECT_EQ(0u, src.capacity());
+    ASSERT_NE(nullptr, data.get());
+    EXPECT_EQ(cap, data.get_deleter().cap);
+
+    vec_t dst(std::move(data), 3);
+    ASSERT_EQ(3u, dst.size());
+    EXPECT_EQ(cap, dst.capacity());
+    EXPECT_EQ(10, dst[0]);
+    EXPECT_EQ(20, dst[1]);
+    EXPECT_EQ(30, dst[2]);
+}
+
+// gtl extension
+TEST(vector, steal_data_empty_round_trip) {
+    using vec_t = gtl::vector<int>;
+
+    vec_t src;
+    auto  data = src.steal_data();
+    EXPECT_EQ(nullptr, data.get());
+    EXPECT_EQ(0u, data.get_deleter().cap);
+
+    vec_t dst(std::move(data), 0);
+    EXPECT_TRUE(dst.empty());
+    EXPECT_EQ(0u, dst.capacity());
 }
