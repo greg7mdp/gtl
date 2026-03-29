@@ -202,8 +202,6 @@ private:
             b_ = newB;
         }
 
-        pointer data() const { return z_; }
-
         void reset(size_type newCap) {
             destroy();
             scoped_guard rollback([&] { init(0); });
