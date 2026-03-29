@@ -39,6 +39,7 @@
 #include <type_traits>
 #include <utility>
 
+#include <gtl/gtl_config.hpp>
 #include <gtl/utils.hpp>
 
 //=========================== likely ========================================
@@ -243,8 +244,8 @@ public:
 
     // ------------------- gtl extensions -------------------------------------------------------
     struct detached_storage_deleter {
-        allocator_type alloc;
-        size_type      cap;
+        GTL_ATTRIBUTE_NO_UNIQUE_ADDRESS allocator_type alloc;
+        size_type                                      cap;
 
         detached_storage_deleter(const allocator_type& a, size_type c)
             : alloc(a)
@@ -990,16 +991,14 @@ public:
         // xallocx() will shrink to precisely newCapacityBytes (which was generated
         // by goodMallocSize()) if it successfully shrinks in place.
         if constexpr ((usingJEMalloc() && usingStdAllocator) && newCapacityBytes >= gtl::jemallocMinInPlaceExpandable &&
-                      xallocx(p, newCapacityBytes, 0, 0) == newCapacityBytes)
-        {
+                      xallocx(p, newCapacityBytes, 0, 0) == newCapacityBytes) {
             impl_.z_ += newCap - oldCap;
         } else {
             T* newB = nullptr;
 
             try {
                 newB = M_allocate(newCap);
-            } catch (...) {
-            };
+            } catch (...) {};
             if (!newB)
                 return;
 
@@ -1171,8 +1170,7 @@ private:
     void emplace_back_aux(Args&&... args) {
         size_type byte_sz = gtl::goodMallocSize(computePushBackCapacity() * sizeof(T));
         if constexpr (usingStdAllocator && usingJEMalloc() &&
-                      ((impl_.z_ - impl_.b_) * sizeof(T) >= gtl::jemallocMinInPlaceExpandable))
-        {
+                      ((impl_.z_ - impl_.b_) * sizeof(T) >= gtl::jemallocMinInPlaceExpandable)) {
             // Try to reserve in place.
             // Ask xallocx to allocate in place at least size()+1 and at most sz
             //  space.
