@@ -241,6 +241,30 @@ public:
     typedef std::reverse_iterator<iterator>            reverse_iterator;
     typedef std::reverse_iterator<const_iterator>      const_reverse_iterator;
 
+    // ------------------- gtl extensions -------------------------------------------------------
+    struct detached_storage_deleter {
+        allocator_type alloc;
+        size_type      cap;
+
+        detached_storage_deleter(const allocator_type& a, size_type c)
+            : alloc(a)
+            , cap(c) {}
+
+        void operator()(T* p) noexcept {
+            if (!p) {
+                return;
+            }
+            if constexpr (vector::usingStdAllocator) {
+                free(p);
+            } else {
+                std::allocator_traits<Allocator>::deallocate(alloc, p, cap);
+            }
+        }
+    };
+    typedef std::unique_ptr<T, detached_storage_deleter> detached_storage_ptr;
+
+    // ------------------- end of gtl extensions ------------------------------------------------
+
 private:
     static constexpr bool should_pass_by_value =
         std::is_trivially_copyable<T>::value && sizeof(T) <= 16; // don't force large structures to be passed by value
@@ -718,15 +742,23 @@ public:
         : vector(il.begin(), il.end(), a) {}
 
     // ------------------- gtl extensions -------------------------------------------------------
-    vector(std::unique_ptr<T> data, size_type sz, size_type cap, const Allocator& a = Allocator())
-        : impl_(a) {
-        impl_.set(data.release(), sz, cap);
+    vector(detached_storage_ptr data, size_type sz)
+        : impl_(data.get_deleter().alloc) {
+        auto const cap = data.get_deleter().cap;
+        assert(sz <= cap);
+        auto p = data.release();
+        if (p == nullptr) {
+            assert(sz == 0 && cap == 0);
+            impl_.b_ = impl_.e_ = impl_.z_ = nullptr;
+        } else {
+            impl_.set(p, sz, cap);
+        }
     }
 
     // return value to be used in accordance with vector's allocator
-    std::unique_ptr<T> steal_data() {
-        std::unique_ptr<T> res(impl_.data());
-        impl_.set(nullptr, nullptr, nullptr); // don't deallocate the buffer!!
+    detached_storage_ptr steal_data() {
+        detached_storage_ptr res(impl_.b_, detached_storage_deleter(static_cast<allocator_type&>(impl_), capacity()));
+        impl_.b_ = impl_.e_ = impl_.z_ = nullptr; // don't deallocate the buffer!!
         return res;
     }
 
