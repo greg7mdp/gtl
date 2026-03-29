@@ -202,6 +202,8 @@ private:
             b_ = newB;
         }
 
+        pointer data() const { return b_; }
+
         void reset(size_type newCap) {
             destroy();
             scoped_guard rollback([&] { init(0); });
@@ -755,7 +757,7 @@ public:
 
     // return value to be used in accordance with vector's allocator
     detached_storage_ptr steal_data() {
-        detached_storage_ptr res(impl_.b_, detached_storage_deleter(static_cast<allocator_type&>(impl_), capacity()));
+        detached_storage_ptr res(impl_.data(), detached_storage_deleter(impl_, capacity()));
         impl_.b_ = impl_.e_ = impl_.z_ = nullptr; // don't deallocate the buffer!!
         return res;
     }
