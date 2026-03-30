@@ -39,6 +39,7 @@
 #include <type_traits>
 #include <utility>
 
+#include <gtl/gtl_config.hpp>
 #include <gtl/utils.hpp>
 
 //=========================== likely ========================================
@@ -202,7 +203,7 @@ private:
             b_ = newB;
         }
 
-        pointer data() const { return z_; }
+        pointer data() const { return b_; }
 
         void reset(size_type newCap) {
             destroy();
@@ -240,6 +241,30 @@ public:
     typedef typename A::const_pointer                  const_pointer;
     typedef std::reverse_iterator<iterator>            reverse_iterator;
     typedef std::reverse_iterator<const_iterator>      const_reverse_iterator;
+
+    // ------------------- gtl extensions -------------------------------------------------------
+    struct detached_storage_deleter {
+        GTL_ATTRIBUTE_NO_UNIQUE_ADDRESS allocator_type alloc;
+        size_type                                      cap;
+
+        detached_storage_deleter(const allocator_type& a, size_type c)
+            : alloc(a)
+            , cap(c) {}
+
+        void operator()(T* p) noexcept {
+            if (!p) {
+                return;
+            }
+            if constexpr (vector::usingStdAllocator) {
+                free(p);
+            } else {
+                std::allocator_traits<Allocator>::deallocate(alloc, p, cap);
+            }
+        }
+    };
+    typedef std::unique_ptr<T, detached_storage_deleter> detached_storage_ptr;
+
+    // ------------------- end of gtl extensions ------------------------------------------------
 
 private:
     static constexpr bool should_pass_by_value =
@@ -718,15 +743,23 @@ public:
         : vector(il.begin(), il.end(), a) {}
 
     // ------------------- gtl extensions -------------------------------------------------------
-    vector(std::unique_ptr<T> data, size_type sz, size_type cap, const Allocator& a = Allocator())
-        : impl_(a) {
-        impl_.set(data.release(), sz, cap);
+    vector(detached_storage_ptr data, size_type sz)
+        : impl_(data.get_deleter().alloc) {
+        auto const cap = data.get_deleter().cap;
+        assert(sz <= cap);
+        auto p = data.release();
+        if (p == nullptr) {
+            assert(sz == 0 && cap == 0);
+            impl_.b_ = impl_.e_ = impl_.z_ = nullptr;
+        } else {
+            impl_.set(p, sz, cap);
+        }
     }
 
     // return value to be used in accordance with vector's allocator
-    std::unique_ptr<T> steal_data() {
-        std::unique_ptr<T> res(impl_.data());
-        impl_.set(nullptr, nullptr, nullptr); // don't deallocate the buffer!!
+    detached_storage_ptr steal_data() {
+        detached_storage_ptr res(impl_.data(), detached_storage_deleter(impl_, capacity()));
+        impl_.b_ = impl_.e_ = impl_.z_ = nullptr; // don't deallocate the buffer!!
         return res;
     }
 
@@ -958,16 +991,14 @@ public:
         // xallocx() will shrink to precisely newCapacityBytes (which was generated
         // by goodMallocSize()) if it successfully shrinks in place.
         if constexpr ((usingJEMalloc() && usingStdAllocator) && newCapacityBytes >= gtl::jemallocMinInPlaceExpandable &&
-                      xallocx(p, newCapacityBytes, 0, 0) == newCapacityBytes)
-        {
+                      xallocx(p, newCapacityBytes, 0, 0) == newCapacityBytes) {
             impl_.z_ += newCap - oldCap;
         } else {
             T* newB = nullptr;
 
             try {
                 newB = M_allocate(newCap);
-            } catch (...) {
-            };
+            } catch (...) {};
             if (!newB)
                 return;
 
@@ -1139,8 +1170,7 @@ private:
     void emplace_back_aux(Args&&... args) {
         size_type byte_sz = gtl::goodMallocSize(computePushBackCapacity() * sizeof(T));
         if constexpr (usingStdAllocator && usingJEMalloc() &&
-                      ((impl_.z_ - impl_.b_) * sizeof(T) >= gtl::jemallocMinInPlaceExpandable))
-        {
+                      ((impl_.z_ - impl_.b_) * sizeof(T) >= gtl::jemallocMinInPlaceExpandable)) {
             // Try to reserve in place.
             // Ask xallocx to allocate in place at least size()+1 and at most sz
             //  space.
