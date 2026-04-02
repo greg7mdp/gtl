@@ -76,8 +76,6 @@ include(helpers)
 add_library(${PROJECT_NAME} INTERFACE)
 add_library(${PROJECT_NAME}::${PROJECT_NAME} ALIAS ${PROJECT_NAME})
 
-target_sources(${PROJECT_NAME} INTERFACE ${GTL_HEADERS})
-
 target_include_directories(
      ${PROJECT_NAME} INTERFACE
      $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/include>
@@ -94,7 +92,12 @@ if(GTL_INSTALL)
     install(TARGETS ${PROJECT_NAME}
             EXPORT ${PROJECT_NAME}-targets)
 
-    export(EXPORT ${PROJECT_NAME}-targets
+    install(EXPORT ${PROJECT_NAME}-targets
+            NAMESPACE ${namespace}
+            DESTINATION ${CMAKE_INSTALL_DATADIR}/cmake/${PROJECT_NAME})
+
+    export(TARGETS ${PROJECT_NAME}
+           NAMESPACE ${namespace}
            FILE "${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}Targets.cmake")
 endif()
 
