@@ -777,7 +777,7 @@ public:
                 // can't use other's different allocator to clean up self
                 impl_.reset();
             }
-            (Allocator&)impl_ = (Allocator&)other.impl_;
+            static_cast<Allocator&>(impl_) = static_cast<const Allocator&>(other.impl_);
         }
 
         assign(other.begin(), other.end());
