@@ -93,11 +93,25 @@ if(GTL_INSTALL)
             EXPORT ${PROJECT_NAME}-targets)
 
     install(EXPORT ${PROJECT_NAME}-targets
-            NAMESPACE ${namespace}
+            NAMESPACE ${PROJECT_NAME}::
+            DESTINATION ${CMAKE_INSTALL_DATADIR}/cmake/${PROJECT_NAME})
+
+    configure_package_config_file(
+        ${CMAKE_CURRENT_SOURCE_DIR}/cmake/${PROJECT_NAME}Config.cmake.in
+        ${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}Config.cmake
+        INSTALL_DESTINATION ${CMAKE_INSTALL_DATADIR}/cmake/${PROJECT_NAME})
+
+    write_basic_package_version_file(
+        ${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}ConfigVersion.cmake
+        COMPATIBILITY SameMajorVersion)
+
+    install(FILES
+            ${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}Config.cmake
+            ${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}ConfigVersion.cmake
             DESTINATION ${CMAKE_INSTALL_DATADIR}/cmake/${PROJECT_NAME})
 
     export(TARGETS ${PROJECT_NAME}
-           NAMESPACE ${namespace}
+           NAMESPACE ${PROJECT_NAME}::
            FILE "${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}Targets.cmake")
 endif()
 
