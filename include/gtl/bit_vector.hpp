@@ -254,7 +254,7 @@ public:
             if (mod(last)) {
                 const uint64_t s  = _s[last_slot];
                 const uint64_t m  = himask(last); // m has ones on the bits we don't want to change
-                const auto     fs = f(oor_bits<flags>(s, m), -(int)(shift));
+                const auto     fs = f(oor_bits<flags>(s, m), 0);
                 if constexpr (!(flags & vt::view)) {
                     if (s != fs) {
                         uint64_t& d = _s[last_slot];
@@ -270,7 +270,7 @@ public:
             if (mod(last)) {
                 const uint64_t s  = _s[last_slot];
                 const uint64_t m  = himask(last); // m has ones on the bits we don't want to change
-                const auto     fs = f(oor_bits<flags>(s, m), -(int)(shift));
+                const auto     fs = f(oor_bits<flags>(s, m), 0);
                 if constexpr (!(flags & vt::view)) {
                     if (s != fs) {
                         uint64_t& d = _s[last_slot];

@@ -402,6 +402,49 @@ TEST(BitVectorTest, find_first) {
     EXPECT_TRUE(v2.view(67).find_next(191) == 198);
 }
 
+TEST(BitVectorTest, find_next) {
+    // check issue #56 - really a test of:
+    // `template<vt flags, class F> storage::visit(const size_t first, const size_t last, F f)`
+    // and the shift assignment aoperators
+    // ----------------------------------------------------------------------------------------
+    gtl::bit_vector a(66);
+    a.set(65);
+    EXPECT_TRUE(a.find_next(43) == 65);
+
+    gtl::bit_vector b(130);
+    b.set(128);
+    EXPECT_TRUE(b.find_next(1) == 128);
+
+    gtl::bit_vector c(135);
+    c.set(128);
+    EXPECT_TRUE(c.find_next(129) == gtl::bit_vector::npos);
+
+    a <<= 1;
+    b <<= 1;
+    c <<= 1;
+
+    EXPECT_TRUE(a.find_next(43)  == 64);
+    EXPECT_TRUE(b.find_next(1)   == 127);
+    EXPECT_TRUE(c.find_next(128) == gtl::bit_vector::npos);
+
+    a <<= 11;
+    b <<= 11;
+    c <<= 11;
+
+    EXPECT_TRUE(a.find_next(43)  == 53);
+    EXPECT_TRUE(b.find_next(1)   == 116);
+    EXPECT_TRUE(c.find_next(117) == gtl::bit_vector::npos);
+
+    a >>= 12;
+    b >>= 12;
+    c >>= 12;
+
+    EXPECT_TRUE(a.find_next(43) == 65);
+    EXPECT_TRUE(b.find_next(1) == 128);
+    EXPECT_TRUE(c.find_next(129) == gtl::bit_vector::npos);
+    EXPECT_TRUE(c.find_next(128) == 128);
+}
+
 TEST(BitVectorTest, hash) {
     gtl::bit_vector v{ 0xfafafaull, 0ull, 0x4444444444444444ull };
     auto            x = std::hash<gtl::bit_vector>()(v);
