@@ -2359,7 +2359,7 @@ public:
         // bitor is a faster way of doing `max` here. We will round up to the next
         // power-of-2-minus-1, so bitor is good enough.
         // ----------------------------------------------------------------------------
-        auto m = NormalizeCapacity((std::max)(n, size()));
+        auto m = NormalizeCapacity(n | GrowthToLowerboundCapacity(size()));
         // n == 0 unconditionally rehashes as per the standard.
         if (n == 0 || m > capacity_) {
             resize(m);
@@ -4160,6 +4160,8 @@ public:
     }
 
     void reserve(size_t n) {
+        if (n <= capacity())
+            return;
         size_t target     = GrowthToLowerboundCapacity(n);
         size_t normalized = num_tables * NormalizeCapacity(n / num_tables);
         rehash(normalized > target ? normalized : target);
