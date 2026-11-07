@@ -1,0 +1,62 @@
+GTL - Gregory's Template Library
+Copyright (c) 2017-2024, Gregory Popovitch
+
+This product includes software developed at or derived from:
+
+================================================================================
+The Abseil Authors (Apache-2.0)
+--------------------------------------------------------------------------------
+Files: include/gtl/phmap.hpp, include/gtl/btree.hpp, include/gtl/bits.hpp,
+       include/gtl/gtl_base.hpp, include/gtl/gtl_config.hpp,
+       include/gtl/phmap_utils.hpp
+
+Copyright 2018 The Abseil Authors
+Licensed under the Apache License, Version 2.0
+https://github.com/abseil/abseil-cpp
+
+================================================================================
+Meta Platforms, Inc. - Folly library (Apache-2.0)
+--------------------------------------------------------------------------------
+Files: include/gtl/vector.hpp
+
+Original authors: Nicholas Ormrod (njormrod), Andrei Alexandrescu (aalexandre)
+Licensed under the Apache License, Version 2.0
+See licenses/license_folly for full license text
+
+================================================================================
+Peter Dimov, Andrey Semashev - Boost intrusive_ptr (BSL-1.0)
+--------------------------------------------------------------------------------
+Files: include/gtl/intrusive.hpp
+
+Copyright (c) 2001, 2002 Peter Dimov
+Copyright (c) 2007-2013 Andrey Semashev
+Distributed under the Boost Software License, Version 1.0
+See licenses/license_boost for full license text
+
+================================================================================
+Mark Liu (MIT)
+--------------------------------------------------------------------------------
+Files: include/gtl/soa.hpp
+
+Copyright (c) 2018 Mark Liu
+Licensed under the MIT License
+See licenses/license_mark_liu for full license text
+
+================================================================================
+Conor Hoekstra - blackbird combinators (MIT)
+--------------------------------------------------------------------------------
+Files: include/gtl/combinators.hpp
+
+Copyright (c) 2022 Conor Hoekstra
+Licensed under the MIT License
+https://github.com/codereport/blackbird
+See licenses/license_blackbird for full license text
+
+================================================================================
+lamerman - LRU cache (BSD-3-Clause)
+--------------------------------------------------------------------------------
+Files: include/gtl/lru_cache.hpp (original implementation reference)
+
+Copyright (c) 2014, lamerman
+Licensed under the BSD 3-Clause License
+See licenses/license_lamerman for full license text
