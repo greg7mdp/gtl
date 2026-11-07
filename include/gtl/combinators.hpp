@@ -1,4 +1,4 @@
-pragma once
+#pragma once
 
 /*
  * from https://github.com/codereport/blackbird  - Copyright (c) 2022 Conor Hoekstra
