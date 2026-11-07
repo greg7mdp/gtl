@@ -38,7 +38,7 @@ include(FetchContent)
 FetchContent_Declare(
     gtl
     GIT_REPOSITORY https://github.com/greg7mdp/gtl.git
-    GIT_TAG        v1.3.0 # adjust tag/branch/commit as needed
+    GIT_TAG        v1.3.1 # adjust tag/branch/commit as needed
 )
 FetchContent_MakeAvailable(gtl)
 
