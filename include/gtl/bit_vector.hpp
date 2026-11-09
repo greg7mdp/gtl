@@ -549,13 +549,12 @@ public:
 
     _view& operator=(const _view& o) {
         assert(size() == o.size());
-        if ((&_bv != &o._bv) || (_first < o._first) || (_first <= o._last)) {
+        if ((&_bv != &o._bv) || (_first <= o._first) || (_first >= o._last)) {
             typename S::bit_sequence seq(o._bv.storage(), o._first, o._last, _first);
             _bv.storage().template visit<vt::none>(_first, _last, [&](uint64_t, int) { return seq(); });
-        } else if (_first > o._first) {
+        } else {
             // both views are on same bitmap, and we are copying backward with an overlap
-            typename S::bit_sequence seq(_bv.storage(), _first, _last, o._first);
-            o._bv.storage().template visit<vt::none>(o._first, o._last, [&](uint64_t, int) { return seq(); });
+            copy_slow(o);
         }
         return *this;
     }
