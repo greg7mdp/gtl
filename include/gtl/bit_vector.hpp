@@ -440,27 +440,51 @@ public:
         return *this;
     }
 
+    // o is on the same bit_vector, starts before us and overlaps us
+    bool overlaps_from_before(const _view& o) const noexcept {
+        return &_bv == &o._bv && o._first < _first && _first < o._last;
+    }
+
+    // go backward bit by bit, so source bits are read before they are overwritten
+    template<class F>
+    _view& bin_assign_backward(const _view& o, F&& f) noexcept {
+        assert(size() == o.size());
+        for (size_t i = size(); i-- > 0;)
+            set(i, f((*this)[i], o[i]));
+        return *this;
+    }
+
     _view& operator|=(const _view& o) noexcept {
+        if (overlaps_from_before(o))
+            return bin_assign_backward(o, [](bool a, bool b) { return a || b; });
         typename S::bit_sequence seq(o._bv.storage(), o._first, o._last, _first);
         return bin_assign(o, [&](uint64_t a, size_t) { return a | seq(); });
     }
 
     _view& operator&=(const _view& o) noexcept {
+        if (overlaps_from_before(o))
+            return bin_assign_backward(o, [](bool a, bool b) { return a && b; });
         typename S::bit_sequence seq(o._bv.storage(), o._first, o._last, _first);
         return bin_assign(o, [&](uint64_t a, size_t) { return a & seq(); });
     }
 
     _view& operator^=(const _view& o) noexcept {
+        if (overlaps_from_before(o))
+            return bin_assign_backward(o, [](bool a, bool b) { return a != b; });
         typename S::bit_sequence seq(o._bv.storage(), o._first, o._last, _first);
         return bin_assign(o, [&](uint64_t a, size_t) { return a ^ seq(); });
     }
 
     _view& operator-=(const _view& o) noexcept {
+        if (overlaps_from_before(o))
+            return bin_assign_backward(o, [](bool a, bool b) { return a && !b; });
         typename S::bit_sequence seq(o._bv.storage(), o._first, o._last, _first);
         return bin_assign(o, [&](uint64_t a, size_t) { return a & ~seq(); });
     }
 
     _view& or_not(const _view& o) noexcept {
+        if (overlaps_from_before(o))
+            return bin_assign_backward(o, [](bool a, bool b) { return a || !b; });
         typename S::bit_sequence seq(o._bv.storage(), o._first, o._last, _first);
         return bin_assign(o, [&](uint64_t a, size_t) { return a | ~seq(); });
     }

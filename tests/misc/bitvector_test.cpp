@@ -314,6 +314,54 @@ TEST(BitVectorTest, view_assignment) {
     }
 }
 
+// |=, &=, ^=, -= and or_not between two views of the *same* bit_vector
+// must behave like std::vector<bool>, including when the views overlap
+TEST(BitVectorTest, view_bitwise_ops_same_bitmap) {
+    for (int op = 0; op < 5; ++op) {
+        for (size_t sz : { 1, 7, 64, 65, 130, 200 }) {
+            for (size_t len = 0; len <= sz; len += 3) {
+                for (size_t src = 0; src + len <= sz; src += 5) {
+                    for (size_t dst = 0; dst + len <= sz; dst += 7) {
+                        gtl::bit_vector   v(sz);
+                        std::vector<bool> ref(sz);
+                        for (size_t i = 0; i < sz; ++i) {
+                            bool b = ((i * 7 + 3) % 5) < 2;
+                            v.set(i, b);
+                            ref[i] = b;
+                        }
+                        std::vector<bool> tmp(ref.begin() + src, ref.begin() + src + len);
+                        for (size_t i = 0; i < len; ++i) {
+                            bool a = ref[dst + i], b = tmp[i];
+                            ref[dst + i] = op == 0   ? (a || b)
+                                           : op == 1 ? (a && b)
+                                           : op == 2 ? (a != b)
+                                           : op == 3 ? (a && !b)
+                                                     : (a || !b);
+                        }
+
+                        auto d = v.view(dst, dst + len);
+                        auto s = v.view(src, src + len);
+                        if (op == 0)
+                            d |= s;
+                        else if (op == 1)
+                            d &= s;
+                        else if (op == 2)
+                            d ^= s;
+                        else if (op == 3)
+                            d -= s;
+                        else
+                            d.or_not(s);
+
+                        for (size_t i = 0; i < sz; ++i)
+                            EXPECT_EQ(v[i], ref[i]) << "op " << op << " size " << sz << " len " << len << " src " << src
+                                                    << " dst " << dst << " bit " << i;
+                    }
+                }
+            }
+        }
+    }
+}
+
 TEST(BitVectorTest, unary_predicates_on_full_bit_vector) {
     auto check_sz = [](size_t sz) {
         gtl::bit_vector v(sz);
