@@ -3952,7 +3952,7 @@ public:
             // we did an unlock/lock, need to call `find()` again
             it = set.find(key, hashval);
             if (it == set.end())
-                return 1;
+                return 0;
         }
         if (std::forward<F>(f)(const_cast<value_type&>(*it))) {
             set._erase(it);
