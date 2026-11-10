@@ -4718,7 +4718,7 @@ private:
     std::pair<iterator, bool> insert_or_assign_impl(K&& k, V&& v) {
         size_t                hashval = this->hash(k);
         UniqueLock            m;
-        auto                  res   = this->find_or_prepare_insert(k, m);
+        auto                  res   = this->find_or_prepare_insert_with_hash(hashval, k, m);
         typename Base::Inner* inner = std::get<0>(res);
         if (std::get<2>(res)) {
             inner->set_.emplace_at(std::get<1>(res), std::forward<K>(k), std::forward<V>(v));
