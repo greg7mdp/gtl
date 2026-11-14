@@ -75,14 +75,19 @@ constexpr vt   operator|(vt a, vt b) { return (vt)((vt_type)a | (vt_type)b); }
 template<class A>
 class storage {
 public:
-    storage(size_t num_bits = 0, bool val = false) { resize(num_bits, val); }
+    storage(size_t num_bits = 0, bool val = false)
+        : _sz(0) {
+        resize(num_bits, val);
+    }
     size_t size() const { return _s.size(); } // size in slots
 
     // -------------------------------------------------------------------------------
     void resize(size_t num_bits, bool val = false) {
-        _sz              = num_bits;
         size_t num_slots = slot_cnt(num_bits);
         _s.resize(num_slots, val ? ones : 0);
+        if (val && num_bits > _sz && mod(_sz))
+            _s[slot(_sz)] |= himask(_sz);
+        _sz = num_bits;
         if (mod(num_bits))
             _s[num_slots - 1] &= ~himask(num_bits); // make sure to zero the remainder bits in last slot
         _check_extra_bits();
@@ -775,8 +780,8 @@ public:
     }
 
     void resize(size_t sz, bool val = false) {
+        _s.resize(sz, val);
         _sz = sz;
-        _s.resize(_sz, val);
     }
 
     // bit access
