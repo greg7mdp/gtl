@@ -4654,6 +4654,46 @@ public:
         return try_emplace_with_hash(hashval, k, std::forward<Args>(args)...).first;
     }
 
+    template<class K = key_type, class V = mapped_type, K* = nullptr, V* = nullptr>
+    std::pair<iterator, bool> insert_or_assign_with_hash(size_t hashval, key_arg<K>&& k, V&& v) {
+        return insert_or_assign_impl_with_hash(hashval, std::forward<K>(k), std::forward<V>(v));
+    }
+
+    template<class K = key_type, class V = mapped_type, K* = nullptr>
+    std::pair<iterator, bool> insert_or_assign_with_hash(size_t hashval, key_arg<K>&& k, const V& v) {
+        return insert_or_assign_impl_with_hash(hashval, std::forward<K>(k), v);
+    }
+
+    template<class K = key_type, class V = mapped_type, V* = nullptr>
+    std::pair<iterator, bool> insert_or_assign_with_hash(size_t hashval, const key_arg<K>& k, V&& v) {
+        return insert_or_assign_impl_with_hash(hashval, k, std::forward<V>(v));
+    }
+
+    template<class K = key_type, class V = mapped_type>
+    std::pair<iterator, bool> insert_or_assign_with_hash(size_t hashval, const key_arg<K>& k, const V& v) {
+        return insert_or_assign_impl_with_hash(hashval, k, v);
+    }
+
+    template<class K = key_type, class V = mapped_type, K* = nullptr, V* = nullptr>
+    iterator insert_or_assign_with_hash(size_t hashval, const_iterator, key_arg<K>&& k, V&& v) {
+        return insert_or_assign_with_hash(hashval, std::forward<K>(k), std::forward<V>(v)).first;
+    }
+
+    template<class K = key_type, class V = mapped_type, K* = nullptr>
+    iterator insert_or_assign_with_hash(size_t hashval, const_iterator, key_arg<K>&& k, const V& v) {
+        return insert_or_assign_with_hash(hashval, std::forward<K>(k), v).first;
+    }
+
+    template<class K = key_type, class V = mapped_type, V* = nullptr>
+    iterator insert_or_assign_with_hash(size_t hashval, const_iterator, const key_arg<K>& k, V&& v) {
+        return insert_or_assign_with_hash(hashval, k, std::forward<V>(v)).first;
+    }
+
+    template<class K = key_type, class V = mapped_type>
+    iterator insert_or_assign_with_hash(size_t hashval, const_iterator, const key_arg<K>& k, const V& v) {
+        return insert_or_assign_with_hash(hashval, k, v).first;
+    }
+
     // if map does not contains key, it is inserted and the mapped value is value-constructed
     // with the provided arguments (if any), as with try_emplace.
     // if map already  contains key, then the lambda is called with the mapped value (under
@@ -4716,7 +4756,11 @@ public:
 private:
     template<class K, class V>
     std::pair<iterator, bool> insert_or_assign_impl(K&& k, V&& v) {
-        size_t                hashval = this->hash(k);
+        return insert_or_assign_impl_with_hash(this->hash(k), std::forward<K>(k), std::forward<V>(v));
+    }
+
+    template<class K, class V>
+    std::pair<iterator, bool> insert_or_assign_impl_with_hash(size_t hashval, K&& k, V&& v) {
         UniqueLock            m;
         auto                  res   = this->find_or_prepare_insert_with_hash(hashval, k, m);
         typename Base::Inner* inner = std::get<0>(res);
@@ -5246,6 +5290,7 @@ public:
     using Base::find;
     using Base::insert;
     using Base::insert_or_assign;
+    using Base::insert_or_assign_with_hash;
     using Base::max_size;
     using Base::merge;
     using Base::rehash;
@@ -5370,6 +5415,7 @@ public:
     using Base::find;
     using Base::insert;
     using Base::insert_or_assign;
+    using Base::insert_or_assign_with_hash;
     using Base::max_size;
     using Base::merge;
     using Base::rehash;
@@ -5490,6 +5536,7 @@ public:
     using Base::hash;
     using Base::insert;
     using Base::insert_or_assign;
+    using Base::insert_or_assign_with_hash;
     using Base::max_size;
     using Base::merge;
     using Base::rehash;
@@ -5611,6 +5658,7 @@ public:
     using Base::hash;
     using Base::insert;
     using Base::insert_or_assign;
+    using Base::insert_or_assign_with_hash;
     using Base::max_size;
     using Base::merge;
     using Base::rehash;
