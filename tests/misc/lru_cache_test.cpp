@@ -1,5 +1,6 @@
 #include "gtest/gtest.h"
 #include <gtl/lru_cache.hpp>
+#include <gtl/memoize.hpp>
 
 constexpr int CACHETEST1_NUM_OF_RECORDS = 100;
 constexpr int CACHETEST1_CACHE_CAPACITY = 50;
@@ -14,6 +15,25 @@ TEST(CacheTest, SimplePut) {
 TEST(CacheTest, MissingValue) {
     gtl::lru_cache<int, int> cache;
     EXPECT_FALSE(cache.get(7));
+}
+
+TEST(MemoizeLruTest, EvictsLeastRecentOnlyAfterCapacity) {
+    auto identity = [](int value) { return value; };
+    gtl::memoize_lru<decltype(identity), 0> memoized(identity, 3);
+
+    for (int value : {1, 2, 3}) {
+        EXPECT_EQ(value, memoized(value));
+    }
+    EXPECT_EQ(3u, memoized.size());
+    EXPECT_EQ(1, memoized.contains(1));
+
+    EXPECT_EQ(1, memoized(1));
+    EXPECT_EQ(4, memoized(4));
+    EXPECT_EQ(3u, memoized.size());
+    EXPECT_FALSE(memoized.contains(2));
+    EXPECT_EQ(1, memoized.contains(1));
+    EXPECT_EQ(3, memoized.contains(3));
+    EXPECT_EQ(4, memoized.contains(4));
 }
 
 TEST(CacheTest1, KeepsAllValuesWithinCapacity) {
