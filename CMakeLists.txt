@@ -69,7 +69,10 @@ set(GTL_HEADERS ${CMAKE_CURRENT_SOURCE_DIR}/include/${GTL_DIR}/phmap.hpp
                 ${CMAKE_CURRENT_SOURCE_DIR}/include/${GTL_DIR}/soa.hpp
                 ${CMAKE_CURRENT_SOURCE_DIR}/include/${GTL_DIR}/stopwatch.hpp
                 ${CMAKE_CURRENT_SOURCE_DIR}/include/${GTL_DIR}/utils.hpp
-                ${CMAKE_CURRENT_SOURCE_DIR}/include/${GTL_DIR}/adv_utils.hpp)
+                ${CMAKE_CURRENT_SOURCE_DIR}/include/${GTL_DIR}/adv_utils.hpp
+                ${CMAKE_CURRENT_SOURCE_DIR}/include/${GTL_DIR}/vector.hpp
+                ${CMAKE_CURRENT_SOURCE_DIR}/include/${GTL_DIR}/vec_utils.hpp
+                ${CMAKE_CURRENT_SOURCE_DIR}/include/${GTL_DIR}/combinators.hpp)
 
 include(helpers)
 
@@ -112,7 +115,7 @@ if(GTL_INSTALL)
 
     export(TARGETS ${PROJECT_NAME}
            NAMESPACE ${PROJECT_NAME}::
-           FILE "${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}Targets.cmake")
+           FILE "${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}-targets.cmake")
 endif()
 
 
