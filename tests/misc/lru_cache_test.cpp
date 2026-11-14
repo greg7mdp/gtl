@@ -5,6 +5,45 @@
 constexpr int CACHETEST1_NUM_OF_RECORDS = 100;
 constexpr int CACHETEST1_CACHE_CAPACITY = 50;
 
+namespace {
+
+template<class Cache>
+void CheckReferenceArgumentValues(Cache& memoized) {
+    int input = 3;
+    EXPECT_EQ(9, memoized(input));
+    input = 4;
+
+    auto original = memoized.contains(3);
+    ASSERT_TRUE(original.has_value());
+    EXPECT_EQ(9, *original);
+    EXPECT_EQ(16, memoized(input));
+    EXPECT_EQ(9, memoized(3));
+    EXPECT_EQ(2u, memoized.size());
+}
+
+} // namespace
+
+TEST(MemoizeTest, CachesReferenceArgumentValues) {
+    auto square = [](const int& value) { return value * value; };
+    gtl::memoize<decltype(square), 0> memoized(square);
+    CheckReferenceArgumentValues(memoized);
+
+    gtl::mt_memoize<decltype(square), true, 0> recursive(square);
+    CheckReferenceArgumentValues(recursive);
+
+    gtl::mt_memoize<decltype(square), false, 0> nonrecursive(square);
+    CheckReferenceArgumentValues(nonrecursive);
+}
+
+TEST(MemoizeLruTest, CachesReferenceArgumentValues) {
+    auto square = [](const int& value) { return value * value; };
+    gtl::memoize_lru<decltype(square), 0> memoized(square, 3);
+    CheckReferenceArgumentValues(memoized);
+
+    gtl::mt_memoize_lru<decltype(square), 0> concurrent(square, 3);
+    CheckReferenceArgumentValues(concurrent);
+}
+
 TEST(CacheTest, SimplePut) {
     gtl::lru_cache<int, int> cache;
     cache.insert(7, 777);
