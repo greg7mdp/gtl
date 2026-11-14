@@ -231,7 +231,7 @@ public:
                 res = _f(args...);
                 l.push_front(value_type(key, res));
                 ctor(key, l.begin());
-                if (l.size() >= _max_size) {
+                if (l.size() > _max_size) {
                     // remove oldest
                     auto last = l.end();
                     last--;
