@@ -179,8 +179,6 @@ When an ordering is not needed, a hash container is typically a better choice th
 
 [Gtl](https://github.com/greg7mdp/gtl) provides a `gtl::bit_vector` class, which is an alternative to `std::vector<bool>` or `std::bitset`, as it provides both dynamic resizing, and a good assortment of bit manipulation primitives.
 
-`resize(size, value)` preserves existing bits up to the new size. When the vector grows, every added bit is set to `value`, which defaults to `false`.
-
 I implemented this container because I often needed the functionality it provides, and didn't find an open-source implementation I liked which didn't require pulling in a big library. The `gtl::bit_vector` implementation is self-contained in a single header [file](https://github.com/greg7mdp/gtl/blob/main/gtl/bit_vector.hpp) which can trivially  be added to any project (it currently requires a C++17 compiler).
 
 In addition, I dreamed of the `gtl::bit_view` functionality, similar to `std::string_view` for strings, to refer and operate on a subset of a full `gtl::bit_vector`, and I thought it would be fun implementing it.
