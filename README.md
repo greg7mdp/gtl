@@ -196,9 +196,11 @@ The classes from the `memoize.hpp` header provide a very efficient way to memoiz
 
 * `gtl::lru_cache`: a basic lru (least recently used) cache, not internally thread-safe, providing APIs like `contains()` and`insert()` to look up and insert items if not already present.
 * `gtl::memoize`
-* `gtl::memoize_lru`
+* `gtl::memoize_lru`: a bounded memoization cache for single-threaded use.
 * `gtl::mt_memoize`:
-* `gtl::mt_memoize_lru`:
+* `gtl::mt_memoize_lru`: the bounded variant for concurrent use.
+
+Both bounded variants divide `max_size` by the number of submaps (`2^N`, rounding down). A cache hit makes the key most recently used in its submap. Inserting a new key into a full submap evicts that submap's least recently used key. With `N = 0` and `max_size = 3`, the cache holds three entries and first evicts on the fourth distinct key.
 
 ## intrusive
 
