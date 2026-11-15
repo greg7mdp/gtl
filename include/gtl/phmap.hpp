@@ -5290,7 +5290,6 @@ public:
     using Base::find;
     using Base::insert;
     using Base::insert_or_assign;
-    using Base::insert_or_assign_with_hash;
     using Base::max_size;
     using Base::merge;
     using Base::rehash;
@@ -5415,7 +5414,6 @@ public:
     using Base::find;
     using Base::insert;
     using Base::insert_or_assign;
-    using Base::insert_or_assign_with_hash;
     using Base::max_size;
     using Base::merge;
     using Base::rehash;
