@@ -110,6 +110,29 @@ TEST(BitVectorTest, resize) {
     EXPECT_TRUE(v1 == v2);
 }
 
+TEST(BitVectorTest, resize_fills_new_bits) {
+    for (size_t initial_size : {0, 5, 63, 64, 65, 130}) {
+        for (bool fill : {false, true}) {
+            gtl::bit_vector bits(initial_size);
+            std::vector<bool> expected(initial_size);
+            for (size_t i = 0; i < initial_size; i += 3) {
+                bits.set(i);
+                expected[i] = true;
+            }
+
+            for (size_t size : {7, 65, 128, 129, 5, 64, 0, 65}) {
+                bits.resize(size, fill);
+                expected.resize(size, fill);
+                ASSERT_EQ(bits.size(), expected.size());
+                for (size_t i = 0; i < size; ++i)
+                    ASSERT_EQ(bits[i], expected[i])
+                        << "initial size " << initial_size << ", new size " << size
+                        << ", fill " << fill << ", bit " << i;
+            }
+        }
+    }
+}
+
 TEST(BitVectorTest, bit_view_change) {
     static constexpr size_t sz = 500;
     gtl::bit_vector         tv1(sz), tv2(sz);
