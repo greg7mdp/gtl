@@ -17,6 +17,7 @@
 #include <list>
 #include <optional>
 #include <tuple>
+#include <type_traits>
 
 namespace gtl {
 
@@ -74,7 +75,7 @@ class mt_memoize;
 template<class F, bool recursive, size_t N, class Mutex, class... Args>
 class mt_memoize<F, recursive, N, Mutex, pack<Args...>> {
 public:
-    using key_type    = std::tuple<Args...>;
+    using key_type    = std::tuple<std::decay_t<Args>...>;
     using result_type = decltype(std::declval<F>()(std::declval<Args>()...));
     using map_type    = gtl::parallel_flat_hash_map<key_type,
                                                  result_type,
@@ -177,7 +178,7 @@ class mt_memoize_lru;
 template<class F, size_t N, class Mutex, class... Args>
 class mt_memoize_lru<F, N, Mutex, pack<Args...>> {
 public:
-    using key_type    = std::tuple<Args...>;
+    using key_type    = std::tuple<std::decay_t<Args>...>;
     using result_type = decltype(std::declval<F>()(std::declval<Args>()...));
     using value_type  = typename std::pair<const key_type, result_type>;
 
@@ -199,14 +200,14 @@ public:
         : _f(std::move(f)) {
         reserve(max_size);
         set_cache_size(max_size);
-        assert(_max_size > 2);
+        assert(_max_size > 0);
     }
 
     mt_memoize_lru(F& f, size_t max_size = 65536)
         : _f(f) {
         reserve(max_size);
         set_cache_size(max_size);
-        assert(_max_size > 2);
+        assert(_max_size > 0);
     }
 
     std::optional<result_type> contains(Args... args) {
@@ -246,7 +247,7 @@ public:
 
     void   clear() { _cache.clear(); }
     void   reserve(size_t n) { _cache.reserve(size_t(n * 1.1f)); }
-    void   set_cache_size(size_t max_size) { _max_size = max_size / num_submaps; }
+    void   set_cache_size(size_t max_size) { _max_size = (max_size / num_submaps > 0) ? (max_size / num_submaps) : (max_size > 0 ? 1 : 0); }
     size_t size() const { return _cache.size(); }
 
 private:
