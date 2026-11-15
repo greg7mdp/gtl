@@ -72,3 +72,73 @@ TEST(CacheTest1, mtKeepsAllValuesWithinCapacity) {
         EXPECT_EQ(i, *cache.get(i));
     }
 }
+
+TEST(CacheTest, BoundaryCapacityOneAndTwo) {
+    // Capacity 1
+    gtl::lru_cache<int, int> cache1(1);
+    cache1.insert(1, 10);
+    EXPECT_EQ(1u, cache1.size());
+    EXPECT_TRUE(cache1.contains(1));
+
+    cache1.insert(2, 20);
+    EXPECT_EQ(1u, cache1.size());
+    EXPECT_FALSE(cache1.contains(1));
+    EXPECT_TRUE(cache1.contains(2));
+
+    // Capacity 2
+    gtl::lru_cache<int, int> cache2(2);
+    cache2.insert(1, 10);
+    cache2.insert(2, 20);
+    EXPECT_EQ(2u, cache2.size());
+    EXPECT_TRUE(cache2.contains(1));
+    EXPECT_TRUE(cache2.contains(2));
+
+    cache2.insert(3, 30);
+    EXPECT_EQ(2u, cache2.size());
+    EXPECT_FALSE(cache2.contains(1));
+    EXPECT_TRUE(cache2.contains(2));
+    EXPECT_TRUE(cache2.contains(3));
+
+    // Access 2 to make it most recently used, so 3 becomes least recently used
+    EXPECT_EQ(20, *cache2.get(2));
+    cache2.insert(4, 40);
+    EXPECT_EQ(2u, cache2.size());
+    EXPECT_FALSE(cache2.contains(3));
+    EXPECT_TRUE(cache2.contains(2));
+    EXPECT_TRUE(cache2.contains(4));
+}
+
+TEST(CacheTest, ConstContainsAndExists) {
+    gtl::lru_cache<int, int> cache(5);
+    cache.insert(42, 100);
+
+    const auto& const_cache = cache;
+    EXPECT_TRUE(const_cache.contains(42));
+    EXPECT_TRUE(const_cache.exists(42));
+    EXPECT_FALSE(const_cache.contains(99));
+    EXPECT_FALSE(const_cache.exists(99));
+}
+
+TEST(MemoizeLruTest, BoundaryCapacityOneAndTwo) {
+    auto sq = [](int x) { return x * x; };
+    gtl::memoize_lru<decltype(sq), 0> memoized1(sq, 1);
+    EXPECT_EQ(1, memoized1(1));
+    EXPECT_EQ(1u, memoized1.size());
+    EXPECT_TRUE(memoized1.contains(1).has_value());
+
+    EXPECT_EQ(4, memoized1(2));
+    EXPECT_EQ(1u, memoized1.size());
+    EXPECT_FALSE(memoized1.contains(1).has_value());
+    EXPECT_TRUE(memoized1.contains(2).has_value());
+
+    gtl::memoize_lru<decltype(sq), 0> memoized2(sq, 2);
+    EXPECT_EQ(1, memoized2(1));
+    EXPECT_EQ(4, memoized2(2));
+    EXPECT_EQ(2u, memoized2.size());
+
+    EXPECT_EQ(9, memoized2(3));
+    EXPECT_EQ(2u, memoized2.size());
+    EXPECT_FALSE(memoized2.contains(1).has_value());
+    EXPECT_TRUE(memoized2.contains(2).has_value());
+    EXPECT_TRUE(memoized2.contains(3).has_value());
+}
