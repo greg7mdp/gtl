@@ -53,11 +53,15 @@ public:
     lru_cache_impl(size_t max_size = 65536) {
         reserve(max_size);
         set_cache_size(max_size);
-        assert(_max_size > 2);
+        assert(_max_size > 0);
     }
 
-    bool exists(const K& k) {
-        return _cache.if_contains(k, [&](const auto&, list_type&) {});
+    bool exists(const K& k) const {
+        return _cache.if_contains(k, [&](const auto&, const list_type&) {});
+    }
+
+    bool contains(const K& k) const {
+        return exists(k);
     }
 
     std::optional<result_type> get(const K& k) {
@@ -96,7 +100,7 @@ public:
 
     void   clear() { _cache.clear(); }
     void   reserve(size_t n) { _cache.reserve(size_t(n * 1.1f)); }
-    void   set_cache_size(size_t max_size) { _max_size = max_size / num_submaps; }
+    void   set_cache_size(size_t max_size) { _max_size = (max_size / num_submaps > 0) ? (max_size / num_submaps) : (max_size > 0 ? 1 : 0); }
     size_t size() const { return _cache.size(); }
 
 private:
