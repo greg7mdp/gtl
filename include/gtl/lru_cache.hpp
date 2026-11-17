@@ -56,6 +56,13 @@ public:
         assert(_max_size > 0);
     }
 
+    // The map stores iterators into the per-submap lists, so a copy would
+    // still point into the source's lists. Moving keeps them valid.
+    lru_cache_impl(const lru_cache_impl&)            = delete;
+    lru_cache_impl& operator=(const lru_cache_impl&) = delete;
+    lru_cache_impl(lru_cache_impl&&)                 = default;
+    lru_cache_impl& operator=(lru_cache_impl&&)      = default;
+
     bool exists(const K& k) const {
         return _cache.if_contains(k, [&](const auto&, const list_type&) {});
     }
