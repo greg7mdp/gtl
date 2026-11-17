@@ -3537,8 +3537,10 @@ public:
         : parallel_hash_set(std::move(that), that.alloc_ref()) {}
 
     parallel_hash_set(parallel_hash_set&& that, const allocator_type& a) {
-        for (size_t i = 0; i < num_tables; ++i)
+        for (size_t i = 0; i < num_tables; ++i) {
             sets_[i].set_ = { std::move(that.sets_[i]).set_, a };
+            move_aux(sets_[i], that.sets_[i]);
+        }
     }
 
     parallel_hash_set& operator=(const parallel_hash_set& that) {
@@ -3550,12 +3552,26 @@ public:
     parallel_hash_set& operator=(parallel_hash_set&& that) noexcept(
         std::allocator_traits<allocator_type>::is_always_equal::value && std::is_nothrow_move_assignable_v<hasher> &&
         std::is_nothrow_move_assignable_v<key_equal>) {
-        for (size_t i = 0; i < num_tables; ++i)
+        for (size_t i = 0; i < num_tables; ++i) {
             sets_[i].set_ = std::move(that.sets_[i].set_);
+            move_aux(sets_[i], that.sets_[i]);
+        }
         return *this;
     }
 
     ~parallel_hash_set() {}
+
+private:
+    // The aux container (e.g. lru_cache's per-submap lists) has to travel with
+    // its submap, since the submap's values may refer into it.
+    static void move_aux([[maybe_unused]] Inner& to, [[maybe_unused]] Inner& from) {
+        if constexpr (!std::is_same_v<gtl::priv::empty, aux_type>) {
+            to.aux_ = std::move(from.aux_);
+            from.aux_.clear();
+        }
+    }
+
+public:
 
     iterator begin() {
         auto it = iterator(&sets_[0], &sets_[0] + num_tables, sets_[0].set_.begin());
@@ -4175,6 +4191,8 @@ public:
             UniqueLock                     l(sets_[i]);
             typename Lockable2::UniqueLock l2(that.get_inner(i));
             swap(sets_[i].set_, that.get_inner(i).set_);
+            if constexpr (!std::is_same_v<gtl::priv::empty, aux_type>)
+                swap(sets_[i].aux_, that.get_inner(i).aux_);
         }
     }
 
