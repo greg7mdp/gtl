@@ -337,6 +337,34 @@ TEST(BitVectorTest, view_assignment) {
     }
 }
 
+// copying one view of a bit_vector onto another view of the *same* bit_vector
+// must behave like std::vector<bool>, wherever the two views are
+TEST(BitVectorTest, view_assignment_same_bitmap) {
+    for (size_t sz : {1, 7, 64, 65, 130, 200}) {
+        for (size_t len = 0; len <= sz; len += 3) {
+            for (size_t src = 0; src + len <= sz; src += 5) {
+                for (size_t dst = 0; dst + len <= sz; dst += 7) {
+                    gtl::bit_vector    v(sz);
+                    std::vector<bool>  ref(sz);
+                    for (size_t i = 0; i < sz; ++i) {
+                        bool b = ((i * 7 + 3) % 5) < 2;
+                        v.set(i, b);
+                        ref[i] = b;
+                    }
+                    std::vector<bool> tmp(ref.begin() + src, ref.begin() + src + len);
+                    for (size_t i = 0; i < len; ++i)
+                        ref[dst + i] = tmp[i];
+
+                    v.view(dst, dst + len) = v.view(src, src + len);
+
+                    for (size_t i = 0; i < sz; ++i)
+                        EXPECT_EQ(v[i], ref[i]) << "size " << sz << " len " << len << " src " << src << " dst " << dst << " bit " << i;
+                }
+            }
+        }
+    }
+}
+
 TEST(BitVectorTest, unary_predicates_on_full_bit_vector) {
     auto check_sz = [](size_t sz) {
         gtl::bit_vector v(sz);
