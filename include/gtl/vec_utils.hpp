@@ -51,10 +51,13 @@ auto slice(V&& v, int first = 0, int last = -1, int stride = 1) {
         (first >= 0 ? std::begin(std::forward<V>(v)) + first : std::end(std::forward<V>(v)) + (first + 1));
     auto last_iter = (last >= 0 ? std::begin(std::forward<V>(v)) + last : std::end(std::forward<V>(v)) + (last + 1));
     if (last_iter > first_iter) {
-        std::size_t cnt = (last_iter - first_iter) / stride;
+        // round up, so the last element is kept when the range length is not a multiple of stride
+        std::size_t len  = static_cast<std::size_t>(last_iter - first_iter);
+        std::size_t step = static_cast<std::size_t>(stride);
+        std::size_t cnt  = (len + step - 1) / step;
         res.reserve(cnt);
-        for (; cnt-- != 0; first_iter += stride)
-            res.push_back(*first_iter);
+        for (std::size_t i = 0; i < cnt; ++i)
+            res.push_back(first_iter[static_cast<std::ptrdiff_t>(i * step)]);
     }
     return res;
 }
