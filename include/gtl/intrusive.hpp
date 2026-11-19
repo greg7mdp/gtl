@@ -26,6 +26,7 @@
 #include <cassert>
 #include <cstddef>
 #include <iostream>
+#include <type_traits>
 
 namespace gtl {
 
@@ -71,8 +72,8 @@ public:
             intrusive_ptr_add_ref(px);
     }
 
-    template<class U, typename std::enable_if_t<std::is_convertible_v<U, T>, int> = 0>
-    intrusive_ptr(intrusive_ptr<U>&& rhs)
+    template<class U, typename std::enable_if_t<std::is_convertible_v<U*, T*>, int> = 0>
+    intrusive_ptr(intrusive_ptr<U>&& rhs) noexcept
         : px(rhs.px) {
         rhs.px = nullptr;
     }
@@ -101,8 +102,8 @@ public:
 
     template<class U>
     intrusive_ptr& operator=(intrusive_ptr<U> const& rhs) {
-        if (this != &rhs)
-            this_type(rhs).swap(*this);
+        // rhs has a different type, so it cannot be *this
+        this_type(rhs).swap(*this);
         return *this;
     }
 
