@@ -375,10 +375,17 @@ protected:
 
     friend void intrusive_ptr_add_ref(const DerivedT* p) noexcept { CounterPolicyT::increment(p->_refcount); }
 
+#if defined(__GNUC__) && !defined(__clang__)
+#    pragma GCC diagnostic push
+#    pragma GCC diagnostic ignored "-Wuse-after-free"
+#endif
     friend void intrusive_ptr_release(const DerivedT* p) noexcept {
         if (CounterPolicyT::decrement(p->_refcount) == 0)
             delete static_cast<const DerivedT*>(p);
     }
+#if defined(__GNUC__) && !defined(__clang__)
+#    pragma GCC diagnostic pop
+#endif
 };
 
 } // namespace gtl
