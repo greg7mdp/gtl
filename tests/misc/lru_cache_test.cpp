@@ -181,3 +181,43 @@ TEST(MemoizeLruTest, BoundaryCapacityOneAndTwo) {
     EXPECT_TRUE(memoized2.contains(2).has_value());
     EXPECT_TRUE(memoized2.contains(3).has_value());
 }
+
+TEST(CacheTest, MoveConstructKeepsRecencyLists) {
+    gtl::lru_cache<int, int> source(2);
+    source.insert(1, 1);
+    source.insert(2, 2);
+
+    gtl::lru_cache<int, int> cache(std::move(source));
+    EXPECT_EQ(2u, cache.size());
+    EXPECT_EQ(1, cache.get(1).value()); // 1 becomes the most recent
+    cache.insert(3, 3);                 // so 2 is the one evicted
+
+    EXPECT_EQ(2u, cache.size());
+    EXPECT_TRUE(cache.exists(1));
+    EXPECT_FALSE(cache.exists(2));
+    EXPECT_TRUE(cache.exists(3));
+}
+
+TEST(CacheTest, MoveAssignKeepsRecencyLists) {
+    gtl::lru_cache<int, int> source(2);
+    source.insert(1, 1);
+    source.insert(2, 2);
+
+    gtl::lru_cache<int, int> cache(2);
+    cache.insert(7, 7);
+    cache = std::move(source);
+    cache.insert(3, 3); // 1 is the oldest
+
+    EXPECT_EQ(2u, cache.size());
+    EXPECT_FALSE(cache.exists(1));
+    EXPECT_TRUE(cache.exists(2));
+    EXPECT_TRUE(cache.exists(3));
+    EXPECT_FALSE(cache.exists(7));
+}
+
+TEST(CacheTest, IsMoveOnly) {
+    EXPECT_FALSE((std::is_copy_constructible_v<gtl::lru_cache<int, int>>));
+    EXPECT_FALSE((std::is_copy_assignable_v<gtl::lru_cache<int, int>>));
+    EXPECT_TRUE((std::is_move_constructible_v<gtl::lru_cache<int, int>>));
+    EXPECT_TRUE((std::is_move_assignable_v<gtl::lru_cache<int, int>>));
+}

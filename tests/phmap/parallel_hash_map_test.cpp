@@ -205,6 +205,48 @@ TEST(THIS_TEST_NAME, EmplaceSingle) {
     EXPECT_EQ(m.count(11), 0);
 }
 
+TEST(THIS_TEST_NAME, InsertOrAssignWithHash) {
+    using Map = ThisMap<int, std::string>;
+    Map m;
+
+    size_t h1 = m.hash(1);
+    size_t h2 = m.hash(2);
+
+    // 1. Insert new elements with precomputed hash
+    auto res1 = m.insert_or_assign_with_hash(h1, 1, "one");
+    EXPECT_TRUE(res1.second);
+    EXPECT_EQ(res1.first->first, 1);
+    EXPECT_EQ(res1.first->second, "one");
+    EXPECT_EQ(m.size(), 1u);
+
+    auto res2 = m.insert_or_assign_with_hash(h2, 2, "two");
+    EXPECT_TRUE(res2.second);
+    EXPECT_EQ(res2.first->first, 2);
+    EXPECT_EQ(res2.first->second, "two");
+    EXPECT_EQ(m.size(), 2u);
+
+    // 2. Assign to existing element with precomputed hash
+    auto res1_reassign = m.insert_or_assign_with_hash(h1, 1, "ONE_UPDATED");
+    EXPECT_FALSE(res1_reassign.second);
+    EXPECT_EQ(res1_reassign.first->first, 1);
+    EXPECT_EQ(res1_reassign.first->second, "ONE_UPDATED");
+    EXPECT_EQ(m.size(), 2u);
+    EXPECT_EQ(m[1], "ONE_UPDATED");
+
+    // 3. Hint version
+    size_t h3 = m.hash(3);
+    auto it3 = m.insert_or_assign_with_hash(h3, m.begin(), 3, "three");
+    EXPECT_EQ(it3->first, 3);
+    EXPECT_EQ(it3->second, "three");
+    EXPECT_EQ(m.size(), 3u);
+
+    auto it3_reassign = m.insert_or_assign_with_hash(h3, m.begin(), 3, "THREE_UPDATED");
+    EXPECT_EQ(it3_reassign->first, 3);
+    EXPECT_EQ(it3_reassign->second, "THREE_UPDATED");
+    EXPECT_EQ(m.size(), 3u);
+    EXPECT_EQ(m[3], "THREE_UPDATED");
+}
+
 } // namespace
 } // namespace priv
 } // namespace gtl
