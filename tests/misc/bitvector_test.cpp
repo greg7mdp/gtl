@@ -365,6 +365,79 @@ TEST(BitVectorTest, view_assignment_same_bitmap) {
     }
 }
 
+// Explicit regression test for the backward copy bug (dst > src with overlap)
+TEST(BitVectorTest, view_assignment_overlapping_backward) {
+    gtl::bit_vector v(128);
+    for (size_t i = 0; i < 128; ++i)
+        v.set(i, i % 3 == 0);
+
+    std::vector<bool> ref(128);
+    for (size_t i = 0; i < 128; ++i)
+        ref[i] = v[i];
+
+    // Copy [10,70) to [30,90) - overlapping, dst > src
+    std::vector<bool> tmp(ref.begin() + 10, ref.begin() + 70);
+    for (size_t i = 0; i < 60; ++i)
+        ref[30 + i] = tmp[i];
+
+    v.view(30, 90) = v.view(10, 70);
+
+    for (size_t i = 0; i < 128; ++i)
+        EXPECT_EQ(v[i], ref[i]) << "bit " << i;
+}
+
+// Test word-aligned positions explicitly
+TEST(BitVectorTest, view_assignment_word_aligned) {
+    for (size_t sz : {256, 512}) {
+        for (size_t len : {64, 128, 192}) {
+            for (size_t src : {0, 64, 128}) {
+                for (size_t dst : {0, 64, 128}) {
+                    if (src + len > sz || dst + len > sz)
+                        continue;
+                    gtl::bit_vector   v(sz);
+                    std::vector<bool> ref(sz);
+                    for (size_t i = 0; i < sz; ++i) {
+                        bool b = ((i * 11 + 7) % 13) < 5;
+                        v.set(i, b);
+                        ref[i] = b;
+                    }
+                    std::vector<bool> tmp(ref.begin() + src, ref.begin() + src + len);
+                    for (size_t i = 0; i < len; ++i)
+                        ref[dst + i] = tmp[i];
+
+                    v.view(dst, dst + len) = v.view(src, src + len);
+
+                    for (size_t i = 0; i < sz; ++i)
+                        EXPECT_EQ(v[i], ref[i]) << "size " << sz << " len " << len << " src " << src << " dst " << dst << " bit " << i;
+                }
+            }
+        }
+    }
+}
+
+// Test adjacent single-bit copies
+TEST(BitVectorTest, view_assignment_adjacent_bits) {
+    gtl::bit_vector v(128);
+    for (size_t i = 0; i < 128; ++i)
+        v.set(i, i % 2 == 0);
+
+    // Copy single bits to adjacent positions
+    for (size_t i = 0; i + 1 < 128; ++i) {
+        gtl::bit_vector copy = v;
+        bool src_val = copy[i];
+        copy.view(i + 1, i + 2) = copy.view(i, i + 1);
+        EXPECT_EQ(copy[i + 1], src_val) << "copying bit " << i << " to " << i + 1;
+    }
+
+    // Copy in reverse direction
+    for (size_t i = 1; i < 128; ++i) {
+        gtl::bit_vector copy = v;
+        bool src_val = copy[i];
+        copy.view(i - 1, i) = copy.view(i, i + 1);
+        EXPECT_EQ(copy[i - 1], src_val) << "copying bit " << i << " to " << i - 1;
+    }
+}
+
 TEST(BitVectorTest, unary_predicates_on_full_bit_vector) {
     auto check_sz = [](size_t sz) {
         gtl::bit_vector v(sz);

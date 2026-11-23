@@ -445,7 +445,8 @@ public:
         return *this;
     }
 
-    // returns true if the two views are on the same bit vector and overlap.
+    // returns true if the two views are on the same bit vector **and** overlap.
+    // -------------------------------------------------------------------------
     bool overlaps(const _view& o) const noexcept {
         return &_bv == &o._bv && o._first < _last && _first < o._last;
     }
@@ -581,7 +582,9 @@ public:
     _view& operator=(const _view& o) {
         assert(size() == o.size());
         if (overlaps(o) && o._first < _first) {
-            // both views are on same bitmap, and we are copying backward with an overlap
+            // Classic memmove problem: when copying overlapping regions where
+            // source starts before destination, a forward copy would overwrite
+            // source bits before reading them. We must copy backward instead.
             return bin_assign_backward(o, [](uint64_t, uint64_t b) { return b; });
         }
         typename S::bit_sequence seq(o._bv.storage(), o._first, o._last, _first);
