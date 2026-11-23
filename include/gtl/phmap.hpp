@@ -2647,6 +2647,10 @@ private:
 
     void initialize_slots(size_t new_capacity) {
         assert(new_capacity);
+        // Past this bound `layout.AllocSize()` can wrap around size_t and
+        // return a size far smaller than `new_capacity` slots.
+        if (GTL_PREDICT_FALSE(new_capacity > (std::numeric_limits<size_t>::max)() / 2 / (sizeof(slot_type) + 1)))
+            ThrowStdLengthError("gtl: hash table size overflow");
         if (std::is_same_v<SlotAlloc, std::allocator<slot_type>> && slots_ == nullptr) {}
 
         auto  layout = MakeLayout(new_capacity);

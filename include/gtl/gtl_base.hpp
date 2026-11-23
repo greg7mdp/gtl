@@ -978,6 +978,9 @@ namespace {
 } // namespace
 
 
+static inline void ThrowStdLengthError(const std::string& what_arg) { GTL_THROW_IMPL_MSG(std::length_error, what_arg); }
+static inline void ThrowStdLengthError(const char* what_arg) { GTL_THROW_IMPL_MSG(std::length_error, what_arg); }
+
 static inline void ThrowStdOutOfRange(const std::string& what_arg) { GTL_THROW_IMPL_MSG(std::out_of_range, what_arg); }
 static inline void ThrowStdOutOfRange(const char* what_arg) { GTL_THROW_IMPL_MSG(std::out_of_range, what_arg); }
 
