@@ -473,26 +473,36 @@ public:
     }
 
     _view& operator|=(const _view& o) noexcept {
+        if (overlaps(o) && o._first < _first)
+            return bin_assign_backward(o, [](uint64_t a, uint64_t b) { return a | b; });
         typename S::bit_sequence seq(o._bv.storage(), o._first, o._last, _first);
         return bin_assign(o, [&](uint64_t a, size_t) { return a | seq(); });
     }
 
     _view& operator&=(const _view& o) noexcept {
+        if (overlaps(o) && o._first < _first)
+            return bin_assign_backward(o, [](uint64_t a, uint64_t b) { return a & b; });
         typename S::bit_sequence seq(o._bv.storage(), o._first, o._last, _first);
         return bin_assign(o, [&](uint64_t a, size_t) { return a & seq(); });
     }
 
     _view& operator^=(const _view& o) noexcept {
+        if (overlaps(o) && o._first < _first)
+            return bin_assign_backward(o, [](uint64_t a, uint64_t b) { return a ^ b; });
         typename S::bit_sequence seq(o._bv.storage(), o._first, o._last, _first);
         return bin_assign(o, [&](uint64_t a, size_t) { return a ^ seq(); });
     }
 
     _view& operator-=(const _view& o) noexcept {
+        if (overlaps(o) && o._first < _first)
+            return bin_assign_backward(o, [](uint64_t a, uint64_t b) { return a & ~b; });
         typename S::bit_sequence seq(o._bv.storage(), o._first, o._last, _first);
         return bin_assign(o, [&](uint64_t a, size_t) { return a & ~seq(); });
     }
 
     _view& or_not(const _view& o) noexcept {
+        if (overlaps(o) && o._first < _first)
+            return bin_assign_backward(o, [](uint64_t a, uint64_t b) { return a | ~b; });
         typename S::bit_sequence seq(o._bv.storage(), o._first, o._last, _first);
         return bin_assign(o, [&](uint64_t a, size_t) { return a | ~seq(); });
     }
